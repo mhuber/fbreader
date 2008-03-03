@@ -94,24 +94,20 @@ private:
 	int myVisibleInModes;
 };
 
-class ShowCollectionAction : public ModeDependentAction {
+class SetModeAction : public ModeDependentAction {
 
 public:
-	ShowCollectionAction(FBReader &fbreader);
+	SetModeAction(FBReader &fbreader, FBReader::ViewMode modeToSet, int visibleInModes);
 	void run();
+
+private:
+	FBReader::ViewMode myModeToSet;
 };
 
 class ShowHelpAction : public FBAction {
 
 public:
 	ShowHelpAction(FBReader &fbreader);
-	void run();
-};
-
-class ShowRecentBooksListAction : public ModeDependentAction {
-
-public:
-	ShowRecentBooksListAction(FBReader &fbreader);
 	void run();
 };
 
@@ -201,6 +197,15 @@ public:
 	SearchAction(FBReader &fbreader);
 	bool isVisible();
 	void run();
+
+private:
+	ZLBooleanOption SearchBackwardOption;
+	ZLBooleanOption SearchIgnoreCaseOption;
+	ZLBooleanOption SearchInWholeTextOption;
+	ZLBooleanOption SearchThisSectionOnlyOption;
+	ZLStringOption SearchPatternOption;
+
+friend class SearchPatternEntry;
 };
 
 class FindNextAction : public FBAction {

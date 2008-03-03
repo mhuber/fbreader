@@ -320,7 +320,11 @@ void ToolBarButton::doActionSlot() {
 }
 
 void MyMainWindow::keyPressEvent(QKeyEvent *event) {
-	myApplicationWindow->application().doActionByKey(ZLQtKeyUtil::keyName(event));
+	if (event->key() == 0x1031) {
+		QMainWindow::keyPressEvent(event);
+	} else {
+		myApplicationWindow->application().doActionByKey(ZLQtKeyUtil::keyName(event));
+	}
 }
 
 void MyMainWindow::focusInEvent(QFocusEvent*) {
@@ -401,12 +405,17 @@ void MyMainWindow::closeEvent(QCloseEvent *event) {
 	}
 }
 
-void MyMainWindow::doActionQuit() {
+void MyMainWindow::doActionQuitSlot() {
 	myApplicationWindow->application().closeView();
 }
 
-void MyMainWindow::connectQuitButton(UTIL_CST *cst) {
-	connect(cst->getRightBtn(), SIGNAL(clicked()), this, SLOT(doActionQuit()));
+void MyMainWindow::setFullscreenSlot() {
+	myApplicationWindow->setFullscreen(true);
+}
+
+void MyMainWindow::connectCSTButtons(UTIL_CST *cst) {
+	connect(cst->getMidBtn(), SIGNAL(clicked()), this, SLOT(setFullscreenSlot()));
+	connect(cst->getRightBtn(), SIGNAL(clicked()), this, SLOT(doActionQuitSlot()));
 }
 
 void ZLQtApplicationWindow::close() {
@@ -430,9 +439,8 @@ ZLViewWidget *ZLQtApplicationWindow::createViewWidget() {
 	myCST = new UTIL_CST(main, ZLibrary::ApplicationName().c_str(), "CST_Menu", myRightButtonResource);
 	myCST->setFixedSize(ZGlobal::getCstR().size());
 	layout->addWidget(myCST);
-	myCST->getMidBtn()->setEnabled(false);
 	myCST->getLeftBtn()->setPopup(myMenu);
-	myMainWindow->connectQuitButton(myCST);
+	myMainWindow->connectCSTButtons(myCST);
 
 	myMainWindow->setCentralWidget(main);
 	return viewWidget;
