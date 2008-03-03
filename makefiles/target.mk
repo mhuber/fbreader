@@ -12,6 +12,9 @@
 #UI_TYPE = maemo2
 #UI_TYPE = maemo4
 
+#TARGET_ARCH = ebr
+#UI_TYPE = nanoX
+
 TARGET_ARCH = desktop
 UI_TYPE = gtk
 #UI_TYPE = qt
@@ -29,6 +32,9 @@ UI_TYPE = gtk
 #TARGET_ARCH = zaurus
 #UI_TYPE = qtopia-240x320
 #UI_TYPE = qtopia-640x480
+
+#TARGET_ARCH = moto
+#UI_TYPE = ezx
 
 #TARGET_ARCH = pma400
 #UI_TYPE = qtopia
