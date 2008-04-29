@@ -51,6 +51,10 @@ void BooleanOptionView::_hide() {
 	gtk_widget_hide(GTK_WIDGET(myCheckBox));
 }
 
+void BooleanOptionView::_setActive(bool active) {
+	gtk_widget_set_sensitive(GTK_WIDGET(myCheckBox), active);
+}
+
 void BooleanOptionView::_onAccept() const {
 	((ZLBooleanOptionEntry&)*myOption).onAccept(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(myCheckBox)));
 }
@@ -110,6 +114,10 @@ void Boolean3OptionView::_hide() {
 	gtk_widget_hide(GTK_WIDGET(myCheckBox));
 }
 
+void Boolean3OptionView::_setActive(bool active) {
+	gtk_widget_set_sensitive(GTK_WIDGET(myCheckBox), active);
+}
+
 void Boolean3OptionView::_onAccept() const {
 	((ZLBoolean3OptionEntry&)*myOption).onAccept(myState);
 }
@@ -152,6 +160,13 @@ void ChoiceOptionView::_hide() {
 	}
 }
 
+void ChoiceOptionView::_setActive(bool active) {
+	gtk_widget_set_sensitive(GTK_WIDGET(myFrame), active);
+	for (int i = 0; i < ((ZLChoiceOptionEntry&)*myOption).choiceNumber(); ++i) {
+		gtk_widget_set_sensitive(GTK_WIDGET(myButtons[i]), active);
+	}
+}
+
 void ChoiceOptionView::_onAccept() const {
 	for (int i = 0; i < ((ZLChoiceOptionEntry&)*myOption).choiceNumber(); ++i) {
 		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(myButtons[i]))) {
@@ -163,27 +178,37 @@ void ChoiceOptionView::_onAccept() const {
 
 void ComboOptionView::_createItem() {
 	const ZLComboOptionEntry &comboOptionEntry = (ZLComboOptionEntry&)*myOption;
-	myLabel = gtkLabel(ZLOptionView::name());
+	if (!ZLOptionView::name().empty()) {
+		myLabel = gtkLabel(ZLOptionView::name());
+	}
 	myComboBox = comboOptionEntry.isEditable() ?
 		GTK_COMBO_BOX(gtk_combo_box_entry_new_text()) : 
 		GTK_COMBO_BOX(gtk_combo_box_new_text());
 
 	g_signal_connect(GTK_WIDGET(myComboBox), "changed", G_CALLBACK(_onValueChanged), this);
 
-	int midColumn = (myFromColumn + myToColumn) / 2;
-	myTab->addItem(GTK_WIDGET(myLabel), myRow, myFromColumn, midColumn);
-	myTab->addItem(GTK_WIDGET(myComboBox), myRow, midColumn, myToColumn);
+	if (myLabel != 0) {
+		int midColumn = (myFromColumn + myToColumn) / 2;
+		myTab->addItem(GTK_WIDGET(myLabel), myRow, myFromColumn, midColumn);
+		myTab->addItem(GTK_WIDGET(myComboBox), myRow, midColumn, myToColumn);
+	} else {
+		myTab->addItem(GTK_WIDGET(myComboBox), myRow, myFromColumn, myToColumn);
+	}
 
 	reset();
 }
 
 void ComboOptionView::_show() {
-	gtk_widget_show(GTK_WIDGET(myLabel));
+	if (myLabel != 0) {
+		gtk_widget_show(GTK_WIDGET(myLabel));
+	}
 	gtk_widget_show(GTK_WIDGET(myComboBox));
 }
 
 void ComboOptionView::_hide() {
-	gtk_widget_hide(GTK_WIDGET(myLabel));
+	if (myLabel != 0) {
+		gtk_widget_hide(GTK_WIDGET(myLabel));
+	}
 	gtk_widget_hide(GTK_WIDGET(myComboBox));
 }
 

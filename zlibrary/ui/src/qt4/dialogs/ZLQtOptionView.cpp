@@ -58,6 +58,10 @@ void BooleanOptionView::_createItem() {
 	connect(myCheckBox, SIGNAL(toggled(bool)), this, SLOT(onStateChanged(bool)));
 }
 
+void BooleanOptionView::_setActive(bool active) {
+	myCheckBox->setEnabled(active);
+}
+
 void BooleanOptionView::_onAccept() const {
 	((ZLBooleanOptionEntry&)*myOption).onAccept(myCheckBox->isChecked());
 }
@@ -85,6 +89,10 @@ void Boolean3OptionView::_createItem() {
 	myWidgets.push_back(myCheckBox);
 	myTab->addItem(myCheckBox, myRow, myFromColumn, myToColumn);
 	connect(myCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onStateChanged(int)));
+}
+
+void Boolean3OptionView::_setActive(bool active) {
+	myCheckBox->setEnabled(active);
 }
 
 void Boolean3OptionView::_onAccept() const {
@@ -120,17 +128,21 @@ void Boolean3OptionView::onStateChanged(int state) const {
 }
 
 void ChoiceOptionView::_createItem() {
-	QGroupBox *groupBox = new QGroupBox(::qtString(ZLOptionView::name()));
-	myWidgets.push_back(groupBox);
-	QVBoxLayout *layout = new QVBoxLayout(groupBox);
+	myGroupBox = new QGroupBox(::qtString(ZLOptionView::name()));
+	myWidgets.push_back(myGroupBox);
+	QVBoxLayout *layout = new QVBoxLayout(myGroupBox);
 	myButtons = new QRadioButton*[((ZLChoiceOptionEntry&)*myOption).choiceNumber()];
 	for (int i = 0; i < ((ZLChoiceOptionEntry&)*myOption).choiceNumber(); ++i) {
-		myButtons[i] = new QRadioButton(groupBox);
+		myButtons[i] = new QRadioButton(myGroupBox);
 		myButtons[i]->setText(::qtString(((ZLChoiceOptionEntry&)*myOption).text(i)));
 		layout->addWidget(myButtons[i]);
 	}
 	myButtons[((ZLChoiceOptionEntry&)*myOption).initialCheckedIndex()]->setChecked(true);
-	myTab->addItem(groupBox, myRow, myFromColumn, myToColumn);
+	myTab->addItem(myGroupBox, myRow, myFromColumn, myToColumn);
+}
+
+void ChoiceOptionView::_setActive(bool active) {
+	myGroupBox->setEnabled(active);
 }
 
 void ChoiceOptionView::_onAccept() const {
@@ -144,19 +156,29 @@ void ChoiceOptionView::_onAccept() const {
 
 void ComboOptionView::_createItem() {
 	const ZLComboOptionEntry &comboOption = (ZLComboOptionEntry&)*myOption;
-	QLabel *label = new QLabel(::qtString(ZLOptionView::name()), myTab->widget());
+	QLabel *label = 0;
+	const std::string &name = ZLOptionView::name();
+	if (!name.empty()) {
+		label = new QLabel(::qtString(name), myTab->widget());
+	}
 	myComboBox = new QComboBox(myTab->widget());
 	myComboBox->setEditable(comboOption.isEditable());
 
-	myWidgets.push_back(label);
+	if (label != 0) {
+		myWidgets.push_back(label);
+	}
 	myWidgets.push_back(myComboBox);
 
 	connect(myComboBox, SIGNAL(activated(int)), this, SLOT(onValueSelected(int)));
 	connect(myComboBox, SIGNAL(editTextChanged(const QString&)), this, SLOT(onValueEdited(const QString&)));
 
-	int width = myToColumn - myFromColumn + 1;
-	myTab->addItem(label, myRow, myFromColumn, myFromColumn + width / 2 - 1);
-	myTab->addItem(myComboBox, myRow, myToColumn - width / 2 + 1, myToColumn);
+	if (label != 0) {
+		int width = myToColumn - myFromColumn + 1;
+		myTab->addItem(label, myRow, myFromColumn, myFromColumn + width / 2 - 1);
+		myTab->addItem(myComboBox, myRow, myToColumn - width / 2 + 1, myToColumn);
+	} else {
+		myTab->addItem(myComboBox, myRow, myFromColumn, myToColumn);
+	}
 
 	reset();
 }

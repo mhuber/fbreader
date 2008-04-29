@@ -45,6 +45,7 @@
 #include "../options/FBOptions.h"
 #include "../bookmodel/BookModel.h"
 #include "../formats/FormatPlugin.h"
+#include "../collection/BookList.h"
 
 static const std::string OPTIONS = "Options";
 static const std::string STATE = "State";
@@ -102,8 +103,6 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	myBindings270("Keys270"),
 	myBookToOpen(bookToOpen),
 	myBookAlreadyOpen(false) {
-
-	migrateFromOldVersions();
 
 	myModel = 0;
 	myBookTextView = new BookTextView(*this, context());
@@ -171,10 +170,15 @@ void FBReader::initWindow() {
 	ZLApplication::initWindow();
 	trackStylus(true);
 
+	MigrationRunnable migration;
+	if (migration.shouldMigrate()) {
+		ZLDialogManager::instance().wait(ZLResourceKey("migrate"), migration);
+	}
+
 	if (!myBookAlreadyOpen) {
 		BookDescriptionPtr description;
 		if (!myBookToOpen.empty()) {
-			description = createDescription(myBookToOpen);
+			createDescription(myBookToOpen, description);
 		}
 		if (description.isNull()) {
 			ZLStringOption bookName(ZLCategoryKey::STATE, STATE, BOOK, "");
@@ -193,12 +197,26 @@ void FBReader::initWindow() {
 	ZLTimeManager::instance().addTask(new TimeUpdater(*this), 1000);
 }
 
-BookDescriptionPtr FBReader::createDescription(const std::string& fileName) const {
+bool FBReader::createDescription(const std::string& fileName, BookDescriptionPtr &description) {
 	ZLFile bookFile = ZLFile(fileName);
 
-	BookDescriptionPtr description = BookDescription::getDescription(bookFile.path());
-	if (!description.isNull() || !bookFile.isArchive()) {
-		return description;
+	if (!bookFile.isArchive()) {
+		FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
+		if (plugin == 0) {
+			return false;
+		}
+		std::string error = plugin->tryOpen(fileName);
+		if (!error.empty()) {
+			ZLResourceKey boxKey("openBookErrorBox");
+			ZLDialogManager::instance().errorBox(
+				boxKey,
+				ZLStringUtil::printf(ZLDialogManager::dialogMessage(boxKey), error)
+			);
+		} else {
+			BookList().addFileName(bookFile.path());
+			description = BookDescription::getDescription(bookFile.path());
+		}
+		return true;
 	}
 
 	std::queue<std::string> archiveNames;
@@ -216,12 +234,10 @@ BookDescriptionPtr FBReader::createDescription(const std::string& fileName) cons
 		for (std::vector<std::string>::const_iterator it = items.begin(); it != items.end(); ++it) {
 			const std::string itemName = archiveDir->itemPath(*it);
 			ZLFile subFile(itemName);
-			description = BookDescription::getDescription(itemName);
-			if (!description.isNull()) {
-				return description;
-			}
 			if (subFile.isArchive()) {
 				archiveNames.push(itemName);
+			} else if (createDescription(itemName, description)) {
+				return true;
 			}
 		}
 		items.clear();
@@ -369,7 +385,6 @@ void FBReader::setMode(ViewMode mode) {
 bool FBReader::runBookInfoDialog(const std::string &fileName) {
 	BookCollection &collection = ((CollectionView&)*myCollectionView).collection();
 	if (BookInfoDialog(collection, fileName).dialog().run()) {
-		openFile(fileName);
 		collection.rebuild(false);
 		return true;
 	}
@@ -378,6 +393,10 @@ bool FBReader::runBookInfoDialog(const std::string &fileName) {
 
 BookTextView &FBReader::bookTextView() const {
 	return (BookTextView&)*myBookTextView;
+}
+
+CollectionView &FBReader::collectionView() const {
+	return (CollectionView&)*myCollectionView;
 }
 
 void FBReader::showBookTextView() {
@@ -404,7 +423,8 @@ std::string FBReader::helpFileName(const std::string &language) const {
 }
 
 void FBReader::openFile(const std::string &fileName) {
-	BookDescriptionPtr description = BookDescription::getDescription(fileName);
+	BookDescriptionPtr description;
+	createDescription(fileName, description);
 	if (!description.isNull()) {
 		openBook(description);
 		refreshWindow();

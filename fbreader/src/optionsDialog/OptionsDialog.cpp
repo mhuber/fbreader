@@ -20,7 +20,6 @@
 #include <ZLDialogManager.h>
 #include <ZLOptionsDialog.h>
 #include <ZLPaintContext.h>
-#include <ZLChineseBreakingAlgorithm.h>
 #include <ZLLanguageList.h>
 #include <ZLEncodingConverter.h>
 
@@ -153,13 +152,18 @@ OptionsDialog::OptionsDialog(FBReader &fbreader) {
 
 	myDialog = ZLDialogManager::instance().createOptionsDialog(ZLResourceKey("OptionsDialog"), new OptionsApplyRunnable(fbreader), true);
 
-	ZLDialogContent &generalTab = myDialog->createTab(ZLResourceKey("General"));
-	CollectionView &collectionView = (CollectionView&)*fbreader.myCollectionView;
+	ZLDialogContent &generalTab = myDialog->createTab(ZLResourceKey("Library"));
+	CollectionView &collectionView = fbreader.collectionView();
 	generalTab.addOption(ZLResourceKey("bookPath"), collectionView.collection().PathOption);
 	generalTab.addOption(ZLResourceKey("lookInSubdirectories"), collectionView.collection().ScanSubdirsOption);
 	RecentBooksView &recentBooksView = (RecentBooksView&)*fbreader.myRecentBooksView;
 	generalTab.addOption(ZLResourceKey("recentListSize"), new ZLSimpleSpinOptionEntry(recentBooksView.lastBooks().MaxListSizeOption, 1));
-	generalTab.addOption(ZLResourceKey("keyDelay"), new ZLSimpleSpinOptionEntry(fbreader.KeyDelayOption, 50));
+	ZLToggleBooleanOptionEntry *showTagsEntry = new ZLToggleBooleanOptionEntry(collectionView.ShowTagsOption);
+	ZLOptionEntry *showAllBooksTagEntry = new ZLSimpleBooleanOptionEntry(collectionView.ShowAllBooksTagOption);
+	showTagsEntry->addDependentEntry(showAllBooksTagEntry);
+	generalTab.addOption(ZLResourceKey("showTags"), showTagsEntry);
+	generalTab.addOption(ZLResourceKey("showAllBooksList"), showAllBooksTagEntry);
+	showTagsEntry->onStateChanged(showTagsEntry->initialState());
 
 	ZLDialogContent &encodingTab = myDialog->createTab(ZLResourceKey("Language"));
 	encodingTab.addOption(ZLResourceKey("autoDetect"), new ZLSimpleBooleanOptionEntry(PluginCollection::instance().LanguageAutoDetectOption));
@@ -169,7 +173,6 @@ OptionsDialog::OptionsDialog(FBReader &fbreader) {
 	encodingTab.addOption(ZLResourceKey("defaultEncodingSet"), encodingSetEntry);
 	encodingTab.addOption(ZLResourceKey("defaultEncoding"), encodingEntry);
 	encodingTab.addOption(ZLResourceKey("useWindows1252Hack"), new ZLSimpleBooleanOptionEntry(ZLEncodingCollection::useWindows1252HackOption()));
-	encodingTab.addOption(ZLResourceKey("chineseBreakAtAnyPosition"), new ZLSimpleBooleanOptionEntry(ZLChineseBreakingAlgorithm::instance().AnyPositionBreakingOption));
 
 	myScrollingPage = new ScrollingOptionsPage(myDialog->createTab(ZLResourceKey("Scrolling")), fbreader);
 

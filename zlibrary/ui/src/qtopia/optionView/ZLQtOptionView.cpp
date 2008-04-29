@@ -54,6 +54,10 @@ void BooleanOptionView::_hide() {
 	myCheckBox->hide();
 }
 
+void BooleanOptionView::_setActive(bool active) {
+	myCheckBox->setEnabled(active);
+}
+
 void BooleanOptionView::_onAccept() const {
 	((ZLBooleanOptionEntry&)*myOption).onAccept(myCheckBox->isChecked());
 }
@@ -86,6 +90,10 @@ void Boolean3OptionView::_show() {
 
 void Boolean3OptionView::_hide() {
 	myCheckBox->hide();
+}
+
+void Boolean3OptionView::_setActive(bool active) {
+	myCheckBox->setEnabled(active);
 }
 
 void Boolean3OptionView::_onAccept() const {
@@ -142,6 +150,10 @@ void ChoiceOptionView::_hide() {
 	myGroup->hide();
 }
 
+void ChoiceOptionView::_setActive(bool active) {
+	myGroup->setEnabled(active);
+}
+
 void ChoiceOptionView::_onAccept() const {
 	for (int i = 0; i < ((ZLChoiceOptionEntry&)*myOption).choiceNumber(); ++i) {
 		if (myButtons[i]->isChecked()) {
@@ -153,7 +165,10 @@ void ChoiceOptionView::_onAccept() const {
 
 void ComboOptionView::_createItem() {
 	const ZLComboOptionEntry &comboOption = (ZLComboOptionEntry&)*myOption;
-	myLabel = new QLabel(::qtString(ZLOptionView::name()), myHolder.widget());
+	const std::string &name = ZLOptionView::name();
+	if (!name.empty()) {
+		myLabel = new QLabel(::qtString(name), myHolder.widget());
+	}
 	myComboBox = new QComboBox(myHolder.widget());
 	myComboBox->setEditable(comboOption.isEditable());
 
@@ -163,7 +178,11 @@ void ComboOptionView::_createItem() {
 	connect(myComboBox, SIGNAL(activated(int)), this, SLOT(onValueSelected(int)));
 	connect(myComboBox, SIGNAL(textChanged(const QString&)), this, SLOT(onValueEdited(const QString&)));
 
-	myHolder.attachWidgets(*this, myLabel, 1, myComboBox, 1);
+	if (myLabel != 0) {
+		myHolder.attachWidgets(*this, myLabel, 1, myComboBox, 1);
+	} else {
+		myHolder.attachWidget(*this, myComboBox);
+	}
 
 	reset();
 }
@@ -196,12 +215,16 @@ void ComboOptionView::onTabResized(const QSize &size) {
 }
 
 void ComboOptionView::_show() {
-	myLabel->show();
+	if (myLabel != 0) {
+		myLabel->show();
+	}
 	myComboBox->show();
 }
 
 void ComboOptionView::_hide() {
-	myLabel->hide();
+	if (myLabel != 0) {
+		myLabel->hide();
+	}
 	myComboBox->hide();
 }
 

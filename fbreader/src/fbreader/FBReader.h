@@ -45,6 +45,10 @@ class RecentBooksView;
 class FBReader : public ZLApplication {
 
 public:
+	// returns true if description was found or error message was shown
+	static bool createDescription(const std::string &fileName, BookDescriptionPtr &description);
+
+public:
 	enum ViewMode {
 		UNDEFINED_MODE = 0,
 		BOOK_TEXT_MODE = 1 << 0,
@@ -89,8 +93,6 @@ public:
 private:
 	void initWindow();
 
-	BookDescriptionPtr createDescription(const std::string &fileName) const;
-
 	bool runBookInfoDialog(const std::string &fileName);
 
 	void clearTextCaches();
@@ -112,6 +114,7 @@ public:
 
 	void tryShowFootnoteView(const std::string &id, bool external);
 	BookTextView &bookTextView() const;
+	CollectionView &collectionView() const;
 	void showBookTextView();
 	void openBook(BookDescriptionPtr description);
 

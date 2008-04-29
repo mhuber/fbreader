@@ -32,22 +32,41 @@
 #include "../description/Author.h"
 #include "../formats/FormatPlugin.h"
 
+class DescriptionComparator {
+
+public:
+	bool operator() (const BookDescriptionPtr d1, const BookDescriptionPtr d2);
+};
+
 bool DescriptionComparator::operator() (const BookDescriptionPtr d1, const BookDescriptionPtr d2) {
-	const std::string &sequenceName1 = d1->sequenceName();
-	const std::string &sequenceName2 = d2->sequenceName();
-	if (sequenceName1.empty() && sequenceName2.empty()) {
+	AuthorPtr author1 = d1->author();
+	AuthorPtr author2 = d2->author();
+	const std::string sortKey1 = author1->sortKey();
+	const std::string sortKey2 = author2->sortKey();
+	if (sortKey1 != sortKey2) {
+		return sortKey1 < sortKey2;
+	}
+	const std::string displayName1 = author1->displayName();
+	const std::string displayName2 = author2->displayName();
+	if (displayName1 != displayName2) {
+		return displayName1 < displayName2;
+	}
+
+	const std::string &seriesName1 = d1->seriesName();
+	const std::string &seriesName2 = d2->seriesName();
+	if (seriesName1.empty() && seriesName2.empty()) {
 		return d1->title() < d2->title();
 	}
-	if (sequenceName1.empty()) {
-		return d1->title() < sequenceName2;
+	if (seriesName1.empty()) {
+		return d1->title() < seriesName2;
 	}
-	if (sequenceName2.empty()) {
-		return sequenceName1 <= d2->title();
+	if (seriesName2.empty()) {
+		return seriesName1 <= d2->title();
 	}
-	if (sequenceName1 != sequenceName2) {
-		return sequenceName1 < sequenceName2;
+	if (seriesName1 != seriesName2) {
+		return seriesName1 < seriesName2;
 	}
-	return d1->numberInSequence() < d2->numberInSequence();
+	return d1->numberInSeries() < d2->numberInSeries();
 }
 
 static const std::string OPTIONS = "Options";
@@ -117,8 +136,8 @@ bool BookCollection::synchronize() const {
 	myDoStrongRebuild = false;
 
 	if (doStrongRebuild) {
+		myBooks.clear();
 		myAuthors.clear();
-		myCollection.clear();
 		myExternalBooks.clear();
 
 		std::set<std::string> fileNamesSet;
@@ -142,27 +161,20 @@ bool BookCollection::synchronize() const {
 		BookList bookList;
 		const std::set<std::string> &bookListSet = bookList.fileNames();
 		std::vector<std::string> fileNames;
-		for (std::map<AuthorPtr,Books>::const_iterator it = myCollection.begin(); it != myCollection.end(); ++it) {
-			const Books &books = it->second;
-			for (Books::const_iterator jt = books.begin(); jt != books.end(); ++jt) {
-				if ((myExternalBooks.find(*jt) == myExternalBooks.end()) || 
-						(bookListSet.find((*jt)->fileName()) != bookListSet.end())) {
-					fileNames.push_back((*jt)->fileName());
-				}
+		for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+			if ((myExternalBooks.find(*it) == myExternalBooks.end()) || 
+					(bookListSet.find((*it)->fileName()) != bookListSet.end())) {
+				fileNames.push_back((*it)->fileName());
 			}
 		}
-		myCollection.clear();
+		myBooks.clear();
 		myAuthors.clear();
 		for (std::vector<std::string>::iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
 			addDescription(BookDescription::getDescription(*it, false));
 		}
 	}
 
-	std::sort(myAuthors.begin(), myAuthors.end(), AuthorComparator());
-	DescriptionComparator descriptionComparator;
-	for (std::map<AuthorPtr,Books>::iterator it = myCollection.begin(); it != myCollection.end(); ++it) {
-		std::sort((*it).second.begin(), (*it).second.end(), descriptionComparator);
-	}
+	std::sort(myBooks.begin(), myBooks.end(), DescriptionComparator());
 	return true;
 }
 
@@ -203,27 +215,145 @@ BookCollection::~BookCollection() {
 }
 
 void BookCollection::addDescription(BookDescriptionPtr description) const {
-	if (description.isNull()) {
+	if (!description.isNull()) {
+		myBooks.push_back(description);
+	}
+}
+
+void BookCollection::collectSeriesNames(AuthorPtr author, std::set<std::string> &set) const {
+	synchronize();
+	if (myBooks.empty()) {
 		return;
 	}
-
-	AuthorPtr author = description->author();
-	const std::string &displayName = author->displayName();
-	const std::string &sortKey = author->sortKey();
-
-	std::map<AuthorPtr,Books>::iterator it = myCollection.begin();
-	for (; it != myCollection.end(); ++it) {
-		AuthorPtr author1 = (*it).first;
-		if ((author1->sortKey() == sortKey) && (author1->displayName() == displayName)) {
+	AuthorComparator comparator;
+	Books::const_iterator left = myBooks.begin();
+	if (comparator(author, (*left)->author())) {
+		return;
+	}
+	Books::const_iterator right = myBooks.end() - 1;
+	if (comparator((*right)->author(), author)) {
+		return;
+	}
+	while (right > left) {
+		Books::const_iterator middle = left + (right - left) / 2;
+		if (comparator((*middle)->author(), author)) {
+			left = middle + 1;
+		} else if (comparator(author, (*middle)->author())) {
+			right = middle;
+		} else {
+			for (Books::const_iterator it = middle; !comparator((*it)->author(), author); --it) {
+				set.insert((*it)->seriesName());
+				if (it == left) {
+					break;
+				}
+			}
+			for (Books::const_iterator it = middle; !comparator(author, (*it)->author()); ++it) {
+				set.insert((*it)->seriesName());
+				if (it == right) {
+					break;
+				}
+			}
 			break;
 		}
 	}
-	if (it != myCollection.end()) {
-		(*it).second.push_back(description);
-	} else {
-		Books books;
-		books.push_back(description);
-		myCollection.insert(std::pair<AuthorPtr,Books>(author, books));
-		myAuthors.push_back(author);
+}
+
+const std::vector<AuthorPtr> &BookCollection::authors() const {
+	synchronize();
+	if (myAuthors.empty() && !myBooks.empty()) {
+		AuthorPtr author;
+		for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+			AuthorPtr newAuthor = (*it)->author();
+			if (author.isNull() || (author->sortKey() != newAuthor->sortKey()) || (author->displayName() != newAuthor->displayName())) {
+				author = newAuthor;
+				myAuthors.push_back(author);
+			}
+		}
 	}
+	return myAuthors;
+}
+
+void BookCollection::removeTag(const std::string &tag, bool includeSubTags) {
+	synchronize();
+	for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+		WritableBookDescription wbd(**it);
+		wbd.removeTag(tag, includeSubTags);
+	}
+}
+
+void BookCollection::addTagToAllBooks(const std::string &to) {
+	std::string checkedName = to;
+	BookDescriptionUtil::removeWhiteSpacesFromTag(checkedName);
+	if (!checkedName.empty()) {
+		synchronize();
+		for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+			WritableBookDescription wbd(**it);
+			wbd.addTag(checkedName, false);
+		}
+	}
+}
+
+void BookCollection::addTagToBooksWithNoTags(const std::string &to) {
+	std::string checkedName = to;
+	BookDescriptionUtil::removeWhiteSpacesFromTag(checkedName);
+	if (!checkedName.empty()) {
+		synchronize();
+		for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+			if ((*it)->tags().empty()) {
+				WritableBookDescription wbd(**it);
+				wbd.addTag(checkedName, false);
+			}
+		}
+	}
+}
+
+void BookCollection::renameTag(const std::string &from, const std::string &to, bool includeSubTags) {
+	std::string checkedName = to;
+	BookDescriptionUtil::removeWhiteSpacesFromTag(checkedName);
+	if (!checkedName.empty() && (checkedName != from)) {
+		synchronize();
+		for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+			WritableBookDescription wbd(**it);
+			wbd.renameTag(from, checkedName, includeSubTags);
+		}
+	}
+}
+
+void BookCollection::cloneTag(const std::string &from, const std::string &to, bool includeSubTags) {
+	std::string checkedName = to;
+	BookDescriptionUtil::removeWhiteSpacesFromTag(checkedName);
+	if (!checkedName.empty() && (checkedName != from)) {
+		synchronize();
+		for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+			WritableBookDescription wbd(**it);
+			wbd.cloneTag(from, checkedName, includeSubTags);
+		}
+	}
+}
+
+bool BookCollection::hasBooks(const std::string &tag) const {
+	synchronize();
+	for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+		const std::vector<std::string> &tags = (*it)->tags();
+		for (std::vector<std::string>::const_iterator jt = tags.begin(); jt != tags.end(); ++jt) {
+			if (*jt == tag) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool BookCollection::hasSubtags(const std::string &tag) const {
+	synchronize();
+	const std::string prefix = tag + '/';
+	for (Books::const_iterator it = myBooks.begin(); it != myBooks.end(); ++it) {
+		const std::vector<std::string> &tags = (*it)->tags();
+		for (std::vector<std::string>::const_iterator jt = tags.begin(); jt != tags.end(); ++jt) {
+			if (ZLStringUtil::stringStartsWith(*jt, prefix)) {
+				return true;
+			}
+		}
+	}
+	return false;
 }

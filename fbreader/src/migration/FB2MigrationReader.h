@@ -17,17 +17,40 @@
  * 02110-1301, USA.
  */
 
-#include "ZLChineseBreakingAlgorithm.h"
+#ifndef __FB2MIGRATIONREADER_H__
+#define __FB2MIGRATIONREADER_H__
 
-ZLChineseBreakingAlgorithm *ZLChineseBreakingAlgorithm::ourInstance = 0;
+#include <set>
+#include <string>
 
-ZLChineseBreakingAlgorithm &ZLChineseBreakingAlgorithm::instance() {
-	if (ourInstance == 0) {
-		ourInstance = new ZLChineseBreakingAlgorithm();
-	}
-	return *ourInstance;
-}
+#include "../formats/fb2/FB2Reader.h" 
+#include "../description/BookDescription.h"
 
-ZLChineseBreakingAlgorithm::ZLChineseBreakingAlgorithm() :
-	AnyPositionBreakingOption(ZLCategoryKey::CONFIG, "ChineseBreakingAgorithm", "BreakAtAnyPlace", true) {
-}
+class FB2MigrationReader : public FB2Reader {
+
+public:
+	FB2MigrationReader(BookInfo &info, bool updateSeries);
+
+	void doRead(const std::string &fileName);
+
+	void startElementHandler(int tag, const char **attributes);
+	void endElementHandler(int tag);
+	void characterDataHandler(const char *text, int len);
+
+private:
+	BookInfo &myInfo;
+
+	enum {
+		READ_NOTHING,
+		READ_SOMETHING,
+		READ_GENRE
+	} myReadState;
+
+	bool myUpdateSeries;
+	bool myUpdateTags;
+
+	std::string myGenreBuffer;
+	std::set<std::string> myTags;
+};
+
+#endif /* __FB2MIGRATIONREADER_H__ */

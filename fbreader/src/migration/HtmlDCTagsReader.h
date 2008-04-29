@@ -17,24 +17,31 @@
  * 02110-1301, USA.
  */
 
-#ifndef __ZLCHINESEBREAKINGALGORITHM_H__
-#define __ZLCHINESEBREAKINGALGORITHM_H__
+#ifndef __HTMLDCTAGSREADER_H__
+#define __HTMLDCTAGSREADER_H__
 
-#include <ZLOptions.h>
+#include "../formats/html/HtmlReader.h"
+#include "../description/BookDescription.h"
 
-class ZLChineseBreakingAlgorithm {
-
-public:
-	static ZLChineseBreakingAlgorithm &instance();
-
-private:
-	static ZLChineseBreakingAlgorithm *ourInstance;
+class HtmlDCTagsReader : public HtmlReader {
 
 public:
-	ZLBooleanOption AnyPositionBreakingOption;
+	HtmlDCTagsReader(BookInfo &info);
 
 private:
-	ZLChineseBreakingAlgorithm();
+	void startDocumentHandler();
+	void endDocumentHandler();
+
+	bool tagHandler(const HtmlTag &tag);
+	bool characterDataHandler(const char *text, int len, bool convert);
+
+private:
+	BookInfo &myInfo;
+
+	bool myReadTag;
+
+	std::string myBuffer;
+	std::string myTagList;
 };
 
-#endif /* __ZLCHINESEBREAKINGALGORITHM_H__ */
+#endif /* __HTMLDCTAGSREADER_H__ */

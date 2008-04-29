@@ -51,6 +51,10 @@ void BooleanOptionView::_hide() {
 	gtk_widget_hide(GTK_WIDGET(myCheckBox));
 }
 
+void BooleanOptionView::_setActive(bool active) {
+	gtk_widget_set_sensitive(GTK_WIDGET(myCheckBox), active);
+}
+
 void BooleanOptionView::_onAccept() const {
 	((ZLBooleanOptionEntry&)*myOption).onAccept(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(myCheckBox)));
 }
@@ -163,6 +167,13 @@ void ChoiceOptionView::_hide() {
 	}
 }
 
+void ChoiceOptionView::_setActive(bool active) {
+	gtk_widget_set_sensitive(GTK_WIDGET(myFrame), active);
+	for (int i = 0; i < ((ZLChoiceOptionEntry&)*myOption).choiceNumber(); ++i) {
+		gtk_widget_set_sensitive(GTK_WIDGET(myButtons[i]), active);
+	}
+}
+
 void ChoiceOptionView::_onAccept() const {
 	for (int i = 0; i < ((ZLChoiceOptionEntry&)*myOption).choiceNumber(); ++i) {
 		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(myButtons[i]))) {
@@ -174,25 +185,35 @@ void ChoiceOptionView::_onAccept() const {
 
 void ComboOptionView::_createItem() {
 	const ZLComboOptionEntry &comboOptionEntry = (ZLComboOptionEntry&)*myOption;
-	myLabel = gtkLabel(name());
+	if (!name().empty()) {
+		myLabel = gtkLabel(name());
+	}
 	myComboBox = comboOptionEntry.isEditable() ?
 		GTK_COMBO_BOX(gtk_combo_box_entry_new_text()) : 
 		GTK_COMBO_BOX(gtk_combo_box_new_text());
 
 	g_signal_connect(GTK_WIDGET(myComboBox), "changed", G_CALLBACK(_onValueChanged), this);
 
-	myHolder.attachWidgets(*this, GTK_WIDGET(myLabel), 1, GTK_WIDGET(myComboBox), 1);
+	if (myLabel != 0) {
+		myHolder.attachWidgets(*this, GTK_WIDGET(myLabel), 1, GTK_WIDGET(myComboBox), 1);
+	} else {
+		myHolder.attachWidget(*this, GTK_WIDGET(myComboBox));
+	}
 
 	reset();
 }
 
 void ComboOptionView::_show() {
-	gtk_widget_show(GTK_WIDGET(myLabel));
+	if (myLabel != 0) {
+		gtk_widget_show(GTK_WIDGET(myLabel));
+	}
 	gtk_widget_show(GTK_WIDGET(myComboBox));
 }
 
 void ComboOptionView::_hide() {
-	gtk_widget_hide(GTK_WIDGET(myLabel));
+	if (myLabel != 0) {
+		gtk_widget_hide(GTK_WIDGET(myLabel));
+	}
 	gtk_widget_hide(GTK_WIDGET(myComboBox));
 }
 

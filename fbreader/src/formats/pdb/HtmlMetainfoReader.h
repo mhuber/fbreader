@@ -30,14 +30,13 @@ public:
 		NONE = 0,
 		TITLE = 1,
 		AUTHOR = 2,
-		TITLE_AND_AUTHOR = TITLE | AUTHOR
+		TITLE_AND_AUTHOR = TITLE | AUTHOR,
+		TAGS = 4,
+		ALL = TITLE | AUTHOR | TAGS
 	};
 
 public:
 	HtmlMetainfoReader(BookDescription &description, ReadType readType);
-
-	const std::string &title() const;
-	const std::string &author() const;
 
 private:
 	void startDocumentHandler();
@@ -52,17 +51,9 @@ private:
 
 	bool myReadTitle;
 	bool myReadAuthor;
+	bool myReadTags;
 
-	std::string myTitle;
-	std::string myAuthor;
+	std::string myBuffer;
 };
-
-inline const std::string &HtmlMetainfoReader::title() const {
-	return myTitle;
-}
-
-inline const std::string &HtmlMetainfoReader::author() const {
-	return myAuthor;
-}
 
 #endif /* __HTMLMETAINFOREADER_H__ */

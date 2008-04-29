@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "FB2Reader.h"
+#include "../util/EntityFilesCollector.h"
 
 void FB2Reader::startElementHandler(const char *t, const char **attributes) {
 	startElementHandler(tag(t), attributes);
@@ -62,6 +63,7 @@ static const FB2Reader::Tag TAGS[] = {
 	{"last-name", FB2Reader::_LAST_NAME},
 	{"coverpage", FB2Reader::_COVERPAGE},
 	{"sequence", FB2Reader::_SEQUENCE},
+	{"genre", FB2Reader::_GENRE},
 	{0, FB2Reader::_UNKNOWN}
 };
 
@@ -71,4 +73,8 @@ int FB2Reader::tag(const char *name) {
 			return TAGS[i].tagCode;
 		}
 	}
+}
+
+const std::vector<std::string> &FB2Reader::externalDTDs() const {
+	return EntityFilesCollector::instance().externalDTDs("fb2");
 }

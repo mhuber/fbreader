@@ -57,15 +57,18 @@
 	<node name="dialog">
 		<node name="button">
 			<node name="go" value="&amp;Mulai!"/>
+			<node name="thisOnly" value="This only" toBeTranslated="true"/>
+			<node name="withSubtags" value="With subtags" toBeTranslated="true"/>
 		</node>
 		<node name="OptionsDialog">
 			<node name="title" value="FBReader - Pengaturan"/>
 			<node name="tab">
-				<node name="General" value="Umum">
+				<node name="Library" value="Pustaka">
 					<node name="bookPath" value="Lokasi Buku"/>
 					<node name="lookInSubdirectories" value="Tampilkan Buku-buku yang Ada di Sub Direktori"/>
 					<node name="recentListSize" value="Jumlah Daftar Buku-buku yang dibuka sebelumnya"/>
-					<node name="keyDelay" value="Waktu Tunda Antara Penekanan Tombol"/>
+					<node name="showTags" value="Show Tag Hierarchies" toBeTranslated="true"/>
+					<node name="showAllBooksList" value="Show All Books Branch" toBeTranslated="true"/>
 				</node>
 				<node name="Language" value="Bahasa">
 					<node name="autoDetect" value="Deteksi Bahasa dan Enkode secara Otomatis"/>
@@ -73,7 +76,6 @@
 					<node name="defaultEncodingSet" value="Set Enkode Standar"/>
 					<node name="defaultEncoding" value="Enkode Standar"/>
 					<node name="useWindows1252Hack" value="Gunakan windows-1252 daripada iso-8859-1"/>
-					<node name="chineseBreakAtAnyPosition" value="Untuk Bahasa Cina, Penggal Baris di Sembarang Posisi"/>
 				</node>
 				<node name="Indicator" value="Indikator">
 					<node name="show" value="Tampilkan Indikator Posisi"/>
@@ -205,6 +207,7 @@
 						<node name="quit" value="Keluar"/>
 					</node>
 					<node name="quitOnCancel" value="Keluar dari Aplikasi Ketika Pembatalan"/>
+					<node name="keyDelay" value="Waktu Tunda Antara Penekanan Tombol"/>
 				</node>
 				<node name="Config" value="Konfigurasi">
 					<node name="autoSave" value="Simpan Status Secara Otomatis"/>
@@ -245,6 +248,9 @@
 					<node name="seriesTitle" value="Judul Seri"/>
 					<node name="bookNumber" value="Nomor Buku"/>
 				</node>
+				<node name="Tags" value="Tags" toBeTranslated="true">
+					<node name="tags" value="Tag List" toBeTranslated="true"/>
+				</node>
 				<node name="Text" value="Teks">
 					<node name="breakType" value="Penggal Paragraf pada"/>
 					<node name="ignoreIndent" value="Abaikan Indentasi Kurang dari"/>
@@ -274,9 +280,22 @@
 			<node name="title" value="Ke Halaman"/>
 			<node name="pageNumber" value="Ke Nomor Halaman"/>
 		</node>
+		<node name="editTagInfoDialog">
+			<node name="title" value="Edit/Clone Tag" toBeTranslated="true"/>
+			<node name="editOrClone" value="Action" toBeTranslated="true">
+				<node name="edit" value="Rename Tag" toBeTranslated="true"/>
+				<node name="clone" value="Clone Tag" toBeTranslated="true"/>
+			</node>
+			<node name="name" value="Tag Name" toBeTranslated="true"/>
+			<node name="includeSubtags" value="Include Subtags" toBeTranslated="true"/>
+		</node>
 		<node name="removeBookBox">
 			<node name="title" value="Hapus Buku"/>
 			<node name="message" value="Hapus buku &#13;&quot;%s&quot;&#13; dari Pustaka?"/>
+		</node>
+		<node name="removeTagBox">
+			<node name="title" value="Remove Tag" toBeTranslated="true"/>
+			<node name="message" value="Remove Tag &#8220;%s&#8221;?" toBeTranslated="true"/>
 		</node>
 		<node name="openBookErrorBox">
 			<node name="title" value="Ada Kesalahan"/>
@@ -286,9 +305,18 @@
 			<node name="title" value="Ada Kesalahan"/>
 			<node name="message" value="Berkas tidak ditemukan, maaf"/>
 		</node>
+		<node name="tagMustBeNonEmpty">
+			<node name="title" value="Ada Kesalahan"/>
+			<node name="message" value="Tag name must be a non-empty string" toBeTranslated="true"/>
+		</node>
+		<node name="tagMustNotContainComma">
+			<node name="title" value="Ada Kesalahan"/>
+			<node name="message" value="Tag name must not contain a &#8220;,&#8221; symbol" toBeTranslated="true"/>
+		</node>
 		<node name="waitMessage">
 			<node name="loadingBook" value="Membaca buku. Silakan tunggu..."/>
 			<node name="loadingBookList" value="Membaca daftar buku. Silakan tunggu..."/>
+			<node name="migrate" value="Upgrading to the new version. Please, wait..." toBeTranslated="true"/>
 		</node>
 	</node>
 	<node name="style">
@@ -339,5 +367,11 @@
 		<node name="unknown" value="Ada Kesalahan"/>
 		<node name="unsupportedCompressionMethod" value="Metode kompresi tidak didukung"/>
 		<node name="encriptedFile" value="Berkas terproteksi DRM"/>
+	</node>
+	<node name="library">
+		<node name="caption" value="Pustaka"/>
+		<node name="allBooks" value="All Books" toBeTranslated="true"/>
+		<node name="booksWithoutTags" value="Books with no Tags" toBeTranslated="true"/>
+		<node name="noBooks" value="FBReader found no books in the configured locations. Please specify the path to your books in the Preferences Dialog (&#8220;Library&#8221; tab, &#8220;Book Path&#8221; entry). Alternatively, you can add books to your library using &#8220;Add Book&#8221; button." toBeTranslated="true"/>
 	</node>
 </resources>

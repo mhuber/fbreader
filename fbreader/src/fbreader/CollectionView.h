@@ -22,6 +22,8 @@
 
 #include <map>
 
+#include <ZLOptions.h>
+
 #include "FBView.h"
 #include "../description/BookDescription.h"
 #include "../collection/BookCollection.h"
@@ -29,6 +31,14 @@
 class CollectionModel;
 
 class CollectionView : public FBView {
+
+public:
+	static const std::string SpecialTagAllBooks;
+	static const std::string SpecialTagNoTagsBooks;
+
+public:
+	ZLBooleanOption ShowTagsOption;
+	ZLBooleanOption ShowAllBooksTagOption;
 
 public:
 	CollectionView(FBReader &reader, shared_ptr<ZLPaintContext> context);
@@ -48,10 +58,21 @@ public:
 private:
 	CollectionModel &collectionModel();
 
+	void editBookInfo(BookDescriptionPtr book);
+	void removeBook(BookDescriptionPtr book);
+	void editTagInfo(const std::string &tag);
+	void removeTag(const std::string &tag);
+
+	enum BranchType { THIS_TAG_ONLY, TREE, TAG_AND_SUBTREE };
+	bool runEditTagInfoDialog(const bool tagIsSpecial, std::string &tag, bool &editNotClone, bool &includeSubtags, const bool showIncludeSubtagsEntry, const bool hasBooks);
+
 private:
 	BookCollection myCollection;
 	bool myTreeStateIsFrozen;
 	bool myUpdateModel;
+
+	bool myShowTags;
+	bool myShowAllBooksList;
 };
 
 inline BookCollection &CollectionView::collection() {

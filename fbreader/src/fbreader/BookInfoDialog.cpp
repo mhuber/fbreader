@@ -149,7 +149,7 @@ SeriesTitleEntry::SeriesTitleEntry(BookInfoDialog &dialog) : ZLComboOptionEntry(
 }
 
 const std::string &SeriesTitleEntry::initialValue() const {
-	return myInfoDialog.myBookInfo.SequenceNameOption.value();
+	return myInfoDialog.myBookInfo.SeriesNameOption.value();
 }
 
 const std::vector<std::string> &SeriesTitleEntry::values() const {
@@ -158,17 +158,11 @@ const std::vector<std::string> &SeriesTitleEntry::values() const {
 	valuesSet.insert(initialValue());
 	valuesSet.insert("");
 	if (!myOriginalAuthor.isNull()) {
-		const Books &books = myInfoDialog.myCollection.books(myOriginalAuthor);
-		for (Books::const_iterator it = books.begin(); it != books.end(); ++it) {
-			valuesSet.insert((*it)->sequenceName());
-		}
+		myInfoDialog.myCollection.collectSeriesNames(myOriginalAuthor, valuesSet);
 	}
 	AuthorPtr currentAuthor = myInfoDialog.myAuthorDisplayNameEntry->myCurrentAuthor;
 	if (!currentAuthor.isNull() && (currentAuthor != myOriginalAuthor)) {
-		const Books &books = myInfoDialog.myCollection.books(currentAuthor);
-		for (Books::const_iterator it = books.begin(); it != books.end(); ++it) {
-			valuesSet.insert((*it)->sequenceName());
-		}
+		myInfoDialog.myCollection.collectSeriesNames(currentAuthor, valuesSet);
 	}
 	for (std::set<std::string>::const_iterator it = valuesSet.begin(); it != valuesSet.end(); ++it) {
 		myValues.push_back(*it);
@@ -177,7 +171,7 @@ const std::vector<std::string> &SeriesTitleEntry::values() const {
 }
 
 void SeriesTitleEntry::onAccept(const std::string &value) {
-	myInfoDialog.myBookInfo.SequenceNameOption.setValue(value);
+	myInfoDialog.myBookInfo.SeriesNameOption.setValue(value);
 }
 
 void SeriesTitleEntry::onValueSelected(int index) {
@@ -211,7 +205,7 @@ BookInfoDialog::BookInfoDialog(const BookCollection &collection, const std::stri
 	languageCodes.push_back("de-traditional");
 	myLanguageEntry = new ZLLanguageOptionEntry(myBookInfo.LanguageOption, languageCodes);
 	mySeriesTitleEntry = new SeriesTitleEntry(*this);
-	myBookNumberEntry = new ZLSimpleSpinOptionEntry(myBookInfo.NumberInSequenceOption, 1);
+	myBookNumberEntry = new ZLSimpleSpinOptionEntry(myBookInfo.NumberInSeriesOption, 1);
 
 	commonTab.addOption(ZLResourceKey("authorDisplayName"), myAuthorDisplayNameEntry);
 	commonTab.addOption(ZLResourceKey("authorSortKey"), myAuthorSortKeyEntry);
@@ -233,8 +227,11 @@ BookInfoDialog::BookInfoDialog(const BookCollection &collection, const std::stri
 	orderEntry->values().push_back("Third");
 	orderEntry->values().push_back("Fourth");
 	orderEntry->values().push_back("Fifth");
-	sequenceTab.addOption(orderEntry);
+	seriesTab.addOption(orderEntry);
 	*/
+
+	ZLDialogContent &tagsTab = myDialog->createTab(ZLResourceKey("Tags"));
+	tagsTab.addOption(ZLResourceKey("tags"), myBookInfo.TagsOption);
 
 	FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
 	if (plugin != 0) {

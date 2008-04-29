@@ -17,140 +17,25 @@
  * 02110-1301, USA.
  */
 
-#include <ZLibrary.h>
-#include <ZLFileImage.h>
-#include <ZLDialogManager.h>
 #include <ZLOptionsDialog.h>
 #include <ZLStringUtil.h>
 
-#include <ZLTextModel.h>
-#include <ZLTextParagraph.h>
-#include <ZLTextParagraphCursor.h>
-
 #include "CollectionView.h"
+#include "CollectionModel.h"
 #include "FBReader.h"
 #include "BookInfoDialog.h"
 
-#include "../bookmodel/FBTextKind.h"
-#include "../collection/BookCollection.h"
 #include "../collection/BookList.h"
-#include "../description/BookDescription.h"
-#include "../description/Author.h"
 
-static const std::string DELETE_IMAGE_ID = "delete";
-static const std::string BOOK_INFO_IMAGE_ID = "bookInfo";
-static const std::string AUTHOR_INFO_IMAGE_ID = "authorInfo";
-static const std::string SERIES_ORDER_IMAGE_ID = "seriesOrder";
+static const std::string LIBRARY = "Library";
 
-class CollectionModel : public ZLTextTreeModel {
-
-public:
-	CollectionModel(BookCollection &collection);
-	~CollectionModel();
-
-	BookDescriptionPtr bookByParagraphNumber(int num);
-	int paragraphNumberByBook(BookDescriptionPtr book);
-
-	void update();
-
-private:
-	void build();
-
-	void insertText(FBTextKind kind, const std::string &text);
-	void insertImage(const std::string &id);
-
-private:
-	BookCollection &myCollection;
-
-	ZLImageMap myImageMap;
-	std::map<ZLTextParagraph*,BookDescriptionPtr> myParagraphToBook;
-	std::map<BookDescriptionPtr,int> myBookToParagraph;
-};
-
-CollectionModel::CollectionModel(BookCollection &collection) : ZLTextTreeModel(), myCollection(collection) {
-	const std::string prefix = ZLibrary::ApplicationImageDirectory() + ZLibrary::FileNameDelimiter;
-	myImageMap[DELETE_IMAGE_ID] = new ZLFileImage("image/png", prefix + "tree-remove.png", 0);
-	myImageMap[BOOK_INFO_IMAGE_ID] = new ZLFileImage("image/png", prefix + "tree-bookinfo.png", 0);
-	myImageMap[AUTHOR_INFO_IMAGE_ID] = new ZLFileImage("image/png", prefix + "tree-authorinfo.png", 0);
-	myImageMap[SERIES_ORDER_IMAGE_ID] = new ZLFileImage("image/png", prefix + "tree-order.png", 0);
-}
-
-CollectionModel::~CollectionModel() {
-}
-
-BookDescriptionPtr CollectionModel::bookByParagraphNumber(int num) {
-	if ((num < 0) || ((int)paragraphsNumber() <= num)) {
-		return 0;
-	}
-	std::map<ZLTextParagraph*,BookDescriptionPtr>::iterator it = myParagraphToBook.find((*this)[num]);
-	return (it != myParagraphToBook.end()) ? it->second : 0;
-}
-
-int CollectionModel::paragraphNumberByBook(BookDescriptionPtr book) {
-	std::map<BookDescriptionPtr,int>::iterator it = myBookToParagraph.find(book);
-	return (it != myBookToParagraph.end()) ? it->second : -1;
-}
-
-void CollectionModel::build() {
-	const std::vector<AuthorPtr> &authors = myCollection.authors();
-	std::string currentSequenceName;
-	ZLTextTreeParagraph *sequenceParagraph;
-	for (std::vector<AuthorPtr>::const_iterator it = authors.begin(); it != authors.end(); ++it) {
-		const Books &books = myCollection.books(*it);
-		if (!books.empty()) {
-			currentSequenceName.erase();
-			sequenceParagraph = 0;
-
-			ZLTextTreeParagraph *authorParagraph = createParagraph();
-			insertText(LIBRARY_AUTHOR_ENTRY, (*it)->displayName());
-			//insertImage(AUTHOR_INFO_IMAGE_ID);
-			for (Books::const_iterator jt = books.begin(); jt != books.end(); ++jt) {
-				const std::string &sequenceName = (*jt)->sequenceName();
-				if (sequenceName.empty()) {
-					currentSequenceName.erase();
-					sequenceParagraph = 0;
-				} else if (sequenceName != currentSequenceName) {
-					currentSequenceName = sequenceName;
-					sequenceParagraph = createParagraph(authorParagraph);
-					insertText(LIBRARY_BOOK_ENTRY, sequenceName);
-					//insertImage(SERIES_ORDER_IMAGE_ID);
-				}
-				ZLTextTreeParagraph *bookParagraph = createParagraph(
-					(sequenceParagraph == 0) ? authorParagraph : sequenceParagraph
-				);
-				insertText(LIBRARY_BOOK_ENTRY, (*jt)->title());
-				insertImage(BOOK_INFO_IMAGE_ID);
-				if (myCollection.isBookExternal(*jt)) {
-					insertImage(DELETE_IMAGE_ID);
-				}
-				myParagraphToBook[bookParagraph] = *jt;
-				myBookToParagraph[*jt] = paragraphsNumber() - 1;
-			}
-		}
-	}
-}
-
-void CollectionModel::update() {
-	myParagraphToBook.clear();
-	myBookToParagraph.clear();
-	for (int i = paragraphsNumber() - 1; i >= 0; --i) {
-		removeParagraph(i);
-	}
-	build();
-}
-
-void CollectionModel::insertText(FBTextKind kind, const std::string &text) {
-	addControl(kind, true);
-	addText(text);
-}
-
-void CollectionModel::insertImage(const std::string &id) {
-	addFixedHSpace(1);
-	addImage(id, myImageMap, 0);
-}
-
-CollectionView::CollectionView(FBReader &reader, shared_ptr<ZLPaintContext> context) : FBView(reader, context), myUpdateModel(true) {
-	setModel(new CollectionModel(myCollection));
+CollectionView::CollectionView(FBReader &reader, shared_ptr<ZLPaintContext> context) : FBView(reader, context),
+	ShowTagsOption(ZLCategoryKey::LOOK_AND_FEEL, LIBRARY, "ShowTags", true),
+	ShowAllBooksTagOption(ZLCategoryKey::LOOK_AND_FEEL, LIBRARY, "ShowAllBooksTag", true),
+	myUpdateModel(true) {
+	setModel(new CollectionModel(*this, myCollection));
+	myShowTags = ShowTagsOption.value();
+	myShowAllBooksList = ShowAllBooksTagOption.value();
 }
 
 CollectionView::~CollectionView() {
@@ -169,8 +54,7 @@ void CollectionView::synchronizeModel() {
 }
 
 const std::string &CollectionView::caption() const {
-	static const std::string LIBRARY = "Library";
-	return LIBRARY;
+	return ZLResource::resource("library")["caption"].value();
 }
 
 void CollectionView::selectBook(BookDescriptionPtr book) {
@@ -181,15 +65,24 @@ void CollectionView::selectBook(BookDescriptionPtr book) {
 		setModel(oldModel);
 		myUpdateModel = false;
 	}
-	int toSelect = collectionModel().paragraphNumberByBook(book);
-	if (toSelect >= 0) {
-		highlightParagraph(toSelect);
-		gotoParagraph(toSelect);
+	collectionModel().removeAllMarks();
+	const std::vector<int> &toSelect = collectionModel().paragraphNumbersByBook(book);
+	for (std::vector<int>::const_iterator it = toSelect.begin(); it != toSelect.end(); ++it) {
+		highlightParagraph(*it);
+	}
+	if (!toSelect.empty()) {
+		gotoParagraph(toSelect[toSelect.size() - 1]);
 		scrollPage(false, ZLTextView::SCROLL_PERCENTAGE, 40);
 	}
 }
 
 void CollectionView::paint() {
+	if ((myShowTags != ShowTagsOption.value()) ||
+			(myShowAllBooksList != ShowAllBooksTagOption.value())) {
+		myShowTags = ShowTagsOption.value();
+		myShowAllBooksList = ShowAllBooksTagOption.value();
+		myUpdateModel = true;
+	}
 	if (myUpdateModel) {
 		shared_ptr<ZLTextModel> oldModel = model();
 		setModel(0);
@@ -212,44 +105,23 @@ bool CollectionView::_onStylusPress(int x, int y) {
 		}
 		const ZLTextImageElement &imageElement = (ZLTextImageElement&)element;
 
-		BookDescriptionPtr book = collectionModel().bookByParagraphNumber(imageArea->ParagraphNumber);
-		if (book.isNull()) {
+		const std::string &id = imageElement.id();
+
+		if (id == CollectionModel::BookInfoImageId) {
+			editBookInfo(collectionModel().bookByParagraphNumber(imageArea->ParagraphNumber));
+			return true;
+		} else if (id == CollectionModel::RemoveBookImageId) {
+			removeBook(collectionModel().bookByParagraphNumber(imageArea->ParagraphNumber));
+			return true;
+		} else if (id == CollectionModel::RemoveTagImageId) {
+			removeTag(collectionModel().tagByParagraphNumber(imageArea->ParagraphNumber));
+			return true;
+		} else if (id == CollectionModel::TagInfoImageId) {
+			editTagInfo(collectionModel().tagByParagraphNumber(imageArea->ParagraphNumber));
+			return true;
+		} else {
 			return false;
 		}
-
-		if (imageElement.id() == BOOK_INFO_IMAGE_ID) {
-			if (BookInfoDialog(myCollection, book->fileName()).dialog().run()) {
-				myCollection.rebuild(false);
-				myUpdateModel = true;
-				selectBook(book);
-				application().refreshWindow();
-			}
-			return true;
-		} else if (imageElement.id() == DELETE_IMAGE_ID) {
-			ZLResourceKey boxKey("removeBookBox");
-			const std::string message =
-				ZLStringUtil::printf(ZLDialogManager::dialogMessage(boxKey), book->title());
-			if (ZLDialogManager::instance().questionBox(boxKey, message,
-				ZLDialogManager::YES_BUTTON, ZLDialogManager::NO_BUTTON) == 0) {
-				collectionModel().removeAllMarks();
-				BookList().removeFileName(book->fileName());
-				ZLTextTreeParagraph *paragraph = (ZLTextTreeParagraph*)collectionModel()[imageArea->ParagraphNumber];
-				ZLTextTreeParagraph *parent = paragraph->parent();
-				if (parent->children().size() == 1) {
-					collectionModel().removeParagraph(imageArea->ParagraphNumber);
-					collectionModel().removeParagraph(imageArea->ParagraphNumber - 1);
-				} else {
-					collectionModel().removeParagraph(imageArea->ParagraphNumber);
-				}
-				if (collectionModel().paragraphsNumber() == 0) {
-					setStartCursor(0);
-				}
-				rebuildPaintInfo(true);
-				application().refreshWindow();
-			}
-			return true;
-		}
-		return false;
 	}
 
 	int index = paragraphIndexByCoordinate(y);
@@ -265,6 +137,108 @@ bool CollectionView::_onStylusPress(int x, int y) {
 	}
 
 	return false;
+}
+
+void CollectionView::editBookInfo(BookDescriptionPtr book) {
+	if (!book.isNull() && BookInfoDialog(myCollection, book->fileName()).dialog().run()) {
+		myCollection.rebuild(false);
+		myUpdateModel = true;
+		selectBook(book);
+		application().refreshWindow();
+	}
+}
+
+void CollectionView::removeBook(BookDescriptionPtr book) {
+	if (book.isNull()) {
+		return;
+	}
+
+	CollectionModel &cModel = collectionModel();
+
+	ZLResourceKey boxKey("removeBookBox");
+	const std::string message =
+		ZLStringUtil::printf(ZLDialogManager::dialogMessage(boxKey), book->title());
+	if (ZLDialogManager::instance().questionBox(boxKey, message,
+		ZLDialogManager::YES_BUTTON, ZLDialogManager::NO_BUTTON) == 0) {
+		cModel.removeAllMarks();
+		BookList().removeFileName(book->fileName());
+		
+		const std::vector<int> &paragraphIndices = cModel.paragraphNumbersByBook(book);
+		for (int i = paragraphIndices.size() - 1; i >= 0; --i) {
+			int index = paragraphIndices[i];
+			ZLTextTreeParagraph *paragraph = (ZLTextTreeParagraph*)cModel[index];
+			int count = 1;
+			for (ZLTextTreeParagraph *parent = paragraph->parent(); (parent != 0) && (parent->children().size() == 1); parent = parent->parent()) {
+				++count;
+			}
+
+			if (count > index) {
+				count = index;
+			}
+
+			for (; count > 0; --count) {
+				cModel.removeParagraph(index--);
+			}
+		}
+  
+		if (cModel.paragraphsNumber() == 0) {
+			setStartCursor(0);
+		} else {
+			size_t index = startCursor().paragraphCursor().index();
+			if (index >= cModel.paragraphsNumber()) {
+				index = cModel.paragraphsNumber() - 1;
+			}
+			while (!((ZLTextTreeParagraph*)cModel[index])->parent()->isOpen()) {
+				--index;
+			}
+			gotoParagraph(index);
+		}
+		rebuildPaintInfo(true);
+		application().refreshWindow();
+	}
+}
+
+void CollectionView::removeTag(const std::string &tag) {
+	if (tag.empty()) {
+		return;
+	}
+
+	ZLResourceKey boxKey("removeTagBox");
+	const std::string message =
+		ZLStringUtil::printf(ZLDialogManager::dialogMessage(boxKey), tag);
+	enum { REMOVE_TAG, REMOVE_SUBTREE, DONT_REMOVE } code = DONT_REMOVE;
+	if (myCollection.hasSubtags(tag)) {
+		if (myCollection.hasBooks(tag)) {
+			switch (ZLDialogManager::instance().questionBox(boxKey, message,
+								ZLResourceKey("thisOnly"),
+								ZLResourceKey("withSubtags"),
+								ZLDialogManager::CANCEL_BUTTON
+							)) {
+				case 0:
+					code = REMOVE_TAG;
+					break;
+				case 1:
+					code = REMOVE_SUBTREE;
+					break;
+			}
+		} else {
+			if (ZLDialogManager::instance().questionBox(boxKey, message,
+				ZLResourceKey("withSubtags"), ZLDialogManager::CANCEL_BUTTON) == 0) {
+				code = REMOVE_SUBTREE;
+			}
+		}
+	} else {
+		if (ZLDialogManager::instance().questionBox(boxKey, message,
+			ZLDialogManager::YES_BUTTON, ZLDialogManager::CANCEL_BUTTON) == 0) {
+			code = REMOVE_TAG;
+		}
+	}
+	if (code != DONT_REMOVE) {
+		collectionModel().removeAllMarks();
+		myCollection.removeTag(tag, code == REMOVE_SUBTREE);
+		updateModel();
+		application().refreshWindow();
+	}
 }
 
 CollectionModel &CollectionView::collectionModel() {

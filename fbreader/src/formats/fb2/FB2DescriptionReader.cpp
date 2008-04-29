@@ -23,27 +23,37 @@
 #include <ZLStringUtil.h>
 
 #include "FB2DescriptionReader.h"
+#include "FB2TagManager.h"
 
 FB2DescriptionReader::FB2DescriptionReader(BookDescription &description) : myDescription(description) {
 	myDescription.clearAuthor();
 	myDescription.title().erase();
 	myDescription.language().erase();
+	myDescription.removeAllTags();
 }
 
 void FB2DescriptionReader::characterDataHandler(const char *text, int len) {
-	if (myReadSomething) {
-		if (myReadTitle) {
+	switch (myReadState) {
+		case READ_TITLE:
 			myDescription.title().append(text, len);
-		} else if (myReadLanguage) {
+			break;
+		case READ_LANGUAGE:
 			myDescription.language().append(text, len);
-		} else {
-			for (int i = 0; i < 3; ++i) {
-				if (myReadAuthorName[i]) {
-					myAuthorNames[i].append(text, len);
-					break;
-				}
-			}
-		}
+			break;
+		case READ_AUTHOR_NAME_0:
+			myAuthorNames[0].append(text, len);
+			break;
+		case READ_AUTHOR_NAME_1:
+			myAuthorNames[1].append(text, len);
+			break;
+		case READ_AUTHOR_NAME_2:
+			myAuthorNames[2].append(text, len);
+			break;
+		case READ_GENRE:
+			myGenreBuffer.append(text, len);
+			break;
+		default:
+			break;
 	}
 }
 
@@ -54,41 +64,52 @@ void FB2DescriptionReader::startElementHandler(int tag, const char **attributes)
 			interrupt();
 			break;
 		case _TITLE_INFO:
-			myReadSomething = true;
+			myReadState = READ_SOMETHING;
 			break;
 		case _BOOK_TITLE:
-			myReadTitle = true;
+			if (myReadState == READ_SOMETHING) {
+				myReadState = READ_TITLE;
+			}
+			break;
+		case _GENRE:
+			if (myReadState == READ_SOMETHING) {
+				myReadState = READ_GENRE;
+			}
 			break;
 		case _AUTHOR:
-			myReadAuthor = true;
+			if (myReadState == READ_SOMETHING) {
+				myReadState = READ_AUTHOR;
+			}
 			break;
 		case _LANG:
-			myReadLanguage = true;
+			if (myReadState == READ_SOMETHING) {
+				myReadState = READ_LANGUAGE;
+			}
 			break;
 		case _FIRST_NAME:
-			if (myReadAuthor) {
-				myReadAuthorName[0] = true;
+			if (myReadState == READ_AUTHOR) {
+				myReadState = READ_AUTHOR_NAME_0;
 			}
 			break;
 		case _MIDDLE_NAME:
-			if (myReadAuthor) {
-				myReadAuthorName[1] = true;
+			if (myReadState == READ_AUTHOR) {
+				myReadState = READ_AUTHOR_NAME_1;
 			}
 			break;
 		case _LAST_NAME:
-			if (myReadAuthor) {
-				myReadAuthorName[2] = true;
+			if (myReadState == READ_AUTHOR) {
+				myReadState = READ_AUTHOR_NAME_2;
 			}
 			break;
 		case _SEQUENCE:
-			if (myReadSomething) {
+			if (myReadState == READ_SOMETHING) {
 				const char *name = attributeValue(attributes, "name");
 				if (name != 0) {
-					std::string sequenceName = name;
-					ZLStringUtil::stripWhiteSpaces(sequenceName);
-					myDescription.sequenceName() = sequenceName;
+					std::string seriesName = name;
+					ZLStringUtil::stripWhiteSpaces(seriesName);
+					myDescription.seriesName() = seriesName;
 					const char *number = attributeValue(attributes, "number");
-					myDescription.numberInSequence() = (number != 0) ? atoi(number) : 0;
+					myDescription.numberInSeries() = (number != 0) ? atoi(number) : 0;
 				}
 			}
 			break;
@@ -100,13 +121,33 @@ void FB2DescriptionReader::startElementHandler(int tag, const char **attributes)
 void FB2DescriptionReader::endElementHandler(int tag) {
 	switch (tag) {
 		case _TITLE_INFO:
-			myReadSomething = false;
+			myReadState = READ_NOTHING;
 			break;
 		case _BOOK_TITLE:
-			myReadTitle = false;
+			if (myReadState == READ_TITLE) {
+				myReadState = READ_SOMETHING;
+			}
+			break;
+		case _GENRE:
+			if (myReadState == READ_GENRE) {
+				ZLStringUtil::stripWhiteSpaces(myGenreBuffer);
+				if (!myGenreBuffer.empty()) {
+					const std::vector<std::string> &tags =
+						FB2TagManager::instance().humanReadableTags(myGenreBuffer);
+					if (!tags.empty()) {
+						for (std::vector<std::string>::const_iterator it = tags.begin(); it != tags.end(); ++it) {
+							myDescription.addTag(*it, false);
+						}
+					} else {
+						myDescription.addTag(myGenreBuffer);
+					}
+					myGenreBuffer.erase();
+				}
+				myReadState = READ_SOMETHING;
+			}
 			break;
 		case _AUTHOR:
-			if (myReadSomething) {
+			if (myReadState == READ_AUTHOR) {
 				ZLStringUtil::stripWhiteSpaces(myAuthorNames[0]);
 				ZLStringUtil::stripWhiteSpaces(myAuthorNames[1]);
 				ZLStringUtil::stripWhiteSpaces(myAuthorNames[2]);
@@ -123,20 +164,28 @@ void FB2DescriptionReader::endElementHandler(int tag) {
 				myAuthorNames[0].erase();
 				myAuthorNames[1].erase();
 				myAuthorNames[2].erase();
-				myReadAuthor = false;
+				myReadState = READ_SOMETHING;
 			}
 			break;
 		case _LANG:
-			myReadLanguage = false;
+			if (myReadState == READ_LANGUAGE) {
+				myReadState = READ_SOMETHING;
+			}
 			break;
 		case _FIRST_NAME:
-			myReadAuthorName[0] = false;
+			if (myReadState == READ_AUTHOR_NAME_0) {
+				myReadState = READ_AUTHOR;
+			}
 			break;
 		case _MIDDLE_NAME:
-			myReadAuthorName[1] = false;
+			if (myReadState == READ_AUTHOR_NAME_1) {
+				myReadState = READ_AUTHOR;
+			}
 			break;
 		case _LAST_NAME:
-			myReadAuthorName[2] = false;
+			if (myReadState == READ_AUTHOR_NAME_2) {
+				myReadState = READ_AUTHOR;
+			}
 			break;
 		default:
 			break;
@@ -144,12 +193,10 @@ void FB2DescriptionReader::endElementHandler(int tag) {
 }
 
 bool FB2DescriptionReader::readDescription(const std::string &fileName) {
-	myReadSomething = false;
-	myReadTitle = false;
-	myReadAuthor = false;
-	myReadLanguage = false;
+	myReadState = READ_NOTHING;
 	for (int i = 0; i < 3; ++i) {
-		myReadAuthorName[i] = false;
+		myAuthorNames[i].erase();
 	}
+	myGenreBuffer.erase();
 	return readDocument(fileName);
 }

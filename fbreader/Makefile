@@ -19,7 +19,7 @@ all: .resources
 		fi; \
 	done;
 	@echo -n "Linking $(TARGET) ..."
-	@$(LD) $(LDFLAGS) -o $(TARGET) `find src -name *.o` -L$(ROOTDIR)/zlibrary/text -lzltext $(CORE_LIBS)
+	@$(LD) $(LDFLAGS) -o $(TARGET) `find src -name *.o` -L$(ROOTDIR)/zlibrary/text $(TEXT_LIBS) $(CORE_LIBS)
 	@echo " OK"
 
 FBSHAREDIR = $(DESTDIR)$(subst %APPLICATION_PATH%\\\\,/,$(SHAREDIR))/FBReader
@@ -40,6 +40,9 @@ do_install:
 	@install -m 0644 data/formats/html/html.ent $(FBSHAREDIR)/formats/html
 	@install -d $(FBSHAREDIR)/formats/xhtml
 	@install -m 0644 $(wildcard data/formats/xhtml/*.ent) $(FBSHAREDIR)/formats/xhtml
+	@install -d $(FBSHAREDIR)/formats/fb2
+	@sed "s/VERSION/$(VERSION)/" data/formats/fb2/FBReaderVersion.ent > $(FBSHAREDIR)/formats/fb2/FBReaderVersion.ent
+	@install -m 0644 data/formats/fb2/fb2genres.xml $(FBSHAREDIR)/formats/fb2
 	@install -d $(FBSHAREDIR)/default
 	@./scripts/install_toolbar_and_menu.sh $(VARIANT) $(FBSHAREDIR)/default
 	@install -m 0644 data/default/external.$(TARGET_ARCH).xml $(FBSHAREDIR)/default/external.xml
@@ -49,9 +52,9 @@ do_install:
 	@install -d $(FBSHAREDIR)/resources
 	@install -m 0644 $(wildcard data/resources/*.xml) $(FBSHAREDIR)/resources
 	@install -d $(DESTDIR)$(APPIMAGEDIR_REAL)
-	@install -m 0644 $(wildcard icons/toolbar/$(VARIANT)/*.*) $(DESTDIR)$(APPIMAGEDIR_REAL)
-	@install -m 0644 $(wildcard icons/filetree/$(VARIANT)/*.*) $(DESTDIR)$(APPIMAGEDIR_REAL)
-	@install -m 0644 $(wildcard icons/booktree/$(VARIANT)/*.*) $(DESTDIR)$(APPIMAGEDIR_REAL)
+	@install -m 0644 $(wildcard data/icons/toolbar/$(VARIANT)/*.*) $(DESTDIR)$(APPIMAGEDIR_REAL)
+	@install -m 0644 $(wildcard data/icons/filetree/$(VARIANT)/*.*) $(DESTDIR)$(APPIMAGEDIR_REAL)
+	@install -m 0644 $(wildcard data/icons/booktree/$(VARIANT)/*.*) $(DESTDIR)$(APPIMAGEDIR_REAL)
 	@make -C $(TARGET_ARCH) RESOLUTION=$(RESOLUTION) install
 
 clean:

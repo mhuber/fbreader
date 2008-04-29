@@ -17,6 +17,9 @@
  * 02110-1301, USA.
  */
 
+#include <algorithm>
+#include <set>
+
 #include <ZLOptions.h>
 #include <ZLFile.h>
 #include <ZLUnicodeUtil.h>
@@ -37,32 +40,22 @@ BookInfo::BookInfo(const std::string &fileName) :
 	AuthorDisplayNameOption(FBCategoryKey::BOOKS, fileName, "AuthorDisplayName", EMPTY),
 	AuthorSortKeyOption(FBCategoryKey::BOOKS, fileName, "AuthorSortKey", EMPTY),
 	TitleOption(FBCategoryKey::BOOKS, fileName, "Title", EMPTY),
-	SequenceNameOption(FBCategoryKey::BOOKS, fileName, "Sequence", EMPTY),
-	NumberInSequenceOption(FBCategoryKey::BOOKS, fileName, "Number in seq", 0, 100, 0),
+	SeriesNameOption(FBCategoryKey::BOOKS, fileName, "Sequence", EMPTY),
+	NumberInSeriesOption(FBCategoryKey::BOOKS, fileName, "Number in seq", 0, 100, 0),
 	LanguageOption(FBCategoryKey::BOOKS, fileName, "Language", PluginCollection::instance().DefaultLanguageOption.value()),
 	EncodingOption(FBCategoryKey::BOOKS, fileName, "Encoding", EMPTY),
-	IsSequenceDefinedOption(FBCategoryKey::BOOKS, fileName, "SequenceDefined", ZLFile(fileName).extension() != "fb2") {
-	// this is just hack for compatibility with versions < 0.8.8
-	std::string language = LanguageOption.value();
-	if (language == "") {
-		LanguageOption.setValue(PluginCollection::instance().DefaultLanguageOption.value());
-	} else if (language == "cz") {
-		LanguageOption.setValue("cs");
-	} else if (language == "none") {
-		LanguageOption.setValue("other");
-	} else if ((language == "chinese") || (language == "anycharacter")) {
-		LanguageOption.setValue("zh");
-	}
+	TagsOption(FBCategoryKey::BOOKS, fileName, "TagList", EMPTY) {
 }
 
 void BookInfo::reset() {
 	AuthorDisplayNameOption.setValue(EMPTY);
 	AuthorSortKeyOption.setValue(EMPTY);
 	TitleOption.setValue(EMPTY);
-	SequenceNameOption.setValue(EMPTY);
-	NumberInSequenceOption.setValue(0);
+	SeriesNameOption.setValue(EMPTY);
+	NumberInSeriesOption.setValue(0);
 	LanguageOption.setValue(PluginCollection::instance().DefaultLanguageOption.value());
 	EncodingOption.setValue(EMPTY);
+	TagsOption.setValue(EMPTY);
 }
 
 bool BookInfo::isFull() const {
@@ -70,8 +63,7 @@ bool BookInfo::isFull() const {
 		!AuthorDisplayNameOption.value().empty() &&
 		!AuthorSortKeyOption.value().empty() &&
 		!TitleOption.value().empty() &&
-		!EncodingOption.value().empty() &&
-		IsSequenceDefinedOption.value();
+		!EncodingOption.value().empty();
 }
 
 BookDescriptionPtr BookDescription::getDescription(const std::string &fileName, bool checkFile) {
@@ -91,10 +83,20 @@ BookDescriptionPtr BookDescription::getDescription(const std::string &fileName, 
 		BookInfo info(fileName);
 		description->myAuthor = SingleAuthor::create(info.AuthorDisplayNameOption.value(), info.AuthorSortKeyOption.value());
 		description->myTitle = info.TitleOption.value();
-		description->mySequenceName = info.SequenceNameOption.value();
-		description->myNumberInSequence = info.NumberInSequenceOption.value();
+		description->mySeriesName = info.SeriesNameOption.value();
+		description->myNumberInSeries = info.NumberInSeriesOption.value();
 		description->myLanguage = info.LanguageOption.value();
 		description->myEncoding = info.EncodingOption.value();
+		description->myTags.clear();
+		const std::string &tagList = info.TagsOption.value();
+		if (!tagList.empty()) {
+			int index = 0;
+			do {
+				int newIndex = tagList.find(',', index);
+				description->addTag(tagList.substr(index, newIndex - index));
+				index = newIndex + 1;
+			} while (index != 0);
+		}
 		if (info.isFull()) {
 			return description;
 		}
@@ -129,11 +131,11 @@ BookDescriptionPtr BookDescription::getDescription(const std::string &fileName, 
 		info.AuthorDisplayNameOption.setValue(description->myAuthor->displayName());
 		info.AuthorSortKeyOption.setValue(description->myAuthor->sortKey());
 		info.TitleOption.setValue(description->myTitle);
-		info.SequenceNameOption.setValue(description->mySequenceName);
-		info.NumberInSequenceOption.setValue(description->myNumberInSequence);
+		info.SeriesNameOption.setValue(description->mySeriesName);
+		info.NumberInSeriesOption.setValue(description->myNumberInSeries);
 		info.LanguageOption.setValue(description->myLanguage);
 		info.EncodingOption.setValue(description->myEncoding);
-		info.IsSequenceDefinedOption.setValue(true);
+		description->saveTags(info.TagsOption);
 	}
 	return description;
 }
@@ -141,7 +143,7 @@ BookDescriptionPtr BookDescription::getDescription(const std::string &fileName, 
 BookDescription::BookDescription(const std::string &fileName) {
 	myFileName = fileName;
 	myAuthor = 0;
-	myNumberInSequence = 0;
+	myNumberInSeries = 0;
 }
 
 void WritableBookDescription::clearAuthor() {
@@ -178,4 +180,139 @@ void WritableBookDescription::addAuthor(const std::string &name, const std::stri
 		}
 		((MultiAuthor&)*myDescription.myAuthor).addAuthor(author);
 	}
+}
+
+void WritableBookDescription::addTag(const std::string &tag, bool check) {
+	if (myDescription.addTag(tag, check)) {
+		myDescription.saveTags();
+	}
+}
+
+void BookDescription::saveTags() const {
+	ZLStringOption tagsOption(FBCategoryKey::BOOKS, fileName(), "TagList", "");
+	saveTags(tagsOption);
+}
+
+void BookDescription::saveTags(ZLStringOption &tagsOption) const {
+	std::string tagList;
+	if (!myTags.empty()) {
+		for (std::vector<std::string>::const_iterator it = myTags.begin(); it != myTags.end(); ++it) {
+			if (it != myTags.begin()) {
+				tagList += ",";
+			}
+			tagList += *it;
+		}
+	}
+	tagsOption.setValue(tagList);
+}
+
+bool BookDescription::addTag(const std::string &tag, bool check) {
+	std::string checkedTag = tag;
+	if (check) {
+		BookDescriptionUtil::removeWhiteSpacesFromTag(checkedTag);
+	}
+
+	if (!checkedTag.empty()) {
+		std::vector<std::string>::const_iterator it = std::find(myTags.begin(), myTags.end(), checkedTag);
+		if (it == myTags.end()) {
+			myTags.push_back(checkedTag);
+			return true;
+		}
+	}
+	return false;
+}
+
+void WritableBookDescription::removeTag(const std::string &tag, bool includeSubTags) {
+	std::vector<std::string> &tags = myDescription.myTags;
+	if (includeSubTags) {
+		const std::string prefix = tag + '/';
+		bool changed = false;
+		for (std::vector<std::string>::iterator it = tags.begin(); it != tags.end();) {
+			if ((*it == tag) || ZLStringUtil::stringStartsWith(*it, prefix)) {
+				it = tags.erase(it);
+				changed = true;
+			} else {
+				++it;
+			}
+		}
+		if (changed) {
+			myDescription.saveTags();
+		}
+	} else {
+		std::vector<std::string>::iterator it = std::find(tags.begin(), tags.end(), tag);
+		if (it != tags.end()) {
+			tags.erase(it);
+			myDescription.saveTags();
+		}
+	}
+}
+
+void WritableBookDescription::renameTag(const std::string &from, const std::string &to, bool includeSubTags) {
+	std::vector<std::string> &tags = myDescription.myTags;
+	if (includeSubTags) {
+		const std::string prefix = from + "/";
+		std::set<std::string> tagSet;
+		bool changed = false;
+		for (std::vector<std::string>::const_iterator it = tags.begin(); it != tags.end(); ++it) {
+			if (*it == from) {
+				tagSet.insert(to);
+				changed = true;
+			} else if (ZLStringUtil::stringStartsWith(*it, prefix)) {
+				tagSet.insert(to + "/" + it->substr(prefix.length()));
+				changed = true;
+			} else {
+				tagSet.insert(*it);
+			}
+		}
+		if (changed) {
+			tags.clear();
+			tags.insert(tags.end(), tagSet.begin(), tagSet.end());
+			myDescription.saveTags();
+		}
+	} else {
+		std::vector<std::string>::iterator it = std::find(tags.begin(), tags.end(), from);
+		if (it != tags.end()) {
+			std::vector<std::string>::const_iterator jt = std::find(tags.begin(), tags.end(), to);
+			if (jt == tags.end()) {
+				*it = to;
+			} else {
+				tags.erase(it);
+			}
+			myDescription.saveTags();
+		}
+	}
+}
+
+void WritableBookDescription::cloneTag(const std::string &from, const std::string &to, bool includeSubTags) {
+	std::vector<std::string> &tags = myDescription.myTags;
+	if (includeSubTags) {
+		const std::string prefix = from + "/";
+		std::set<std::string> tagSet;
+		for (std::vector<std::string>::const_iterator it = tags.begin(); it != tags.end(); ++it) {
+			if (*it == from) {
+				tagSet.insert(to);
+			} else if (ZLStringUtil::stringStartsWith(*it, prefix)) {
+				tagSet.insert(to + "/" + it->substr(prefix.length()));
+			}
+		}
+		if (!tagSet.empty()) {
+			tagSet.insert(tags.begin(), tags.end());
+			tags.clear();
+			tags.insert(tags.end(), tagSet.begin(), tagSet.end());
+			myDescription.saveTags();
+		}
+	} else {
+		std::vector<std::string>::const_iterator it = std::find(tags.begin(), tags.end(), from);
+		if (it != tags.end()) {
+			std::vector<std::string>::const_iterator jt = std::find(tags.begin(), tags.end(), to);
+			if (jt == tags.end()) {
+				tags.push_back(to);
+				myDescription.saveTags();
+			}
+		}
+	}
+}
+
+void WritableBookDescription::removeAllTags() {
+	myDescription.myTags.clear();
 }
