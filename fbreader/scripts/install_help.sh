@@ -6,7 +6,7 @@ if [ $# != 2 ]; then
 fi;
 
 case "$1" in
-	desktop|maemo|openzaurus_640x480|pdaxrom|pepperpad3|zaurus_640x480)
+	desktop|openinkpot|maemo|openzaurus_640x480|pdaxrom|pepperpad3|zaurus_640x480)
 		platform=desktop;
 		;;
 	moto)

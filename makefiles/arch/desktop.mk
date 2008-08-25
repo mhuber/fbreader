@@ -6,9 +6,14 @@ endif
 IMAGEDIR = $(INSTALLDIR)/share/pixmaps
 APPIMAGEDIR = $(INSTALLDIR)/share/pixmaps/%APPLICATION_NAME%
 
-CC = gcc
-AR = ar rsu
-LD = g++
+#CC = gcc
+#AR = ar rsu
+#LD = g++
+
+ifeq "$(CC)" "arm-linux-gnueabi-gcc"
+	override AR += rsu
+	override LD = arm-linux-gnueabi-g++
+endif
 
 CFLAGS = -pipe -fno-exceptions -Wall -Wno-ctor-dtor-privacy -W -DLIBICONV_PLUG
 LDFLAGS =
@@ -33,6 +38,12 @@ endif
 
 ifeq "$(UI_TYPE)" "gtk"
   UILIBS = $(shell pkg-config --libs gtk+-2.0) -lpng -ljpeg
+endif
+
+ifeq "$(UI_TYPE)" "ewl"
+  UILIBS = $(shell pkg-config --libs evas ewl pango pangoft2 glib libpng freetype2) -ljpeg -lungif
+  EWLINCLUDE = $(shell pkg-config --cflags evas ewl pango pangoft2 glib libpng freetype2)
+  ZLSHARED = no
 endif
 
 XML_LIB = -lexpat
