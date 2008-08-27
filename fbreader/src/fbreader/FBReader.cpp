@@ -194,7 +194,7 @@ void FBReader::initWindow() {
 	}
 	refreshWindow();
 
-	ZLTimeManager::instance().addTask(new TimeUpdater(*this), 1000);
+//	ZLTimeManager::instance().addTask(new TimeUpdater(*this), 1000);
 }
 
 bool FBReader::createDescription(const std::string& fileName, BookDescriptionPtr &description) {
