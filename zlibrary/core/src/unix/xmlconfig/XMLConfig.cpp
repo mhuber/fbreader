@@ -197,5 +197,5 @@ bool XMLConfig::isAutoSavingSupported() const {
 }
 
 void XMLConfig::startAutoSave(int seconds) {
-	ZLTimeManager::instance().addTask(mySaver, 1000 * seconds);
+//	ZLTimeManager::instance().addTask(mySaver, 1000 * seconds);
 }
