@@ -88,7 +88,7 @@ private:
 
 FBReader::FBReader(const std::string &bookToOpen) :
 	ZLApplication("FBReader"),
-	QuitOnCancelOption(ZLCategoryKey::CONFIG, OPTIONS, "QuitOnCancel", false),
+	QuitOnCancelOption(ZLCategoryKey::CONFIG, OPTIONS, "QuitOnCancel", true),
 	LargeScrollingOptions(LARGE_SCROLLING, 250, ZLTextView::NO_OVERLAPPING, 1, 1, 50),
 	SmallScrollingOptions(SMALL_SCROLLING, 50, ZLTextView::SCROLL_LINES, 1, 1, 50),
 	MouseScrollingOptions(MOUSE_SCROLLING, 0, ZLTextView::SCROLL_LINES, 1, 1, 50),
