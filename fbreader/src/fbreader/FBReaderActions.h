@@ -287,6 +287,7 @@ public:
 	GotoPageNumber(FBReader &fbreader);
 	bool isEnabled();
 	void run();
+	void callback(int pagenumber);
 };
 
 class SelectionAction : public FBAction {

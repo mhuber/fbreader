@@ -34,6 +34,7 @@
 
 #include "../bookmodel/BookModel.h"
 #include "../optionsDialog/OptionsDialog.h"
+#include "../../../zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.h"
 
 FBAction::FBAction(FBReader &fbreader) : myFBReader(fbreader) {
 }
@@ -240,8 +241,8 @@ CancelAction::CancelAction(FBReader &fbreader) : FBAction(fbreader) {
 void CancelAction::run() {
 	if (fbreader().getMode() != FBReader::BOOK_TEXT_MODE) {
 		fbreader().restorePreviousMode();
-	} else if (fbreader().isFullscreen()) {
-		fbreader().setFullscreen(false);
+//	} else if (fbreader().isFullscreen()) {
+//		fbreader().setFullscreen(false);
 	} else if (fbreader().QuitOnCancelOption.value()) {
 		fbreader().quit();
 	}
@@ -351,8 +352,15 @@ bool GotoPageNumber::isEnabled() {
 	return ModeDependentAction::isEnabled() && (fbreader().bookTextView().pageNumber() > 1);
 }
 
+void GotoPageNumber::callback(int pagenumber) {
+	fbreader().bookTextView().gotoPage(pagenumber);
+	fbreader().refreshWindow();
+}
+
 void GotoPageNumber::run() {
-	shared_ptr<ZLDialog> gotoPageDialog = ZLDialogManager::instance().createDialog(ZLResourceKey("gotoPageDialog"));
+	ZLEwlGotoPageDialog(this);
+
+/*	shared_ptr<ZLDialog> gotoPageDialog = ZLDialogManager::instance().createDialog(ZLResourceKey("gotoPageDialog"));
 
 	const int pageNumber = fbreader().bookTextView().pageNumber();
 	ZLIntegerRangeOption pageNumberOption(ZLCategoryKey::CONFIG, "gotoPageDialog", "Number", 0, pageNumber, pageNumber);
@@ -365,6 +373,7 @@ void GotoPageNumber::run() {
 		fbreader().bookTextView().gotoPage(pageNumberOption.value());
 		fbreader().refreshWindow();
 	}
+	*/
 }
 
 SelectionAction::SelectionAction(FBReader &fbreader) : FBAction(fbreader) {
