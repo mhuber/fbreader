@@ -28,6 +28,12 @@
 #include "../util/ZLEwlUtil.h"
 #include "../../../../../fbreader/src/fbreader/FBReaderActions.h"
 
+static void ZLEwlGotoPageDisplay_reveal(Ewl_Widget *w, void *ev, void *data) {
+	Ewl_Widget *win;
+	win = ewl_widget_name_find("main_win");
+	ewl_window_move(EWL_WINDOW(w), (CURRENT_W(win) - CURRENT_W(w)) / 2, (CURRENT_H(win) - CURRENT_H(w)) / 2);
+}
+
 static void ZLEwlGotoPageDialog_window_close_cb(Ewl_Widget *w, void *ev, void *data)
 {
 	ewl_widget_destroy(w);
@@ -52,7 +58,10 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 			free(s);
 			ewl_entry_delete_left(EWL_ENTRY(entry));
 		} else {
+			ewl_widget_hide(dialog);
 			ewl_widget_destroy(dialog);
+			((GotoPageNumber *)data)->callback(-1);
+			manual_update(true);
 		}
 	} else if(!strcmp(e->base.keyname, "Return")) {
 		s = ewl_text_text_get(EWL_TEXT(entry));
@@ -61,7 +70,9 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 			free(s);
 		}
 
+		ewl_widget_hide(dialog);
 		ewl_widget_destroy(dialog);
+		manual_update(true);
 		((GotoPageNumber *)data)->callback(n);
 	}
 }
@@ -82,12 +93,14 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 	ewl_widget_name_set(dialog, "gotopage_dialog");
 	ewl_callback_append(dialog, EWL_CALLBACK_DELETE_WINDOW, ZLEwlGotoPageDialog_window_close_cb, NULL);
 	ewl_callback_append(dialog, EWL_CALLBACK_KEY_UP, ZLEwlGotoPageDialog_key_up_cb, gpn);
+	ewl_callback_append(dialog, EWL_CALLBACK_REVEAL, ZLEwlGotoPageDisplay_reveal, NULL);
 	ewl_window_transient_for(EWL_WINDOW(dialog), EWL_WINDOW(w));
 	ewl_window_dialog_set(EWL_WINDOW(dialog), 1);
 	ewl_window_keyboard_grab_set(EWL_WINDOW(dialog), 1);
-	EWL_EMBED(dialog)->x = CURRENT_W(w) / 2 - 50;
-	EWL_EMBED(dialog)->y = CURRENT_H(w) / 2;
+//	EWL_EMBED(dialog)->x = CURRENT_W(w) / 2 - 100;
+//	EWL_EMBED(dialog)->y = CURRENT_H(w) / 2;
 	ewl_widget_show(dialog);
+	ewl_widget_configure(dialog);
 
 	entry_hbox = ewl_hbox_new();
 	ewl_container_child_append(EWL_CONTAINER(dialog), entry_hbox);

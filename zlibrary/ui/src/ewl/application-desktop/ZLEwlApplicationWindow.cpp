@@ -43,9 +43,6 @@ static void handleKeyEvent(Ewl_Widget *w, void *ev, void *data) {
 	((ZLEwlApplicationWindow*)data)->handleKeyEventSlot(ev);
 }
 
-static void imageReveal(Ewl_Widget *w, void *ev, void *data) {
-}
-
 static const std::string OPTIONS = "Options";
 
 ZLEwlApplicationWindow::ZLEwlApplicationWindow(ZLApplication *application) : ZLDesktopApplicationWindow(application) {

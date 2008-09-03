@@ -353,7 +353,8 @@ bool GotoPageNumber::isEnabled() {
 }
 
 void GotoPageNumber::callback(int pagenumber) {
-	fbreader().bookTextView().gotoPage(pagenumber);
+	if(pagenumber >= 0)
+		fbreader().bookTextView().gotoPage(pagenumber);
 	fbreader().refreshWindow();
 }
 
