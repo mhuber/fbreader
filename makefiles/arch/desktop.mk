@@ -42,7 +42,7 @@ ifeq "$(UI_TYPE)" "gtk"
 endif
 
 ifeq "$(UI_TYPE)" "ewl"
-  UILIBS = $(shell pkg-config --libs evas ewl pango pangoft2 glib libpng freetype2) -ljpeg -lungif
+  UILIBS = $(shell pkg-config --libs evas ewl pango pangoft2 glib libpng freetype2) -ljpeg -lungif -lrt 
   EWLINCLUDE = $(shell pkg-config --cflags evas ewl pango pangoft2 glib libpng freetype2)
   ZLSHARED = no
 endif

@@ -20,6 +20,7 @@
 #include "ZLEwlUtil.h"
 
 #include <iostream>
+#include <csignal>
 
 void manual_update(bool enable)
 {
@@ -35,3 +36,64 @@ void manual_update(bool enable)
 	}
 }
 
+bool idle;
+timer_t t_id;
+
+void suspend(int signo, siginfo_t* evp, void* ucontext)
+{
+	if(!idle)
+		return;
+
+	FILE *state = fopen("/sys/power/state", "w");
+	if(state) {
+		fputs("mem", state);
+		fclose(state);
+	}
+}
+
+void init_timer()
+{
+	struct sigaction sigv;
+	struct sigevent sigx;
+
+	sigemptyset(&sigv.sa_mask);
+	sigv.sa_flags = SA_SIGINFO;
+	sigv.sa_sigaction = suspend;
+
+	if(sigaction(SIGUSR1, &sigv, 0) == -1) {
+		perror("sigaction");
+		return;
+	}
+
+	sigx.sigev_notify = SIGEV_SIGNAL;
+	sigx.sigev_signo = SIGUSR1;
+	sigx.sigev_value.sival_ptr = (void *)NULL;
+
+	if(timer_create(CLOCK_REALTIME, &sigx, &t_id) == -1) {
+		perror("timer_create");
+		return;
+	}
+}
+
+void delete_timer()
+{
+	timer_delete(t_id);
+}
+
+void set_timer()
+{
+	struct itimerspec val;
+	
+	val.it_value.tv_sec = 4;
+	val.it_value.tv_nsec = 0;
+	val.it_interval.tv_sec = 0;
+	val.it_interval.tv_nsec = 0;
+
+	idle = true;
+	timer_settime(t_id, 0, &val, 0);
+}
+
+void busy()
+{
+	idle = false;
+}

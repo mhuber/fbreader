@@ -24,6 +24,7 @@
 
 #include "../dialogs/ZLEwlDialogManager.h"
 #include "../view/ZLEwlViewWidget.h"
+#include "../util/ZLEwlUtil.h"
 #include "../../../../core/src/dialogs/ZLOptionView.h"
 
 void ZLEwlDialogManager::createApplicationWindow(ZLApplication *application) const {
@@ -40,7 +41,9 @@ static void deleteWindow(Ewl_Widget *w, void *ev, void *data) {
 }
 
 static void handleKeyEvent(Ewl_Widget *w, void *ev, void *data) {
+	busy();
 	((ZLEwlApplicationWindow*)data)->handleKeyEventSlot(ev);
+	set_timer();
 }
 
 static const std::string OPTIONS = "Options";

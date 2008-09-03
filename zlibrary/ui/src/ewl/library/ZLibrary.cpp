@@ -77,7 +77,10 @@ void ZLEwlLibraryImplementation::run(ZLApplication *application) {
 
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
+	init_timer();
+	set_timer();
 	ewl_main();
+	delete_timer();
 	delete application;
 
 	manual_update(false);

@@ -22,4 +22,9 @@
 
 void manual_update(bool enable);
 
+void init_timer();
+void delete_timer();
+void set_timer();
+void busy();
+
 #endif /* __ZLEWLUTIL_H__ */
