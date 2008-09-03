@@ -1,0 +1,34 @@
+Source: fbreader
+Section: media
+Priority: optional
+Maintainer: Alexander Kerner <lunohod@gmx.de>
+Standards-Version: 3.7.2
+Build-Depends: debhelper (>= 5.0.22), libxcb1-dev, libxcb-image0-dev, libxcb-aux0-dev, libexpat1-dev, libbz2-dev, libz-dev, libjpeg62-dev, libpng12-dev, libgif-dev
+XCS-Cross-Host-Build-Depends: debhelper (>= 5.0.22)
+XCS-Cross-Build-Depends: libexpat1-dev, libbz2-dev, libz-dev, libjpeg62-dev, libpng12-dev, libgif-dev, libewl-dev, libevas-dev, libglib2.0-dev, libpango1.0-dev, liblinebreak-dev
+XS-Vcs-Git: http://git.openinkpot.org/fbreader.git
+XS-Vcs-Browser: http://git.openinkpot.org/fbreader.git
+
+Package: fbreader
+Priority: optional
+Architecture: any
+Replaces: 
+Depends: ${shlibs:Depends}
+Description: e-book reader
+ FBReader is an e-book reader.
+ .
+ Main features:
+  * supports several open e-book formats: fb2, html, chm, plucker,
+    palmdoc, ztxt, tcr (psion text), rtf, oeb, openreader, non-DRM'ed
+    mobipocket, plain text
+  * reads directly from tar, zip, gzip, bzip2 archives (you can have
+    several books in one archive)
+  * supports a structured view of your e-book collection
+  * automatically determines encodings
+  * automatically generates a table of contents
+  * keeps the last open book and the last read positions for all open books
+    between runs
+  * automatic hyphenation (patterns for several languages are included)
+ .
+  Homepage: http://www.fbreader.org/
+
