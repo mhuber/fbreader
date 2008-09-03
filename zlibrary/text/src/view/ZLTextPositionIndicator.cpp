@@ -167,6 +167,34 @@ std::string ZLTextView::PositionIndicator::textPositionString() const {
 
 std::string ZLTextView::PositionIndicator::timeString() const {
 	std::string buffer;
+
+    char b[10];
+    int charge;
+    int x;
+    FILE *f_cf, *f_cn;
+
+    f_cn = fopen("/sys/class/power_supply/lbookv3_battery/charge_now", "r");
+    f_cf = fopen("/sys/class/power_supply/lbookv3_battery/charge_full_design", "r");
+
+    if((f_cn != NULL) && (f_cf != NULL)) {
+        fgets(b, 10, f_cn);
+        charge = atoi(b);
+        fgets(b, 10, f_cf);
+        x = atoi(b);
+        if(x > 0)
+            charge = charge * 100 / atoi(b);
+    } else
+        charge = 0;
+
+    if(f_cn != NULL)
+        fclose(f_cn);
+    if(f_cf != NULL)
+        fclose(f_cf);
+
+    sprintf(b, "<%d\%>  ", charge);
+
+	buffer += std::string(b);
+
 	ZLTime time;
 	const short hours = time.hours();
 	ZLStringUtil::appendNumber(buffer, hours / 10);
