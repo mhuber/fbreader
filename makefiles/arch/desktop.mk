@@ -6,13 +6,14 @@ endif
 IMAGEDIR = $(INSTALLDIR)/share/pixmaps
 APPIMAGEDIR = $(INSTALLDIR)/share/pixmaps/%APPLICATION_NAME%
 
-#CC = gcc
-#AR = ar rsu
-#LD = g++
 
 ifeq "$(CC)" "arm-linux-gnueabi-gcc"
 	override AR += rsu
 	override LD = arm-linux-gnueabi-g++
+else
+	CC = gcc
+	AR = ar rsu
+	LD = g++
 endif
 
 CFLAGS = -pipe -fno-exceptions -Wall -Wno-ctor-dtor-privacy -W -DLIBICONV_PLUG
