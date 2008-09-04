@@ -1,0 +1,8 @@
+*.o
+*.d
+*~
+*.a
+fbreader/FBReader
+*.gitignore
+tags
+*.swp
