@@ -238,7 +238,7 @@ void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
 	if(lb > 0)
 		lb = 0;
 
-	pango_ft2_render(ft2bmp, myAnalysis.font, myString, -lb , ft2bmp->rows - myDescent);
+	pango_ft2_render(ft2bmp, myAnalysis.font, myString, -lb , ft2bmp->rows - 1 - myDescent);
 
 	unsigned char val;
 	unsigned char *p_ft = (unsigned char *)ft2bmp->buffer;
