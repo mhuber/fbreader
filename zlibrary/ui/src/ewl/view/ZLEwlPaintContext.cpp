@@ -25,6 +25,11 @@
 
 #include "ZLEwlPaintContext.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_GLYPH_H
+#include FT_BITMAP_H
+
 
 ZLEwlPaintContext::ZLEwlPaintContext() {
 	image = NULL;
@@ -37,6 +42,7 @@ ZLEwlPaintContext::ZLEwlPaintContext() {
 	ft2bmp = NULL;
 
 	myFontDescription = 0;
+	myAnalysis.font = 0;
 	myAnalysis.lang_engine = 0;
 	myAnalysis.level = 0;
 	myAnalysis.language = 0;
@@ -140,10 +146,21 @@ void ZLEwlPaintContext::setFont(const std::string &family, int size, bool bold, 
 
 	if (fontChanged) {
 		if (myContext != 0) {
+			if(myAnalysis.font)
+				pango_fc_font_unlock_face((PangoFcFont*)myAnalysis.font);
+
 			myAnalysis.font = pango_context_load_font(myContext, myFontDescription);
 			myAnalysis.shape_engine = pango_font_find_shaper(myAnalysis.font, 0, 0);
 			PangoFontMetrics *metrics = pango_font_get_metrics(myAnalysis.font, myAnalysis.language);
 			myDescent = pango_font_metrics_get_descent(metrics) / PANGO_SCALE;
+
+			face = pango_fc_font_lock_face((PangoFcFont*)myAnalysis.font);
+
+			Font *fc = &fontCache[face];
+			charWidthCache = &fc->charWidthCacheAll;
+			glyphCache = &fc->glyphCacheAll;
+			kerningCache = &fc->kerningCacheAll;
+			glyphIdxCache = &fc->glyphIdxCacheAll;
 		}
 		myStringHeight = -1;
 		mySpaceWidth = -1;
@@ -200,7 +217,7 @@ int ZLEwlPaintContext::descent() const {
 	return myDescent;
 }
 
-void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
+/*void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
 	if (!g_utf8_validate(str, len, 0)) {
 		return;
 	}
@@ -256,6 +273,145 @@ void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
 			}
 		p_ft += ft2bmp->pitch;
 	}
+}
+*/
+
+void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
+/*	FT_Face _face = pango_fc_font_lock_face((PangoFcFont*)myAnalysis.font);
+	FT_Face *face = &_face;
+
+	Font *fc = &fontCache[_face];
+	charWidthCache = &fc->charWidthCacheAll;
+	glyphCache = &fc->glyphCacheAll;
+	kerningCache = &fc->kerningCacheAll;
+	glyphIdxCache = &fc->glyphIdxCacheAll;
+*/
+
+	FT_GlyphSlot  slot = face->glyph;
+	FT_BitmapGlyph glyph;
+	FT_BitmapGlyph *pglyph;
+	FT_Matrix     matrix;                 /* transformation matrix */
+	FT_Vector     pen;                    /* untransformed origin  */
+
+	FT_UInt glyph_idx = 0;
+	FT_UInt previous;
+	FT_Bool use_kerning;
+	FT_Vector delta; 
+
+	use_kerning = face->face_flags & FT_FACE_FLAG_KERNING;
+
+	char *p = (char *)str;
+	unsigned long         codepoint;
+	unsigned char         in_code;
+	int                   expect;
+	int kerning;
+
+	//	bool mark = false;
+
+
+	pen.x = x;
+	pen.y = y;
+
+
+	while ( *p && len--)
+	{
+		in_code = *p++ ;
+
+		if ( in_code >= 0xC0 )
+		{
+			if ( in_code < 0xE0 )           /*  U+0080 - U+07FF   */
+			{
+				expect = 1;
+				codepoint = in_code & 0x1F;
+			}
+			else if ( in_code < 0xF0 )      /*  U+0800 - U+FFFF   */
+			{
+				expect = 2;
+				codepoint = in_code & 0x0F;
+			}
+			else if ( in_code < 0xF8 )      /* U+10000 - U+10FFFF */
+			{
+				expect = 3;
+				codepoint = in_code & 0x07;
+			}
+			continue;
+		}
+		else if ( in_code >= 0x80 )
+		{
+			--expect;
+
+			if ( expect >= 0 )
+			{
+				codepoint <<= 6;
+				codepoint  += in_code & 0x3F;
+			}
+			if ( expect >  0 )
+				continue;
+
+			expect = 0;
+		}
+		else                              /* ASCII, U+0000 - U+007F */
+			codepoint = in_code;
+
+		if(glyphIdxCache->find(codepoint) != glyphIdxCache->end()) {
+			glyph_idx = (*glyphIdxCache)[codepoint];
+		} else {
+			glyph_idx = FT_Get_Char_Index(face, codepoint);
+
+			(*glyphIdxCache)[codepoint] = glyph_idx;
+		}
+
+		if ( use_kerning && previous && glyph_idx ) { 
+			if((kerningCache->find(glyph_idx) != kerningCache->end()) &&
+					((*kerningCache)[glyph_idx].find(previous) != (*kerningCache)[glyph_idx].end())) {
+
+				kerning = ((*kerningCache)[glyph_idx])[previous];
+			} else {
+
+				FT_Get_Kerning(face, previous, glyph_idx, FT_KERNING_DEFAULT, &delta ); 
+				kerning = delta.x >> 6;
+
+				int *k = &((*kerningCache)[glyph_idx])[previous];
+				*k = kerning;
+			}
+			pen.x += kerning;		
+		}
+
+		if(glyphCache->find(codepoint) != glyphCache->end()) { 
+			printf("glyph cache hit\n");
+			pglyph = &(*glyphCache)[codepoint];
+		} else {
+			printf("glyph cache miss\n");
+			if(FT_Load_Glyph(face, glyph_idx,  FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL | FT_RENDER_MODE_NORMAL)) {
+				continue;
+			}	
+
+			FT_Get_Glyph(slot, (FT_Glyph*)&glyph);
+
+			glyph->root.advance.x = slot->advance.x;	  			
+
+			(*glyphCache)[codepoint] = glyph;		  
+			pglyph = &glyph;
+		}
+
+		drawGlyph( &(*pglyph)->bitmap,
+				pen.x + (*pglyph)->left,
+				pen.y - (*pglyph)->top);
+
+
+		/*		if(!mark) {
+				drawLine(pen.x + (*pglyph)->left, y+1, pen.x + ((*pglyph)->root.advance.x >> 6), y+1);
+				mark = true;
+				}
+				*/		
+
+		/* increment pen position */
+		pen.x += (*pglyph)->root.advance.x >> 6;
+		previous = glyph_idx;
+	}
+
+
+//	pango_fc_font_unlock_face((PangoFcFont*)myAnalysis.font);
 }
 
 void ZLEwlPaintContext::drawImage(int x, int y, const ZLImageData &image) {
@@ -420,3 +576,29 @@ void ZLEwlPaintContext::clearFTBitmap(FT_Bitmap *bitmap)
 	memset(p, 0, length);
 }
 
+void ZLEwlPaintContext::drawGlyph(FT_Bitmap* bitmap, FT_Int x, FT_Int y)
+{
+	FT_Int  i, j, p, q;
+	FT_Int  x_max = x + bitmap->width;
+	FT_Int  y_max = y + bitmap->rows;
+	unsigned char val;
+	int s;
+
+	for ( i = x, p = 0; i < x_max; i++, p++ ) {
+		for ( j = y, q = 0; j < y_max; j++, q++ ) {
+
+			if ( i < 0      || j < 0       ||
+					i >= myWidth || j >= myHeight )
+				continue;
+
+			val = bitmap->buffer[q * bitmap->width + p];
+
+			if(val < 64)
+				continue;
+
+			val = 0x55 * (val / 64);
+			val = ~val;			
+			image[i + j * myWidth] = (255 << 24) | (val << 16) | (val << 8) | val;
+		}
+	}
+}

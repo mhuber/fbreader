@@ -27,6 +27,11 @@
 #include <pango/pango.h>
 #include <pango/pangoft2.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_GLYPH_H
+#include FT_BITMAP_H
+
 class ZLEwlPaintContext : public ZLPaintContext {
 
 public:
@@ -85,6 +90,31 @@ private:
 	void modifyFTBitmap(FT_Bitmap *bitmap, int width, int height);
 	void setFTBitmap(FT_Bitmap *bitmap, int width, int height);
 	void clearFTBitmap(FT_Bitmap *bitmap);
+
+	void drawGlyph(FT_Bitmap* bitmap, FT_Int x, FT_Int y);
+
+	class Font {
+		public:
+			Font() { }
+
+			~Font() { }
+	
+			std::map<unsigned long, int> charWidthCacheAll;
+			std::map<unsigned long, FT_BitmapGlyph> glyphCacheAll;
+			
+			std::map<FT_UInt, std::map<FT_UInt, int> > kerningCacheAll;
+			std::map<unsigned long, FT_UInt> glyphIdxCacheAll;
+	};
+	
+
+	mutable std::map<FT_Face, Font> fontCache;
+	mutable std::map<unsigned long, int> *charWidthCache;
+	mutable std::map<unsigned long, FT_BitmapGlyph> *glyphCache;
+
+	mutable std::map<FT_UInt, std::map<FT_UInt, int> > *kerningCache;
+	mutable std::map<unsigned long, FT_UInt> *glyphIdxCache;
+
+	FT_Face face;
 };
 
 #endif /* __ZLEWLPAINTCONTEXT_H__ */
