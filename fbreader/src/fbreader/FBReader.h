@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,6 +119,9 @@ public:
 	void showBookTextView();
 	void openBook(BookDescriptionPtr description);
 
+public:
+	std::vector<std::string> pageFootnotes;
+
 private:
 	shared_ptr<ProgramCollection> dictionaryCollection() const;
 
@@ -183,6 +187,7 @@ friend class GotoNextTOCSectionAction;
 friend class GotoPreviousTOCSectionAction;
 //friend class GotoPageNumber;
 friend class SelectionAction;
+friend class ShowFootnotes;
 };
 
 #endif /* __FBREADER_H__ */

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +23,13 @@
 #include "ZLTextView.h"
 #include "ZLTextLineInfo.h"
 
+#include "../../../../fbreader/src/fbreader/FBReader.h"
+
 void ZLTextView::paint() {
+	FBReader& fbreader = (FBReader&)application();
+	if (fbreader.getMode() == FBReader::BOOK_TEXT_MODE)
+		fbreader.pageFootnotes.erase(fbreader.pageFootnotes.begin(), fbreader.pageFootnotes.end());
+
 	preparePaintInfo();
 
 	myTextElementMap.clear();
@@ -187,6 +194,16 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, size_t from, size_t to
 				context().drawImage(x, y, ((const ZLTextImageElement&)element).image());
 			}
 			++it;
+		} else if(kind == ZLTextElement::CONTROL_ELEMENT) {
+			const ZLTextControlEntry &control = ((const ZLTextControlElement&)element).entry();
+
+			if (control.isHyperlink()) {
+				if(control.kind() == 16) {
+					// footnote
+					std::string id = ((const ZLTextHyperlinkControlEntry&)control).label();
+					((FBReader&)application()).pageFootnotes.push_back(id);
+				}
+			}
 		}
 	}
 	if (it != toIt) {

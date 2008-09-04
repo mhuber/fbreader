@@ -19,4 +19,5 @@
 	<binding key="5" action="nextTOCSection"/>
 	<binding key="4" action="previousTOCSection"/>
 	<binding key="2" action="gotoPageNumber"/>
+	<binding key="6" action="showFootnotes"/>
 </keymap>

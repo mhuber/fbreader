@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,6 +68,8 @@ public:
 	static const std::string CLEAR_SELECTION;
 	static const std::string OPEN_SELECTED_TEXT_IN_DICTIONARY;
 	static const std::string GOTO_PAGE_NUMBER;
+
+	static const std::string SHOW_FOOTNOTES;
 
 private:
 	ActionCode();
@@ -327,5 +330,12 @@ public:
 inline FBReader &FBAction::fbreader() {
 	return myFBReader;
 }
+
+class ShowFootnotes : public FBAction {
+
+public:
+	ShowFootnotes(FBReader &fbreader);
+	void run();
+};
 
 #endif /* __FBREADERACTIONS_H__ */

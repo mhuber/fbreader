@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,3 +58,5 @@ const std::string ActionCode::COPY_SELECTED_TEXT_TO_CLIPBOARD = "copyToClipboard
 const std::string ActionCode::CLEAR_SELECTION = "clearSelection";
 const std::string ActionCode::OPEN_SELECTED_TEXT_IN_DICTIONARY = "openInDictionary";
 const std::string ActionCode::GOTO_PAGE_NUMBER = "gotoPageNumber";
+
+const std::string ActionCode::SHOW_FOOTNOTES = "showFootnotes";

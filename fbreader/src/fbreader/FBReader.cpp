@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -153,6 +154,8 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	addAction(ActionCode::CLEAR_SELECTION, new ClearSelectionAction(*this));
 	addAction(ActionCode::GOTO_PAGE_NUMBER, new GotoPageNumber(*this));
 
+	addAction(ActionCode::SHOW_FOOTNOTES, new ShowFootnotes(*this));
+
 	myOpenFileHandler = new OpenFileHandler(*this);
 	ZLCommunicationManager::instance().registerHandler("openFile", myOpenFileHandler);
 }
@@ -302,7 +305,7 @@ void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
 			}
 		}
 	} else {
-		if ((myMode == BOOK_TEXT_MODE) && (myModel != 0)) {
+		if (((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE)) && (myModel != 0)) {
 			BookModel::Label label = myModel->label(id);
 			if (!label.Model.isNull()) {
 				if (label.Model == myModel->bookTextModel()) {
