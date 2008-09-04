@@ -174,7 +174,7 @@ void ZLEwlPaintContext::setFillColor(ZLColor color, FillStyle style) {
 	fColor = color;
 }
 
-int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
+/*int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
 	if (myContext == 0) {
 		return 0;
 	}
@@ -190,6 +190,101 @@ int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
 	PangoRectangle logicalRectangle;
 	pango_glyph_string_extents(myString, myAnalysis.font, 0, &logicalRectangle);
 	return (logicalRectangle.width + PANGO_SCALE / 2) / PANGO_SCALE;
+}
+*/
+
+int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
+	int w = 0;
+	int ch_w;
+	char *p = (char *)str;
+	unsigned long         codepoint;
+	unsigned char         in_code;
+	int                   expect;
+	FT_UInt glyph_idx = 0;
+	FT_UInt previous;
+	FT_Bool use_kerning;
+	FT_Vector delta; 
+	int kerning = 0;
+
+	use_kerning = face->face_flags & FT_FACE_FLAG_KERNING;
+
+	while ( *p && len-- > 0)
+	{
+		in_code = *p++ ;
+
+		if ( in_code >= 0xC0 )
+		{
+			if ( in_code < 0xE0 )           /*  U+0080 - U+07FF   */
+			{
+				expect = 1;
+				codepoint = in_code & 0x1F;
+			}
+			else if ( in_code < 0xF0 )      /*  U+0800 - U+FFFF   */
+			{
+				expect = 2;
+				codepoint = in_code & 0x0F;
+			}
+			else if ( in_code < 0xF8 )      /* U+10000 - U+10FFFF */
+			{
+				expect = 3;
+				codepoint = in_code & 0x07;
+			}
+			continue;
+		}
+		else if ( in_code >= 0x80 )
+		{
+			--expect;
+
+			if ( expect >= 0 )
+			{
+				codepoint <<= 6;
+				codepoint  += in_code & 0x3F;
+			}
+			if ( expect >  0 )
+				continue;
+
+			expect = 0;
+		}
+		else                              /* ASCII, U+0000 - U+007F */
+			codepoint = in_code;
+
+		if(glyphIdxCache->find(codepoint) != glyphIdxCache->end()) {
+			glyph_idx = (*glyphIdxCache)[codepoint];
+		} else {
+			glyph_idx = FT_Get_Char_Index(face, codepoint);
+
+			(*glyphIdxCache)[codepoint] = glyph_idx;
+		}
+
+		if ( use_kerning && previous && glyph_idx ) { 
+			if((kerningCache->find(glyph_idx) != kerningCache->end()) &&
+					((*kerningCache)[glyph_idx].find(previous) != (*kerningCache)[glyph_idx].end())) {
+
+				kerning = ((*kerningCache)[glyph_idx])[previous];
+			} else {
+
+				FT_Get_Kerning(face, previous, glyph_idx, FT_KERNING_DEFAULT, &delta ); 
+				kerning = delta.x >> 6;
+
+				int *k = &((*kerningCache)[glyph_idx])[previous];
+				*k = kerning;
+			}
+		} else 
+			kerning = 0;
+
+		if(charWidthCache->find(codepoint) != charWidthCache->end()) {
+			w += (*charWidthCache)[codepoint] + kerning;
+		} else {
+			if(!FT_Load_Glyph(face, glyph_idx,  FT_LOAD_RENDER | FT_LOAD_DEFAULT)) { 
+				ch_w = (face->glyph->advance.x + 63) >> 6; // or face->glyph->metrics->horiAdvance >> 6
+				w += ch_w + kerning;
+				charWidthCache->insert(std::make_pair(codepoint, ch_w));
+			} 
+		}
+		previous = glyph_idx;
+	}
+
+	return w;
 }
 
 int ZLEwlPaintContext::spaceWidth() const {
@@ -378,10 +473,10 @@ void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
 		}
 
 		if(glyphCache->find(codepoint) != glyphCache->end()) { 
-			printf("glyph cache hit\n");
+			//printf("glyph cache hit\n");
 			pglyph = &(*glyphCache)[codepoint];
 		} else {
-			printf("glyph cache miss\n");
+			//printf("glyph cache miss\n");
 			if(FT_Load_Glyph(face, glyph_idx,  FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL | FT_RENDER_MODE_NORMAL)) {
 				continue;
 			}	
