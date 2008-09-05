@@ -17,8 +17,6 @@
  * 02110-1301, USA.
  */
 
-#include <ewl/Ewl.h>
-
 #include <ZLApplication.h>
 #include <ZLibrary.h>
 
@@ -34,6 +32,8 @@
 #include "../../../../core/src/util/ZLKeyUtil.h"
 #include "../../../../core/src/unix/xmlconfig/XMLConfig.h"
 #include "../../../../core/src/unix/iconv/IConvEncodingConverter.h"
+
+extern xcb_connection_t *connection;
 
 class ZLEwlLibraryImplementation : public ZLibraryImplementation {
 
@@ -62,7 +62,7 @@ void ZLEwlLibraryImplementation::init(int &argc, char **&argv) {
 	ZLEwlImageManager::createInstance();
 	ZLEncodingCollection::instance().registerProvider(new IConvEncodingConverterProvider());
 
-//	ZLKeyUtil::setKeyNamesFileName("keynames-ewl.xml");
+	ZLKeyUtil::setKeyNamesFileName("keynames-xcb.xml");
 }
 
 ZLPaintContext *ZLEwlLibraryImplementation::createContext() {
@@ -70,17 +70,62 @@ ZLPaintContext *ZLEwlLibraryImplementation::createContext() {
 	return (ZLPaintContext *)pc;
 }
 
-void ZLEwlLibraryImplementation::run(ZLApplication *application) {
-	FILE *manual_refresh;
+void main_loop(ZLApplication *application)
+{
+	xcb_generic_event_t  *e;
+	bool end = false;
 
+	init_timer();
+
+	while (!end) {
+		set_timer();
+		e = xcb_wait_for_event(connection);
+		busy();
+		if (e) {
+			switch (e->response_type & ~0x80) {
+				case XCB_KEY_RELEASE:
+					{
+						xcb_key_release_event_t *ev;
+						ev = (xcb_key_release_event_t *)e;
+
+//						application->doActionByKey(ZLKeyUtil::keyName(ev->detail, ev->detail, ev->state));
+
+						//printf("ev->detail: %d\n", ev->detail);
+
+/*						switch (ev->detail) {
+							// ESC
+							case 9:
+								application->doAction(ActionCode::CANCEL);
+								end = true;
+								break;
+
+							case 19:
+							case 90:
+							case 111:
+								application->doAction(ActionCode::LARGE_SCROLL_FORWARD);
+								break;
+
+							case 18:
+							case 81:
+							case 116:
+								application->doAction(ActionCode::LARGE_SCROLL_BACKWARD);
+								break;
+						}
+*/
+					}
+			}
+			free (e);
+		}
+	}
+	delete_timer();
+}
+
+void ZLEwlLibraryImplementation::run(ZLApplication *application) {
 	manual_update(true);
 
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
-	init_timer();
-	set_timer();
-	ewl_main();
-	delete_timer();
+	main_loop(application);
 	delete application;
 
 	manual_update(false);

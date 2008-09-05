@@ -30,12 +30,18 @@
 #include FT_GLYPH_H
 #include FT_BITMAP_H
 
+extern xcb_connection_t     *connection;
+extern xcb_window_t          window;
+extern xcb_screen_t         *screen;
+extern xcb_image_t *im;
+extern unsigned int *pal;
+
 
 ZLEwlPaintContext::ZLEwlPaintContext() {
 	image = NULL;
 
-	myWidth = 0;
-	myHeight = 0;
+	myWidth = 600;
+	myHeight = 800;
 
 	myContext = 0;
 
@@ -171,7 +177,9 @@ void ZLEwlPaintContext::setColor(ZLColor color, LineStyle style) {
 }
 
 void ZLEwlPaintContext::setFillColor(ZLColor color, FillStyle style) {
-	fColor = color;
+	//fColor = color;
+	fColor = (0.299 * color.Red + 0.587 * color.Green + 0.114 * color.Blue ) / 64;
+	fColor = pal[fColor & 3];
 }
 
 /*int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
@@ -535,11 +543,11 @@ void ZLEwlPaintContext::drawImage(int x, int y, const ZLImageData &image) {
 				continue;
 
 			if(val == 0x00)
-				this->image[i + x + (j + y - iH) * myWidth] = 0xff << 24;
+				xcb_image_put_pixel (this->image, i+x, j + (y - iH), pal[0]);
 			else if(val == 0x40)
-				this->image[i + x + (j + y - iH) * myWidth] = 0xff555555;
+				xcb_image_put_pixel (this->image, i+x, j + (y - iH), pal[1]);
 			else
-				this->image[i + x + (j + y - iH) * myWidth] = 0xffaaaaaa;
+				xcb_image_put_pixel (this->image, i+x, j + (y - iH), pal[2]);
 		}
 }
 
@@ -563,9 +571,9 @@ void ZLEwlPaintContext::drawLine(int x0, int y0, int x1, int y1, bool fill) {
 				done = true;
 
 			if(fill)
-				image[i + j * myWidth] = (255 << 24) | (fColor.Red << 16) | (fColor.Green << 8) | fColor.Blue;		
+				xcb_image_put_pixel (image, i, j, fColor);
 			else
-				image[i + j * myWidth] = 0xff000000;
+				xcb_image_put_pixel (image, i, j, pal[0]);
 
 			j += k;
 
@@ -585,9 +593,9 @@ void ZLEwlPaintContext::drawLine(int x0, int y0, int x1, int y1, bool fill) {
 				done = true;
 
 			if(fill)
-				image[i + j * myWidth] = (255 << 24) | (fColor.Red << 16) | (fColor.Green << 8) | fColor.Blue;		
+				xcb_image_put_pixel (image, i, j, fColor);
 			else
-				image[i + j * myWidth] = 0xff000000;
+				xcb_image_put_pixel (image, i, j, pal[0]);
 
 			if(y1 > y0)
 				j++;
@@ -617,7 +625,7 @@ void ZLEwlPaintContext::drawFilledCircle(int x, int y, int r) {
 }
 
 void ZLEwlPaintContext::clear(ZLColor color) {
-	memset(image, 0xff, myWidth * myHeight * sizeof(int));
+	memset(image->data, 0xff, image->width * image->height * image->bpp / 8);
 }
 
 int ZLEwlPaintContext::width() const {
@@ -691,9 +699,8 @@ void ZLEwlPaintContext::drawGlyph(FT_Bitmap* bitmap, FT_Int x, FT_Int y)
 			if(val < 64)
 				continue;
 
-			val = 0x55 * (val / 64);
-			val = ~val;			
-			image[i + j * myWidth] = (255 << 24) | (val << 16) | (val << 8) | val;
+			val = 3 - val / 64;
+			xcb_image_put_pixel (image, i, j, pal[val]);
 		}
 	}
 }

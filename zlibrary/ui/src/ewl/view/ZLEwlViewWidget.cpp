@@ -17,14 +17,22 @@
  * 02110-1301, USA.
  */
 
-#include <ewl/Ewl.h>
-
 #include "ZLEwlViewWidget.h"
 #include "ZLEwlPaintContext.h"
 
-static void imageReveal(Ewl_Widget *w, void *ev, void *data) {
-	((ZLEwlViewWidget*)data)->doPaint();
-}
+#include <assert.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
+#define XCB_ALL_PLANES ~0
+
+xcb_connection_t *connection;
+xcb_window_t window;
+xcb_screen_t *screen;
+xcb_drawable_t rect;
+xcb_shm_segment_info_t shminfo;
+xcb_image_t *im;
+unsigned int *pal;
 
 static void updatePoint(ZLEwlViewWidget *viewWidget, int &x, int &y) {
 	switch (viewWidget->rotation()) {
@@ -52,86 +60,157 @@ static void updatePoint(ZLEwlViewWidget *viewWidget, int &x, int &y) {
 }
 
 int ZLEwlViewWidget::width() const {
-	Evas_Coord img_w, img_h;
-
-	if(myImage != 0) {
-		evas_object_image_size_get(myImage, &img_w, &img_h);
-		return img_w;
-	}
-
-	return 0;
+	return 600;
 }
 
 int ZLEwlViewWidget::height() const {
-	Evas_Coord img_w, img_h;
-
-	if(myImage != 0) {
-		evas_object_image_size_get(myImage, &img_w, &img_h);
-		return img_h;
-	}
-
-	return 0;
+	return 800;
 }
 
 ZLEwlViewWidget::ZLEwlViewWidget(ZLApplication *application, Angle initialAngle) : ZLViewWidget(initialAngle) {
 	myApplication = application;
 
-	Ewl_Widget *win, *image;
+	xcb_screen_iterator_t screen_iter;
+	const xcb_setup_t    *setup;
+	xcb_generic_event_t  *e;
+	xcb_generic_error_t  *error;
+	xcb_void_cookie_t     cookie_window;
+	xcb_void_cookie_t     cookie_map;
+	uint32_t              mask;
+	uint32_t              values[2];
+	int                   screen_number;
+	uint8_t               is_hand = 0;
+	xcb_rectangle_t     rect_coord = { 0, 0, 600, 800};
 
-	win = ewl_widget_name_find("main_win");
-	if(!win)
-		return;
+	/* getting the connection */
+	connection = xcb_connect (NULL, &screen_number);
+	if (xcb_connection_has_error(connection)) {
+		fprintf (stderr, "ERROR: can't connect to an X server\n");
+		exit(-1);
+	}
 
-	image = ewl_image_new();
-	EWL_IMAGE(image)->image = NULL;
-	ewl_object_fill_policy_set(EWL_OBJECT(image), EWL_FLAG_FILL_FILL);
-	ewl_container_child_append(EWL_CONTAINER(win), image);
-	ewl_callback_append(image, EWL_CALLBACK_REVEAL, imageReveal, this);
-	ewl_object_position_request(EWL_OBJECT(image), CURRENT_X(win), CURRENT_Y(win));
-	ewl_object_size_request(EWL_OBJECT(image), CURRENT_W(win), CURRENT_H(win));
-	ewl_widget_name_set(image, "image");
-	ewl_widget_show(image);
+	screen = xcb_aux_get_screen (connection, screen_number);
 
-	myRepaintBlocked = false;
+	gc = xcb_generate_id (connection);
+	mask = XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES;
+	values[0] = screen->black_pixel;
+	values[1] = 0; /* no graphics exposures */
+	xcb_create_gc (connection, gc, screen->root, mask, values);
+
+	bgcolor = xcb_generate_id (connection);
+	mask = XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES;
+	values[0] = screen->white_pixel;
+	values[1] = 0; /* no graphics exposures */
+	xcb_create_gc (connection, bgcolor, screen->root, mask, values);
+
+	/* creating the window */
+	window = xcb_generate_id(connection);
+	mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
+	values[0] = screen->white_pixel;
+	values[1] =
+		XCB_EVENT_MASK_KEY_RELEASE |
+		XCB_EVENT_MASK_BUTTON_PRESS |
+		XCB_EVENT_MASK_EXPOSURE |
+		XCB_EVENT_MASK_POINTER_MOTION;
+
+	uint8_t depth = xcb_aux_get_depth (connection, screen);
+	xcb_create_window(connection,
+			depth,
+			window, screen->root,
+			0, 0, 600, 800,
+			0, XCB_WINDOW_CLASS_INPUT_OUTPUT,
+			screen->root_visual,
+			mask, values);
+
+	rect = xcb_generate_id (connection);
+	xcb_create_pixmap (connection, depth,
+			rect, window,
+			600, 800);
+
+	xcb_map_window(connection, window);
+
+	xcb_colormap_t    colormap;
+	colormap = screen->default_colormap;
+
+	xcb_alloc_color_reply_t *rep;
+	rep = xcb_alloc_color_reply (connection, xcb_alloc_color (connection, colormap, 0, 0, 0), NULL);
+	pal_[0] = rep->pixel;
+	free(rep);
+	rep = xcb_alloc_color_reply (connection, xcb_alloc_color (connection, colormap, 0x55<<8, 0x55<<8, 0x55<<8), NULL);
+	pal_[1] = rep->pixel;
+	free(rep);
+	rep = xcb_alloc_color_reply (connection, xcb_alloc_color (connection, colormap, 0xaa<<8, 0xaa<<8, 0xaa<<8), NULL);
+	pal_[2] = rep->pixel;
+	free(rep);
+
+	pal = pal_;
+
+	xcb_shm_query_version_reply_t *rep_shm;
+
+	rep_shm = xcb_shm_query_version_reply (connection,
+			xcb_shm_query_version (connection),
+			NULL);
+	if(rep_shm) {
+		xcb_image_format_t format;
+		int shmctl_status;
+
+		if (rep_shm->shared_pixmaps &&
+				(rep_shm->major_version > 1 || rep_shm->minor_version > 0))
+			format = (xcb_image_format_t)rep_shm->pixmap_format;
+		else
+			format = (xcb_image_format_t)0;
+
+		im = xcb_image_create_native (connection, 600, 800,
+				format, depth, NULL, ~0, NULL);
+		assert(im);
+
+		shminfo.shmid = shmget (IPC_PRIVATE,
+				im->stride*im->height,
+				IPC_CREAT | 0777);
+		assert(shminfo.shmid != -1);
+		shminfo.shmaddr = (uint8_t*)shmat (shminfo.shmid, 0, 0);
+		assert(shminfo.shmaddr);
+		im->data = shminfo.shmaddr;
+
+		shminfo.shmseg = xcb_generate_id (connection);
+		xcb_shm_attach (connection, shminfo.shmseg,
+				shminfo.shmid, 0);
+		shmctl_status = shmctl(shminfo.shmid, IPC_RMID, 0);
+		assert(shmctl_status != -1);
+		free (rep_shm);
+	}
+
+	xcb_flush(connection);
 }
 
 ZLEwlViewWidget::~ZLEwlViewWidget() {
 }
 
 void ZLEwlViewWidget::doPaint()	{
-	Ewl_Widget *win, *i;
-	Evas_Coord img_w, img_h;
+	ZLEwlPaintContext &pContext = (ZLEwlPaintContext&)view()->context();
 
-	win = ewl_widget_name_find("main_win");
-	i = ewl_widget_name_find("image");
-	myImage = (Evas_Object*)EWL_IMAGE(i)->image;
-
-	evas_object_image_size_get(myImage, &img_w, &img_h);
-	if((img_w != CURRENT_W(win)) || (img_h != CURRENT_H(win))) {
-		evas_object_image_size_set(myImage, CURRENT_W(win), CURRENT_H(win));
-		evas_object_image_size_get(myImage, &img_w, &img_h);
-	}
-
-	int *data;
-	data = (int *)evas_object_image_data_get(myImage, 1);
-	if(!data)
+	int i;
+	i = xcb_image_shm_get (connection, window,
+			im, shminfo,
+			0, 0,
+			XCB_ALL_PLANES);
+	if(!i)
 		return;
 
-	ZLEwlPaintContext &pContext = (ZLEwlPaintContext&)view()->context();
-	pContext.setImage(data, width(), height());
+	pContext.image = im;
 
 	view()->paint();
-	myRepaintBlocked = true;
-	evas_object_image_data_update_add(myImage, 0, 0, img_w, img_h);
-	//	myApplication->refreshWindow();
-	myRepaintBlocked = false;
+
+	xcb_image_shm_put (connection, window, gc,
+			pContext.image, shminfo,
+			0, 0, 0, 0, 600, 800, 0);
+
+	xcb_flush(connection);
 }
 
 void ZLEwlViewWidget::trackStylus(bool track) {
 }
 
 void ZLEwlViewWidget::repaint()	{
-	if (!myRepaintBlocked) {
-		doPaint();
-	}
+	doPaint();
 }

@@ -32,13 +32,19 @@
 #include FT_GLYPH_H
 #include FT_BITMAP_H
 
+#include <xcb/xcb.h>
+#define class class_
+#include <xcb/xcb_aux.h>
+#undef class
+#include <xcb/xcb_image.h>
+
 class ZLEwlPaintContext : public ZLPaintContext {
 
 public:
 	ZLEwlPaintContext();
 	~ZLEwlPaintContext();
 
-	void setImage(int *img, int w, int h) { image = img; myWidth = w; myHeight = h; };
+	void setImage(xcb_image_t *img, int w, int h) { image = img; myWidth = w; myHeight = h; };
 
 	int width() const;
 	int height() const;
@@ -65,9 +71,11 @@ public:
 	void fillRectangle(int x0, int y0, int x1, int y1);
 	void drawFilledCircle(int x, int y, int r);
 
+	xcb_image_t     *image;
+
 private:
 	int myWidth, myHeight;
-	int *image;
+	//int *image;
 
 	PangoContext *myContext;
 
@@ -82,7 +90,7 @@ private:
 	mutable int mySpaceWidth;
 	int myDescent;
 
-	ZLColor fColor;
+	int fColor;
 
 	FT_Bitmap *ft2bmp;
 	FT_Bitmap *createFTBitmap(int width, int height);

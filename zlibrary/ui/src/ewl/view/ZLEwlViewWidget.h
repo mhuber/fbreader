@@ -20,10 +20,13 @@
 #ifndef __ZLEWLVIEWWIDGET_H__
 #define __ZLEWLVIEWWIDGET_H__
 
-#include <Evas.h>
-
 #include <ZLView.h>
 #include <ZLApplication.h>
+
+extern "C" {
+#include <xcb/xcb.h>
+#include <xcb/shm.h>
+}
 
 class ZLEwlViewWidget : public ZLViewWidget {
 
@@ -40,8 +43,11 @@ private:
 	void repaint();
 
 private:
+	xcb_gcontext_t		gc;
+	xcb_gcontext_t		bgcolor;
+	unsigned int pal_[4];
+
 	ZLApplication *myApplication;
-	Evas_Object *myImage;
 	bool myRepaintBlocked;
 };
 
