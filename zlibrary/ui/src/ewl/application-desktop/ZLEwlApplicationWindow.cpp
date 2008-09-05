@@ -28,13 +28,12 @@
 #include "../../../../core/src/dialogs/ZLOptionView.h"
 
 void ZLEwlDialogManager::createApplicationWindow(ZLApplication *application) const {
-//	myWindow = EWL_WINDOW((new ZLEwlApplicationWindow(application))->getMainWindow());
-	ZLEwlApplicationWindow *mw = new ZLEwlApplicationWindow(application);
+	myWindow = EWL_WINDOW((new ZLEwlApplicationWindow(application))->getMainWindow());
 }
 
 static void applicationQuit(Ewl_Widget *w, void *ev, void *data) {
 	((ZLEwlApplicationWindow*)data)->application().closeView();
-//	ewl_main_quit();
+	ewl_main_quit();
 }
 
 static void deleteWindow(Ewl_Widget *w, void *ev, void *data) {
@@ -42,27 +41,31 @@ static void deleteWindow(Ewl_Widget *w, void *ev, void *data) {
 }
 
 static void handleKeyEvent(Ewl_Widget *w, void *ev, void *data) {
-//	busy();
-//	((ZLEwlApplicationWindow*)data)->handleKeyEventSlot(ev);
-//	set_timer();
+	busy();
+	((ZLEwlApplicationWindow*)data)->handleKeyEventSlot(ev);
+	set_timer();
 }
 
 static const std::string OPTIONS = "Options";
 
 ZLEwlApplicationWindow::ZLEwlApplicationWindow(ZLApplication *application) : ZLDesktopApplicationWindow(application) {
-/*	myMainWindow = ewl_window_new();
+//	ewl_theme_theme_set("./oitheme.edj");
+	myMainWindow = ewl_window_new();
 	ewl_window_title_set(EWL_WINDOW(myMainWindow), "FBReader");
 	ewl_window_class_set(EWL_WINDOW(myMainWindow), "fbreader");
 	ewl_window_name_set(EWL_WINDOW(myMainWindow), "fbreader");
 	ewl_theme_data_str_set(EWL_WIDGET(myMainWindow), "/window/group", "ewl/blank");
 	ewl_object_fill_policy_set(EWL_OBJECT(myMainWindow), EWL_FLAG_FILL_ALL);
-	ewl_object_size_request(EWL_OBJECT(myMainWindow), 600, 800);
+	ewl_object_size_request(EWL_OBJECT(myMainWindow), 0, 0);
+	EWL_EMBED(myMainWindow)->x = 599;
+	EWL_EMBED(myMainWindow)->y = 799;
 	ewl_callback_append(myMainWindow, EWL_CALLBACK_KEY_UP, handleKeyEvent, this);
 	ewl_callback_append(myMainWindow, EWL_CALLBACK_DELETE_WINDOW, deleteWindow, this);
 	ewl_callback_append(myMainWindow, EWL_CALLBACK_DESTROY, applicationQuit, this);
 	ewl_widget_name_set(myMainWindow, "main_win");
+	ewl_window_lower(EWL_WINDOW(myMainWindow));
+	ewl_window_keyboard_grab_set(EWL_WINDOW(myMainWindow), 1);
 	ewl_widget_show(myMainWindow);
-*/
 }
 
 void ZLEwlApplicationWindow::init() {
@@ -107,9 +110,9 @@ ZLViewWidget *ZLEwlApplicationWindow::createViewWidget() {
 }
 
 void ZLEwlApplicationWindow::close() {
-//	ewl_main_quit();
+	ewl_main_quit();
 }
 
 void ZLEwlApplicationWindow::setCaption(const std::string &caption) {
-//	ewl_window_title_set(EWL_WINDOW(myMainWindow), caption.c_str()); 
+	ewl_window_title_set(EWL_WINDOW(myMainWindow), caption.c_str()); 
 }

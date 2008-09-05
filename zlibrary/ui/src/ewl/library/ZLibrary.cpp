@@ -17,6 +17,8 @@
  * 02110-1301, USA.
  */
 
+#include <ewl/Ewl.h>
+
 #include <ZLApplication.h>
 #include <ZLibrary.h>
 
@@ -62,7 +64,7 @@ void ZLEwlLibraryImplementation::init(int &argc, char **&argv) {
 	ZLEwlImageManager::createInstance();
 	ZLEncodingCollection::instance().registerProvider(new IConvEncodingConverterProvider());
 
-	ZLKeyUtil::setKeyNamesFileName("keynames-xcb.xml");
+	//ZLKeyUtil::setKeyNamesFileName("keynames-xcb.xml");
 }
 
 ZLPaintContext *ZLEwlLibraryImplementation::createContext() {
@@ -125,7 +127,11 @@ void ZLEwlLibraryImplementation::run(ZLApplication *application) {
 
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
-	main_loop(application);
+	init_timer();
+	set_timer();
+	ewl_main();
+//	main_loop(application);
+	delete_timer();
 	delete application;
 
 	manual_update(false);
