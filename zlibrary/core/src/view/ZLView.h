@@ -86,6 +86,8 @@ public:
 	void rotate(Angle rotation);
 	Angle rotation() const;
 
+	virtual void invertRegion(int x0, int y0, int x1, int y1, bool flush) = 0;
+
 protected:
 	virtual void repaint() = 0;
 

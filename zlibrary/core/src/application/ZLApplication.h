@@ -364,6 +364,8 @@ public:
 	void refreshWindow();
 	void presentWindow();
 
+	void invertRegion(int x0, int y0, int x1, int y1, bool flush);
+
 	const std::string &lastCaller() const;
 	void resetLastCaller();
 

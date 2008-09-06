@@ -135,6 +135,14 @@ void ZLApplication::refreshWindow() {
 		myWindow->refresh();
 	}
 }
+	
+void ZLApplication::invertRegion(int x0, int y0, int x1, int y1, bool flush)
+{
+	if (myViewWidget != 0) {
+		myViewWidget->invertRegion(x0, y0, x1, y1, flush);
+	}
+}
+
 
 void ZLApplication::presentWindow() {
 	if (myWindow != 0) {

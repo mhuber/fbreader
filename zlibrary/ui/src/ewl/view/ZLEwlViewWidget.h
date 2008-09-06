@@ -37,6 +37,7 @@ public:
 	int width() const;
 	int height() const;
 	void doPaint();
+	void invertRegion(int x0, int y0, int x1, int y1, bool flush);
 
 private:
 	void trackStylus(bool track);
