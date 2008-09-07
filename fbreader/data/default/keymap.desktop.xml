@@ -20,4 +20,5 @@
 	<binding key="4" action="previousTOCSection"/>
 	<binding key="2" action="gotoPageNumber"/>
 	<binding key="6" action="showFootnotes"/>
+	<binding key="8" action="hyperlinkNavStart"/>
 </keymap>

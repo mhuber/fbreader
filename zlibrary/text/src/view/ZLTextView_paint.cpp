@@ -25,10 +25,15 @@
 
 #include "../../../../fbreader/src/fbreader/FBReader.h"
 
+bool link_not_terminated;
+
 void ZLTextView::paint() {
 	FBReader& fbreader = (FBReader&)application();
 	if (fbreader.getMode() == FBReader::BOOK_TEXT_MODE)
 		fbreader.pageFootnotes.erase(fbreader.pageFootnotes.begin(), fbreader.pageFootnotes.end());
+
+	if(!fbreader.pageLinks.empty())
+		fbreader.pageLinks.erase(fbreader.pageLinks.begin(), fbreader.pageLinks.end());
 
 	preparePaintInfo();
 
@@ -39,6 +44,8 @@ void ZLTextView::paint() {
 	if (empty()) {
 		return;
 	}
+
+	link_not_terminated = false;
 
 	std::vector<size_t> labels;
 	labels.reserve(myLineInfos.size() + 1);
@@ -128,6 +135,7 @@ int ZLTextView::areaLength(const ZLTextParagraphCursor &paragraph, const ZLTextE
 }
 
 void ZLTextView::drawTextLine(const ZLTextLineInfo &info, size_t from, size_t to) {
+	FBReader &fbreader = (FBReader&)application();
 	const ZLTextParagraphCursor &paragraph = info.RealStart.paragraphCursor();
 
 	const ZLTextElementIterator fromIt = myTextElementMap.begin() + from;
@@ -178,11 +186,25 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, size_t from, size_t to
 		drawTreeLines(*info.NodeInfo, info.Height, info.Descent + info.VSpaceAfter);
 	}
 	ZLTextElementIterator it = fromIt;
-	for (ZLTextWordCursor pos = info.RealStart; !pos.equalWordNumber(info.End); pos.nextWord()) {
+
+	FBReader::HyperlinkCoord cur_link;
+	cur_link.id.erase();
+	cur_link.x0 = 0;
+	cur_link.x1 = 0;
+	cur_link.y0 = 0;
+	cur_link.y1 = 0;
+	cur_link.next = false;
+
+	bool started = false;
+
+	for (ZLTextWordCursor pos = info.Start; !pos.equalWordNumber(info.End); pos.nextWord()) {
 		const ZLTextElement &element = paragraph[pos.wordNumber()];
 		ZLTextElement::Kind kind = element.kind();
+
 	
-		if ((kind == ZLTextElement::WORD_ELEMENT) || (kind == ZLTextElement::IMAGE_ELEMENT)) {
+		if(pos.equalWordNumber(info.RealStart))
+			started = true;
+		if (started && (kind == ZLTextElement::WORD_ELEMENT) || (kind == ZLTextElement::IMAGE_ELEMENT)) {
 			if (it->ChangeStyle) {
 				myStyle.setTextStyle(it->Style);
 			}
@@ -201,11 +223,81 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, size_t from, size_t to
 				if(control.kind() == 16) {
 					// footnote
 					std::string id = ((const ZLTextHyperlinkControlEntry&)control).label();
-					((FBReader&)application()).pageFootnotes.push_back(id);
+					fbreader.pageFootnotes.push_back(id);
+
+				} else if(control.kind() == 15) {
+					//INTERNAL_HYPERLINK
+					//printf("hyperlink start\n");
+
+					if(!cur_link.id.empty()) {
+						const int y = it->YEnd - myStyle.elementDescent(element) - myStyle.textStyle()->verticalShift();
+
+						cur_link.x1 = it->XEnd;
+						cur_link.y1 = y;
+						cur_link.y0 = y - info.Height;
+
+						fbreader.pageLinks.push_back(cur_link);
+
+						context().drawLine(cur_link.x0, cur_link.y1, cur_link.x1, cur_link.y1);
+					}
+
+					cur_link.id = ((const ZLTextHyperlinkControlEntry&)control).label();
+					cur_link.x0 = it->XStart;
+				} else {
+					//printf("control.kind() %d, id: %s\n", control.kind(), ((const ZLTextHyperlinkControlEntry&)control).label().c_str());
+				}
+
+			} else {
+				if(control.kind() == 15) {
+					if(cur_link.id.empty() || link_not_terminated)
+						cur_link.x0 = fromIt->XStart;
+
+					ZLTextElementIterator lit = it;
+					if(lit != fromIt)
+						lit--;
+
+					const int y = lit->YEnd - myStyle.elementDescent(element) - myStyle.textStyle()->verticalShift();
+
+					cur_link.x1 = lit->XEnd;
+					cur_link.y1 = y;
+					cur_link.y0 = y - info.Height;
+
+					fbreader.pageLinks.push_back(cur_link);
+
+					context().drawLine(cur_link.x0, cur_link.y1, cur_link.x1, cur_link.y1);
+
+					cur_link.id.erase();
+					link_not_terminated = false;
 				}
 			}
 		}
 	}
+
+	if(!cur_link.id.empty() || link_not_terminated) {
+		ZLTextElementIterator lit = it;
+		if(lit != fromIt)
+			lit--;
+
+		ZLTextWordCursor pos = info.RealStart;
+
+		const ZLTextElement &element = paragraph[info.End.wordNumber()];
+		const int y = lit->YEnd - myStyle.elementDescent(element) - myStyle.textStyle()->verticalShift();
+		if(cur_link.id.empty()) {
+			cur_link.x0 = fromIt->XStart;
+		}
+
+		cur_link.x1 = lit->XEnd;
+		cur_link.y1 = y;
+		cur_link.y0 = y - info.Height;
+		cur_link.next = true;
+
+		fbreader.pageLinks.push_back(cur_link);
+
+		context().drawLine(cur_link.x0, cur_link.y1, cur_link.x1, cur_link.y1);
+
+		link_not_terminated = true;
+	}
+
 	if (it != toIt) {
 		if (it->ChangeStyle) {
 			myStyle.setTextStyle(it->Style);

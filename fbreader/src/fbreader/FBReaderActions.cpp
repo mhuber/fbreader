@@ -185,6 +185,14 @@ bool ScrollingAction::useKeyDelay() const {
 }
 
 void ScrollingAction::run() {
+	if(fbreader().getMode() == FBReader::HYPERLINK_NAV_MODE) {
+		if(myForward)
+			fbreader().highlightNextLink();
+		else
+			fbreader().highlightPrevLink();
+		return;
+	}
+
 	int delay = fbreader().myLastScrollingTime.millisecondsTo(ZLTime());
 	shared_ptr<ZLView> view = fbreader().currentView();
 	if (!view.isNull() && ((delay < 0) || (delay >= myOptions.DelayOption.value()))) {
@@ -428,9 +436,20 @@ ShowFootnotes::ShowFootnotes(FBReader &fbreader) : FBAction(fbreader) {
 
 void ShowFootnotes::run() {
 	if(fbreader().pageFootnotes.empty()) {
-		fbreader().restorePreviousMode();
+		if(fbreader().getMode() == FBReader::FOOTNOTE_MODE)
+			fbreader().restorePreviousMode();
 	} else {
 		fbreader().tryShowFootnoteView(fbreader().pageFootnotes.at(0), false);
 		fbreader().pageFootnotes.erase(fbreader().pageFootnotes.begin(), fbreader().pageFootnotes.begin() + 1);
 	}
+}
+
+HyperlinkNavStart::HyperlinkNavStart(FBReader &fbreader) : FBAction(fbreader) {
+}
+
+void HyperlinkNavStart::run() {
+	if(fbreader().getMode() == FBReader::HYPERLINK_NAV_MODE)
+		fbreader().openHyperlink();
+	else
+		fbreader().startNavigationMode();
 }

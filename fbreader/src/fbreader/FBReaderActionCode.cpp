@@ -60,3 +60,4 @@ const std::string ActionCode::OPEN_SELECTED_TEXT_IN_DICTIONARY = "openInDictiona
 const std::string ActionCode::GOTO_PAGE_NUMBER = "gotoPageNumber";
 
 const std::string ActionCode::SHOW_FOOTNOTES = "showFootnotes";
+const std::string ActionCode::HYPERLINK_NAV_START = "hyperlinkNavStart";

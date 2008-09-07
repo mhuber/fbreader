@@ -155,6 +155,7 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	addAction(ActionCode::GOTO_PAGE_NUMBER, new GotoPageNumber(*this));
 
 	addAction(ActionCode::SHOW_FOOTNOTES, new ShowFootnotes(*this));
+	addAction(ActionCode::HYPERLINK_NAV_START, new HyperlinkNavStart(*this));
 
 	myOpenFileHandler = new OpenFileHandler(*this);
 	ZLCommunicationManager::instance().registerHandler("openFile", myOpenFileHandler);
@@ -305,7 +306,7 @@ void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
 			}
 		}
 	} else {
-		if (((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE)) && (myModel != 0)) {
+		if (((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE) || (myMode == HYPERLINK_NAV_MODE)) && (myModel != 0)) {
 			BookModel::Label label = myModel->label(id);
 			if (!label.Model.isNull()) {
 				if (label.Model == myModel->bookTextModel()) {
@@ -318,6 +319,94 @@ void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
 				}
 				setHyperlinkCursor(false);
 				refreshWindow();
+			}
+		}
+	}
+}
+
+void FBReader::invertRegion(HyperlinkCoord link, bool flush)
+{
+	((ZLApplication*)this)->invertRegion(link.x0, link.y0, link.x1, link.y1, flush);
+}
+
+void FBReader::startNavigationMode()
+{
+	if(!pageLinks.empty() && ((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE))) {
+		setMode(HYPERLINK_NAV_MODE);
+		currentLinkIdx = 0;
+		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+			if(!pageLinks.at(i).next) {
+				invertRegion(pageLinks.at(i), true);
+				break;
+			} else {
+				invertRegion(pageLinks.at(i), false);
+			}
+		}
+	}
+}
+
+void FBReader::openHyperlink()
+{
+	if(!pageLinks.empty()) {
+		restorePreviousMode();
+		tryShowFootnoteView(pageLinks.at(currentLinkIdx).id, false);
+	}
+}
+
+void FBReader::highlightNextLink()
+{
+	if(myMode == HYPERLINK_NAV_MODE) {
+		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+			invertRegion(pageLinks.at(i), false);
+			if(!pageLinks.at(i).next) {
+				currentLinkIdx = i + 1;
+				break;
+			}
+		}
+
+		if(currentLinkIdx >= pageLinks.size())
+			currentLinkIdx = 0;
+
+		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+			if(!pageLinks.at(i).next) {
+				invertRegion(pageLinks.at(i), true);
+				break;
+			} else {
+				invertRegion(pageLinks.at(i), false);
+			}
+		}
+	}
+}
+
+void FBReader::highlightPrevLink()
+{
+	if(myMode == HYPERLINK_NAV_MODE) {
+		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+			invertRegion(pageLinks.at(i), false);
+			if(!pageLinks.at(i).next) {
+				break;
+			}
+		}
+
+		currentLinkIdx--;
+		if(currentLinkIdx < 0)
+			currentLinkIdx = pageLinks.size() - 1;
+
+		for(int i = currentLinkIdx - 1; (i >= 0) && (i < pageLinks.size()); i--) {
+			if(i == 0) {
+				currentLinkIdx = 0;
+			} else if(!pageLinks.at(i).next) {
+				currentLinkIdx = i + 1;
+				break;
+			}
+		}
+
+		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+			if(!pageLinks.at(i).next) {
+				invertRegion(pageLinks.at(i), true);
+				break;
+			} else {
+				invertRegion(pageLinks.at(i), false);
 			}
 		}
 	}
@@ -354,6 +443,7 @@ void FBReader::setMode(ViewMode mode) {
 	setViewFinal(myMode == BOOK_TEXT_MODE);
 
 	switch (myMode) {
+		case HYPERLINK_NAV_MODE:
 		case BOOK_TEXT_MODE:
 			setView(myBookTextView);
 			break;
@@ -407,6 +497,9 @@ void FBReader::showBookTextView() {
 }
 
 void FBReader::restorePreviousMode() {
+	if(myMode == HYPERLINK_NAV_MODE)
+		invertRegion(pageLinks.at(currentLinkIdx), true);
+
 	setMode(myPreviousMode);
 	myPreviousMode = BOOK_TEXT_MODE;
 }

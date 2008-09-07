@@ -58,6 +58,7 @@ public:
 		BOOKMARKS_MODE = 1 << 3,
 		BOOK_COLLECTION_MODE = 1 << 4,
 		RECENT_BOOKS_MODE = 1 << 5,
+		HYPERLINK_NAV_MODE = 1 << 6,
 	};
 
 	struct ScrollingOptions {
@@ -121,6 +122,20 @@ public:
 
 public:
 	std::vector<std::string> pageFootnotes;
+
+	typedef struct {
+		int x0, y0, x1, y1;
+		std::string id;
+		bool next;
+	} HyperlinkCoord;
+	std::vector<HyperlinkCoord> pageLinks;
+	int currentLinkIdx;
+
+	void startNavigationMode();
+	void invertRegion(HyperlinkCoord link, bool flush);
+	void highlightNextLink();
+	void highlightPrevLink();
+	void openHyperlink();
 
 private:
 	shared_ptr<ProgramCollection> dictionaryCollection() const;
@@ -188,6 +203,7 @@ friend class GotoPreviousTOCSectionAction;
 //friend class GotoPageNumber;
 friend class SelectionAction;
 friend class ShowFootnotes;
+friend class HyperlinkNavStart;
 };
 
 #endif /* __FBREADER_H__ */

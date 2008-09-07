@@ -70,6 +70,7 @@ public:
 	static const std::string GOTO_PAGE_NUMBER;
 
 	static const std::string SHOW_FOOTNOTES;
+	static const std::string HYPERLINK_NAV_START;
 
 private:
 	ActionCode();
@@ -335,6 +336,13 @@ class ShowFootnotes : public FBAction {
 
 public:
 	ShowFootnotes(FBReader &fbreader);
+	void run();
+};
+
+class HyperlinkNavStart : public FBAction {
+
+public:
+	HyperlinkNavStart(FBReader &fbreader);
 	void run();
 };
 
