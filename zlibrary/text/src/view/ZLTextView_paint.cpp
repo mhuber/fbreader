@@ -252,6 +252,20 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, size_t from, size_t to
 					if(cur_link.id.empty() || link_not_terminated)
 						cur_link.x0 = fromIt->XStart;
 
+					if(cur_link.id.empty() && fbreader.pageLinks.empty()) {
+						for (ZLTextWordCursor pos2 = pos; pos2.wordNumber() > 0; pos2.previousWord()) {
+							const ZLTextElement &element2 = paragraph[pos2.wordNumber()];
+							ZLTextElement::Kind kind2 = element2.kind();
+							if(kind2 == ZLTextElement::CONTROL_ELEMENT) {
+								const ZLTextControlEntry &control2 = ((const ZLTextControlElement&)element2).entry();
+								if (control2.isHyperlink() && (control2.kind() == 15)) {
+									cur_link.id = ((const ZLTextHyperlinkControlEntry&)control2).label();
+									break;
+								}
+							}
+						}
+					}
+
 					ZLTextElementIterator lit = it;
 					if(lit != fromIt)
 						lit--;

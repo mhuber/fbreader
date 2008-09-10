@@ -133,6 +133,7 @@ public:
 
 	void startNavigationMode();
 	void invertRegion(HyperlinkCoord link, bool flush);
+	void highlightCurrentLink();
 	void highlightNextLink();
 	void highlightPrevLink();
 	void openHyperlink();

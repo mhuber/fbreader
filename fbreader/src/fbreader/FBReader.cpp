@@ -330,20 +330,25 @@ void FBReader::invertRegion(HyperlinkCoord link, bool flush)
 	((ZLApplication*)this)->invertRegion(link.x0, link.y0, link.x1, link.y1, flush);
 }
 
+void FBReader::highlightCurrentLink()
+{
+	for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+		if(!pageLinks.at(i).next || (i == (pageLinks.size() - 1))) {
+			invertRegion(pageLinks.at(i), true);
+			break;
+		} else {
+			invertRegion(pageLinks.at(i), false);
+		}
+	}
+}
+
 void FBReader::startNavigationMode()
 {
 	if(!pageLinks.empty() && ((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE))) {
 		manual_update(false);
 		setMode(HYPERLINK_NAV_MODE);
 		currentLinkIdx = 0;
-		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
-			if(!pageLinks.at(i).next) {
-				invertRegion(pageLinks.at(i), true);
-				break;
-			} else {
-				invertRegion(pageLinks.at(i), false);
-			}
-		}
+		highlightCurrentLink();
 	}
 }
 
@@ -357,60 +362,50 @@ void FBReader::openHyperlink()
 
 void FBReader::highlightNextLink()
 {
+	int end = pageLinks.size() - 1;
+
 	if(myMode == HYPERLINK_NAV_MODE) {
-		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+		for(int i = currentLinkIdx; (i >= 0) && (i <= end); i++) {
 			invertRegion(pageLinks.at(i), false);
-			if(!pageLinks.at(i).next) {
+			if(!pageLinks.at(i).next || (i == end)) {
 				currentLinkIdx = i + 1;
 				break;
 			}
 		}
 
-		if(currentLinkIdx >= pageLinks.size())
+		if(currentLinkIdx > end)
 			currentLinkIdx = 0;
 
-		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
-			if(!pageLinks.at(i).next) {
-				invertRegion(pageLinks.at(i), true);
-				break;
-			} else {
-				invertRegion(pageLinks.at(i), false);
-			}
-		}
+		highlightCurrentLink();
 	}
 }
 
 void FBReader::highlightPrevLink()
 {
+	int end = pageLinks.size() - 1;
+
 	if(myMode == HYPERLINK_NAV_MODE) {
-		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
+		for(int i = currentLinkIdx; (i >= 0) && (i <= end); i++) {
 			invertRegion(pageLinks.at(i), false);
-			if(!pageLinks.at(i).next) {
+			if(!pageLinks.at(i).next || (i == end)) {
 				break;
 			}
 		}
 
 		currentLinkIdx--;
 		if(currentLinkIdx < 0)
-			currentLinkIdx = pageLinks.size() - 1;
+			currentLinkIdx = end;
 
-		for(int i = currentLinkIdx - 1; (i >= 0) && (i < pageLinks.size()); i--) {
+		for(int i = currentLinkIdx - 1; (i >= 0) && (i <= end); i--) {
 			if(i == 0) {
 				currentLinkIdx = 0;
-			} else if(!pageLinks.at(i).next) {
+			} else if(!pageLinks.at(i).next || (i == end)) {
 				currentLinkIdx = i + 1;
 				break;
 			}
 		}
 
-		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
-			if(!pageLinks.at(i).next) {
-				invertRegion(pageLinks.at(i), true);
-				break;
-			} else {
-				invertRegion(pageLinks.at(i), false);
-			}
-		}
+		highlightCurrentLink();
 	}
 }
 
