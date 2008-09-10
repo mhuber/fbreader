@@ -233,7 +233,7 @@ void ZLEwlViewWidget::invertRegion(int x0, int y0, int x1, int y1, bool flush)
 		for(int j = y0; j <= y1; j++) {
 			pixel = 0xffffff & xcb_image_get_pixel(im, i, j);
 			for(int idx = 0; idx < 4; idx++) {
-				if(pixel == pal[idx]) {
+				if(pixel == (0xffffff & pal[idx])) {
 					xcb_image_put_pixel(im, i, j, pal[3 - idx]);
 					break;
 				}
@@ -241,9 +241,15 @@ void ZLEwlViewWidget::invertRegion(int x0, int y0, int x1, int y1, bool flush)
 		}
 	}
 
+	uint8_t send_event;
+	if(flush)
+		send_event = 1;
+	else
+		send_event = 0;
+
 	xcb_image_shm_put (connection, window, gc,
 			im, shminfo,
-			0, 0, 0, 0, 600, 800, 0);
+			x0, y0, x0, y0, x1 - x0, y1 - y0, send_event);
 
 	if(flush)
 		xcb_flush(connection);

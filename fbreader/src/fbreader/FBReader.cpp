@@ -47,6 +47,7 @@
 #include "../bookmodel/BookModel.h"
 #include "../formats/FormatPlugin.h"
 #include "../collection/BookList.h"
+#include "../../../zlibrary/ui/src/ewl/util/ZLEwlUtil.h"
 
 static const std::string OPTIONS = "Options";
 static const std::string STATE = "State";
@@ -332,6 +333,7 @@ void FBReader::invertRegion(HyperlinkCoord link, bool flush)
 void FBReader::startNavigationMode()
 {
 	if(!pageLinks.empty() && ((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE))) {
+		manual_update(false);
 		setMode(HYPERLINK_NAV_MODE);
 		currentLinkIdx = 0;
 		for(int i = currentLinkIdx; (i >= 0) && (i < pageLinks.size()); i++) {
@@ -497,8 +499,10 @@ void FBReader::showBookTextView() {
 }
 
 void FBReader::restorePreviousMode() {
-	if(myMode == HYPERLINK_NAV_MODE)
+	if(myMode == HYPERLINK_NAV_MODE) {
 		invertRegion(pageLinks.at(currentLinkIdx), true);
+		manual_update(true);
+	}
 
 	setMode(myPreviousMode);
 	myPreviousMode = BOOK_TEXT_MODE;

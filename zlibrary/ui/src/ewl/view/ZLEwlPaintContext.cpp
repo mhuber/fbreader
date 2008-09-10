@@ -625,7 +625,7 @@ void ZLEwlPaintContext::drawFilledCircle(int x, int y, int r) {
 }
 
 void ZLEwlPaintContext::clear(ZLColor color) {
-	memset(image->data, 0xff, image->width * image->height * image->bpp / 8);
+	memset(image->data, pal[3], image->width * image->height * image->bpp / 8);
 }
 
 int ZLEwlPaintContext::width() const {
