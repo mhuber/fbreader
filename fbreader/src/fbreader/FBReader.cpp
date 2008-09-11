@@ -396,11 +396,11 @@ void FBReader::highlightPrevLink()
 		if(currentLinkIdx < 0)
 			currentLinkIdx = end;
 
-		for(int i = currentLinkIdx - 1; (i >= 0) && (i <= end); i--) {
+		for(int i = currentLinkIdx; (i >= 0) && (i <= end); i--) {
 			if(i == 0) {
 				currentLinkIdx = 0;
-			} else if(!pageLinks.at(i).next || (i == end)) {
-				currentLinkIdx = i + 1;
+			} else if(!pageLinks.at(i).id.empty()) {
+				currentLinkIdx = i;
 				break;
 			}
 		}
