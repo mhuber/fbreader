@@ -28,7 +28,7 @@
 #include "../../filesystem/ZLFSDir.h"
 
 static std::string getPwdDir() {
-	char *pwd = getenv("PWD");
+	char *pwd = getcwd(NULL, 0);
 	return (pwd != 0) ? pwd : "";
 }
 
