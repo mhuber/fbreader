@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi2) stable; urgency=low
+
+  * new features, bugfixes
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Thu, 11 Sep 2008 13:18:49 +0000
+
 fbreader (0.8.17-1.oi1) stable; urgency=low
 
   * first release with ewl gui
