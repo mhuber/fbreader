@@ -1,0 +1,4 @@
+collections
+{	
+#include "groups/dlg_optionbox.edc"
+}

@@ -23,5 +23,7 @@
 #include "../../../../../fbreader/src/fbreader/FBReaderActions.h"
 
 void ZLEwlGotoPageDialog(GotoPageNumber *gpn);
+void ZLEwlOptionsDialog(FBReader &f);
+void redraw_text();
 
 #endif

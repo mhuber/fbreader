@@ -76,7 +76,7 @@ ShowOptionsDialogAction::ShowOptionsDialogAction(FBReader &fbreader) : FBAction(
 
 void ShowOptionsDialogAction::run() {
 	FBReader &f = fbreader();
-	OptionsDialog(f).dialog().run();
+	ZLEwlOptionsDialog(f);
 }
 
 ShowContentsAction::ShowContentsAction(FBReader &fbreader) : FBAction(fbreader) {
