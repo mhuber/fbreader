@@ -41,6 +41,7 @@ timer_t t_id;
 
 void suspend(int signo, siginfo_t* evp, void* ucontext)
 {
+	return;
 	if(!idle)
 		return;
 
@@ -53,6 +54,8 @@ void suspend(int signo, siginfo_t* evp, void* ucontext)
 
 void init_timer()
 {
+	return;
+
 	struct sigaction sigv;
 	struct sigevent sigx;
 
@@ -77,11 +80,13 @@ void init_timer()
 
 void delete_timer()
 {
+	return;
 	timer_delete(t_id);
 }
 
 void set_timer()
 {
+	return;
 	struct itimerspec val;
 	
 	val.it_value.tv_sec = 4;
@@ -95,5 +100,6 @@ void set_timer()
 
 void busy()
 {
+	return;
 	idle = false;
 }

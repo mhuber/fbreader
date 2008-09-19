@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi3) stable; urgency=low
+
+  * disabled suspending
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Fri, 19 Sep 2008 14:14:12 +0200
+
 fbreader (0.8.17-1.oi2) stable; urgency=low
 
   * new features, bugfixes
