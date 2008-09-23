@@ -49,7 +49,7 @@ static void handleKeyEvent(Ewl_Widget *w, void *ev, void *data) {
 static const std::string OPTIONS = "Options";
 
 ZLEwlApplicationWindow::ZLEwlApplicationWindow(ZLApplication *application) : ZLDesktopApplicationWindow(application) {
-//	ewl_theme_theme_set("./oitheme.edj");
+	ewl_theme_theme_set((ZLibrary::ApplicationDirectory() + "/themes/oitheme.edj").c_str());
 	myMainWindow = ewl_window_new();
 	ewl_window_title_set(EWL_WINDOW(myMainWindow), "FBReader");
 	ewl_window_class_set(EWL_WINDOW(myMainWindow), "fbreader");

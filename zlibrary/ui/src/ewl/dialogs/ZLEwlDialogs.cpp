@@ -103,6 +103,8 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 
 	manual_update(false);
 
+//	ewl_theme_theme_set("./oitheme.edj");
+
 	w = ewl_widget_name_find("main_win");
 
 	dialog = ewl_window_new();
@@ -110,7 +112,7 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 	ewl_window_name_set(EWL_WINDOW(dialog), "Go to Page");
 	ewl_window_class_set(EWL_WINDOW(dialog), "Go to Page");
 	ewl_widget_name_set(dialog, "gotopage_dialog");
-//	ewl_theme_data_str_set(EWL_WIDGET(dialog),"/window/group","ewl/dlg_entry");
+	//ewl_theme_data_str_set(EWL_WIDGET(dialog),"/window/group","ewl/oi_window");
 	ewl_callback_append(dialog, EWL_CALLBACK_DELETE_WINDOW, ZLEwlGotoPageDialog_window_close_cb, NULL);
 	ewl_callback_append(dialog, EWL_CALLBACK_KEY_UP, ZLEwlGotoPageDialog_key_up_cb, gpn);
 	ewl_callback_append(dialog, EWL_CALLBACK_REVEAL, ZLEwlGotoPageDialog_reveal, NULL);
@@ -136,10 +138,9 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 	entry = ewl_entry_new();
 	ewl_object_custom_w_set(EWL_OBJECT(entry), 70);
 	ewl_container_child_append(EWL_CONTAINER(entry_hbox), entry);
-//	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/file", get_theme_file());
-//	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/group","ewl/dlg_entry");
-//	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/cursor/group","ewl/dlg_entry/cursor");
-//	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/selection_area/group","ewl/dlg_entry/selection");
+	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/group","ewl/dlg_entry");
+	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/cursor/group","ewl/dlg_entry/cursor");
+	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/selection_area/group","ewl/dlg_entry/selection");
 
 	ewl_widget_name_set(entry, "pagenr_entry");
 	ewl_widget_show(entry);

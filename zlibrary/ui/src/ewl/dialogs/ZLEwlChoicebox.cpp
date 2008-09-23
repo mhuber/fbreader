@@ -322,7 +322,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], int numchoices,
 	for(int i = 0; i < shownum; i++) {
 		tempw1 = ewl_hbox_new();
 		ewl_container_child_append(EWL_CONTAINER(vbox), tempw1);
-		ewl_theme_data_str_set(EWL_WIDGET(tempw1), "/hbox/file", tempstr);
+//		ewl_theme_data_str_set(EWL_WIDGET(tempw1), "/hbox/file", tempstr);
 		ewl_theme_data_str_set(EWL_WIDGET(tempw1), "/hbox/group",
 				"ewl/box/dlg_optionbox");
 		ewl_object_fill_policy_set(EWL_OBJECT(tempw1), EWL_FLAG_FILL_FILL);
@@ -333,7 +333,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], int numchoices,
 
 		tempw2 = ewl_label_new();
 		ewl_container_child_append(EWL_CONTAINER(tempw1), tempw2);
-		ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/file", tempstr);
+//		ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/file", tempstr);
 		ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
 				"ewl/label/dlg_optionlabel");
 		ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",

@@ -1,0 +1,126 @@
+group
+{
+	name: "ewl/oi_label";
+    	
+	parts
+	{
+		part
+		{
+			name: "ewl/oi_label/text";
+			type: TEXT;
+			effect: SOFT_SHADOW;
+
+			description
+			{
+				state: "default" 0.0;
+
+				rel1
+				{
+					relative: 0.0 0.0;
+					offset: 0 0;
+				}
+				rel2
+				{
+					relative: 1.0 1.0;
+					offset: 0 0;
+				}
+				text
+				{
+					font: DEFAULT_FONT;
+					size: DEFAULT_FONT_SIZE;
+					min: 1 1;
+					align: 0.5 0.5;
+				}
+				color: 0 0 0 255;
+				color3: 255 255 255 32;
+			}
+
+		}
+		
+	}
+}
+
+group
+{
+	name: "ewl/oi_statbar_label_left";
+    	
+	parts
+	{
+		part
+		{
+			name: "ewl/oi_statbar_label_left/text";
+			type: TEXT;
+			effect: SOFT_SHADOW;
+
+			description
+			{
+				state: "default" 0.0;
+
+				rel1
+				{
+					relative: 0.0 0.0;
+					offset: 0 0;
+				}
+				rel2
+				{
+					relative: 1.0 1.0;
+					offset: 0 0;
+				}
+				text
+				{
+					font: DEFAULT_FONT;
+					size: DEFAULT_SMALL_FONT_SIZE;
+                    			min: 1 1;
+					align: 0.0 0.5;
+				}
+				color: 0 0 0 255;
+				color3: 255 255 255 32;
+			}
+
+		}
+		
+	}
+}
+
+group
+{
+	name: "ewl/oi_statbar_label_right";
+    	
+	parts
+	{
+		part
+		{
+			name: "ewl/oi_statbar_label_right/text";
+			type: TEXT;
+			effect: SOFT_SHADOW;
+
+			description
+			{
+				state: "default" 0.0;
+
+				rel1
+				{
+					relative: 0.0 0.0;
+					offset: 0 0;
+				}
+				rel2
+				{
+					relative: 1.0 1.0;
+					offset: 0 0;
+				}
+				text
+				{
+					font: DEFAULT_FONT;
+					size: DEFAULT_SMALL_FONT_SIZE;
+                    			min: 1 1;
+					align: 1.0 0.5;
+				}
+				color: 0 0 0 255;
+				color3: 255 255 255 32;
+			}
+
+		}
+		
+	}
+}
+

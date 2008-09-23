@@ -114,8 +114,8 @@ group
 				}
 				text
 				{
-					font: "Liberation Sans";
-					size: 14;
+					font: DEFAULT_FONT;
+					size: DEFAULT_FONT_SIZE;
                     			min: 1 1;
 
 					align: 0.0 0.5;
