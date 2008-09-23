@@ -277,7 +277,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], int numchoices,
 	if(parent == w)
 		manual_update(false);
 
-	set_nav_mode(1);
+	set_nav_mode(0);
 	choice_info_struct *info =
 		(choice_info_struct *) malloc(sizeof(choice_info_struct));
 
