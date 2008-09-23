@@ -349,17 +349,19 @@ Ewl_Widget *init_choicebox(const char *choicelist[], int numchoices,
 
 void fini_choicebox(Ewl_Widget * win)
 {
-	bool redraw = false;
+	bool master = false;
 	ewl_widget_hide(win);
 	choice_info_struct *infostruct =
 		(choice_info_struct *) ewl_widget_data_get(win, (void *)"choice_info");
 	if(infostruct->master)
-		redraw = true;
+		master = true;
 	for (int i = 0; i < infostruct->numchoices; i++)
 		free(infostruct->choices[i]);
 	free(infostruct->choices);
 	free(infostruct);
 	ewl_widget_destroy(win);
-	if(redraw)
+	if(master) {
 		redraw_text();
+		manual_update(true);
+	}
 }

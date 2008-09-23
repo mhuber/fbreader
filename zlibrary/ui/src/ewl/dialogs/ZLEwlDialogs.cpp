@@ -155,10 +155,10 @@ ZLPaintContext *myContext;
 
 void redraw_text()
 {
-	manual_update(true);
+//	manual_update(true);
 	myFbreader->clearTextCaches();
     myFbreader->refreshWindow();
-	manual_update(false);
+//	manual_update(false);
 }
 
 void font_family_choicehandler(int choice, Ewl_Widget *parent)
