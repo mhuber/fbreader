@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi4) stable; urgency=low
+
+  * settings dialogs
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Wed, 24 Sep 2008 02:06:21 +0200
+
 fbreader (0.8.17-1.oi3) stable; urgency=low
 
   * disabled suspending
