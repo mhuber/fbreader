@@ -310,7 +310,7 @@ void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
 		if (((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE) || (myMode == HYPERLINK_NAV_MODE)) && (myModel != 0)) {
 			BookModel::Label label = myModel->label(id);
 			if (!label.Model.isNull()) {
-				if (label.Model == myModel->bookTextModel()) {
+				if ((myMode != FOOTNOTE_MODE) && (label.Model == myModel->bookTextModel())) {
 					bookTextView().gotoParagraph(label.ParagraphNumber);
 				} else {
 					FootnoteView &view = ((FootnoteView&)*myFootnoteView);

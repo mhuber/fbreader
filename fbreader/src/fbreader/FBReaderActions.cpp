@@ -439,8 +439,12 @@ void ShowFootnotes::run() {
 		if(fbreader().getMode() == FBReader::FOOTNOTE_MODE)
 			fbreader().restorePreviousMode();
 	} else {
+		fbreader().setMode(FBReader::FOOTNOTE_MODE);
 		fbreader().tryShowFootnoteView(fbreader().pageFootnotes.at(0), false);
-		fbreader().pageFootnotes.erase(fbreader().pageFootnotes.begin(), fbreader().pageFootnotes.begin() + 1);
+		if(fbreader().pageFootnotes.size() > 1)
+			fbreader().pageFootnotes.erase(fbreader().pageFootnotes.begin(), fbreader().pageFootnotes.begin() + 1);
+		else
+			fbreader().pageFootnotes.clear();
 	}
 }
 
