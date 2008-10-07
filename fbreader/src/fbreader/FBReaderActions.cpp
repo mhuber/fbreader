@@ -76,7 +76,8 @@ ShowOptionsDialogAction::ShowOptionsDialogAction(FBReader &fbreader) : FBAction(
 
 void ShowOptionsDialogAction::run() {
 	FBReader &f = fbreader();
-	ZLEwlOptionsDialog(f);
+	if(f.getMode() != FBReader::HYPERLINK_NAV_MODE)
+		ZLEwlOptionsDialog(f);
 }
 
 ShowContentsAction::ShowContentsAction(FBReader &fbreader) : FBAction(fbreader) {
