@@ -1,3 +1,10 @@
+fbreader (0.8.17-1.oi5) stable; urgency=low
+
+  * new settings
+  * bugfixes
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Tue, 07 Oct 2008 15:06:18 +0200
+
 fbreader (0.8.17-1.oi4) stable; urgency=low
 
   * settings dialogs
