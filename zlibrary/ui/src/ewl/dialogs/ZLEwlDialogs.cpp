@@ -169,6 +169,9 @@ void font_family_choicehandler(int choice, Ewl_Widget *parent)
 {
 	ZLStringOption &option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
 	option.setValue(myContext->fontFamilies().at(choice));
+
+	update_label(parent, 0, myContext->fontFamilies().at(choice).c_str()); 
+
     fini_choicebox(font_family_choicebox);
 
 	redraw_text();
@@ -277,31 +280,37 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 {
 	if (choice == 0) {
 		char **initchoices = (char **)malloc(myContext->fontFamilies().size() * sizeof(char*));
+		char **values = (char **)malloc(myContext->fontFamilies().size() * sizeof(char*));		
 		for(int i = 0; i < myContext->fontFamilies().size(); i++) {
 			asprintf(&initchoices[i], "%d. %s", (i % 8) + 1, myContext->fontFamilies().at(i).c_str());
+			asprintf(&values[i], "");
 		}
 
 		ewl_widget_show(font_family_choicebox =
-				init_choicebox((const char**)initchoices, myContext->fontFamilies().size(),
+				init_choicebox((const char**)initchoices, (const char**)values, myContext->fontFamilies().size(),
 					font_family_choicehandler, parent));
 	} else if (choice == 1) {
 		int count = 11;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
+		char **values = (char **)malloc(count * sizeof(char*));		
 		for(int i = 0; i < count; i++) {		
 			asprintf(&initchoices[i], "%d. %dpt", (i % 8) + 1, i + 8);
+			asprintf(&values[i], "");
 		}
 
 		ewl_widget_show(font_size_choicebox =
-				init_choicebox((const char**)initchoices, count,
+				init_choicebox((const char**)initchoices, (const char**)values, count,
 					font_size_choicehandler, parent));
 	} else if (choice == 2) {
 		int count = 16;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
+		char **values = (char **)malloc(count * sizeof(char*));		
 		for(int i = 0; i < count; i++) {		
 			asprintf(&initchoices[i], "%d. %d%%", (i % 8) + 1, i * 10 + 50);
+			asprintf(&values[i], "");
 		}
 		ewl_widget_show(line_space_choicebox =
-				init_choicebox((const char**)initchoices, count,
+				init_choicebox((const char**)initchoices, (const char**)values, count,
 					line_space_choicehandler, parent));					
 	} else if (choice == 3) {
 		const char *initchoices[] = { 
@@ -311,7 +320,20 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 			"4. Bottom Margin",
 		};
 
-		ewl_widget_show(init_choicebox(initchoices, 4, margins_choicehandler, parent, true));
+		char *m0, *m1, *m2, *m3;
+		FBMargins &margins = FBView::margins();
+		asprintf(&m0, "%d", margins.LeftMarginOption.value());
+		asprintf(&m1, "%d", margins.RightMarginOption.value());
+		asprintf(&m2, "%d", margins.TopMarginOption.value());
+		asprintf(&m3, "%d", margins.BottomMarginOption.value());
+		const char *values[] = { 
+			m0,
+			m1,
+			m2,
+			m3,
+		};
+
+		ewl_widget_show(init_choicebox(initchoices, values, 4, margins_choicehandler, parent, true));
 	} else if (choice == 4) {
 		ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 		ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
@@ -336,6 +358,24 @@ void ZLEwlOptionsDialog(FBReader &f)
 		"5. First Line Indent",
 	};
 
-	ewl_widget_show(init_choicebox(initchoices, 5, options_dialog_choicehandler, w, true));
+	ZLStringOption &ff_option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
+	ZLIntegerRangeOption &fs_option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
+	ZLIntegerOption &lsp_option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
+	ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
+	ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
+	char *fs_option_c, *lsp_option_c, *fl_option_c;
+	asprintf(&fs_option_c, "%d", fs_option.value());
+	asprintf(&lsp_option_c, "%d", lsp_option.value());
+	asprintf(&fl_option_c, "%d", decoration->FirstLineIndentDeltaOption.value());
+
+	const char *values[] = {
+		ff_option.value().c_str(),	
+		fs_option_c,
+		lsp_option_c,
+		"",
+		fl_option_c,
+	};
+
+	ewl_widget_show(init_choicebox(initchoices, values, 5, options_dialog_choicehandler, w, true));
 }
 
