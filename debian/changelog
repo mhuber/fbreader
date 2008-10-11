@@ -1,3 +1,11 @@
+fbreader (0.8.17-1.oi6) stable; urgency=low
+
+  * settings dialog: current values
+  * improved chm navigation
+  * remove obsolete code
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sun, 12 Oct 2008 00:51:16 +0200
+
 fbreader (0.8.17-1.oi5) stable; urgency=low
 
   * new settings
