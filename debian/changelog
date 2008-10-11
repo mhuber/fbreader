@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi7) stable; urgency=low
+
+  * mapped undo action to button 1
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sat, 11 Oct 2008 23:10:32 +0000
+
 fbreader (0.8.17-1.oi6) stable; urgency=low
 
   * settings dialog: current values

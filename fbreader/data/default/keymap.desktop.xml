@@ -8,7 +8,7 @@
 	<binding key="Down" action="largeScrollBackward"/>
 	<binding key="0" action="largeScrollForward"/>
 	<binding key="9" action="largeScrollBackward"/>
-	<binding key="1" action="gotoHome"/>
+	<binding key="1" action="undo"/>
 	<!--	<binding key="&lt;Home&gt;" action="gotoSectionStart"/>
 	<binding key="&lt;End&gt;" action="gotoSectionEnd"/> -->
 	<binding key="Escape" action="cancel"/>
