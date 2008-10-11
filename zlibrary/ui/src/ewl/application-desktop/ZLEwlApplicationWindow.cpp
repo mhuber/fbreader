@@ -41,9 +41,7 @@ static void deleteWindow(Ewl_Widget *w, void *ev, void *data) {
 }
 
 static void handleKeyEvent(Ewl_Widget *w, void *ev, void *data) {
-	busy();
 	((ZLEwlApplicationWindow*)data)->handleKeyEventSlot(ev);
-	set_timer();
 }
 
 static const std::string OPTIONS = "Options";

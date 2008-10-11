@@ -20,9 +20,4 @@
 #ifndef __ZLEWLUTIL_H__
 #define __ZLEWLUTIL_H__
 
-void init_timer();
-void delete_timer();
-void set_timer();
-void busy();
-
 #endif /* __ZLEWLUTIL_H__ */

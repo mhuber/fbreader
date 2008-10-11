@@ -64,8 +64,6 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 	char *s;
 	int n;
 
-	busy();
-
 	e = (Ewl_Event_Key_Down*)ev;
 	w = ewl_widget_name_find("main_win");
 	entry = ewl_widget_name_find("pagenr_entry");
@@ -92,7 +90,6 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 		ewl_widget_destroy(dialog);
 		((GotoPageNumber *)data)->callback(n);
 	}
-	set_timer();
 }
 
 void ZLEwlGotoPageDialog(GotoPageNumber *gpn)

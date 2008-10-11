@@ -77,12 +77,12 @@ void main_loop(ZLApplication *application)
 	xcb_generic_event_t  *e;
 	bool end = false;
 
-	init_timer();
+//	init_timer();
 
 	while (!end) {
-		set_timer();
+//		set_timer();
 		e = xcb_wait_for_event(connection);
-		busy();
+//		busy();
 		if (e) {
 			switch (e->response_type & ~0x80) {
 				case XCB_KEY_RELEASE:
@@ -119,16 +119,13 @@ void main_loop(ZLApplication *application)
 			free (e);
 		}
 	}
-	delete_timer();
+	//delete_timer();
 }
 
 void ZLEwlLibraryImplementation::run(ZLApplication *application) {
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
-	init_timer();
-	set_timer();
 	ewl_main();
 //	main_loop(application);
-	delete_timer();
 	delete application;
 }
