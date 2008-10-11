@@ -1,8 +1,8 @@
 group
 {
 	name: "ewl/box/dlg_optionbox";
-	min: 300 20;
-	max: 300 20;
+	min: 400 20;
+	max: 400 20;
 	parts
 	{
 		part

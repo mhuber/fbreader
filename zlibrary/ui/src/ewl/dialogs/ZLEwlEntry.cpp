@@ -26,6 +26,7 @@ extern void redraw_text();
 typedef struct _entry_info_struct {
 	bool master;
 	entry_handler handler;
+	Ewl_Widget *parent;
 } entry_info_struct;
 
 static void entry_reveal_cb(Ewl_Widget *w, void *ev, void *data) {
@@ -98,6 +99,7 @@ Ewl_Widget *init_entry(char *text, int value, entry_handler handler, Ewl_Widget 
 
 	info->handler = handler;
 	info->master = master;
+	info->parent = parent;
 
 	w = ewl_window_new();
 	ewl_window_title_set(EWL_WINDOW(w), "Entry");
@@ -161,4 +163,13 @@ void fini_entry(Ewl_Widget *win)
 	ewl_widget_destroy(win);
 	if(master)
 		redraw_text();
+}
+
+Ewl_Widget *entry_get_parent(Ewl_Widget *w)
+{
+	entry_info_struct *infostruct;
+	infostruct =
+		(entry_info_struct *) ewl_widget_data_get(w, (void *)"entry_info");
+
+	return infostruct->parent;
 }

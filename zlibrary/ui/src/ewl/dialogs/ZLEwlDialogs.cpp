@@ -170,7 +170,7 @@ void font_family_choicehandler(int choice, Ewl_Widget *parent)
 	ZLStringOption &option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
 	option.setValue(myContext->fontFamilies().at(choice));
 
-	update_label(parent, 0, myContext->fontFamilies().at(choice).c_str()); 
+	update_label(choicebox_get_parent(parent), 0, myContext->fontFamilies().at(choice).c_str());
 
     fini_choicebox(font_family_choicebox);
 
@@ -181,6 +181,11 @@ void font_size_choicehandler(int choice, Ewl_Widget *parent)
 {
 	ZLIntegerRangeOption &option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
 	option.setValue(choice + 8);
+	char *o;
+	asprintf(&o, "%d", option.value());
+	update_label(choicebox_get_parent(parent), 1, o);
+	if(o)
+		free(o);
     fini_choicebox(font_size_choicebox);
 
 	redraw_text();
@@ -190,6 +195,11 @@ void line_space_choicehandler(int choice, Ewl_Widget *parent)
 {
 	ZLIntegerOption &option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
 	option.setValue(choice * 10 + 50);
+	char *o;
+	asprintf(&o, "%d", option.value());
+	update_label(choicebox_get_parent(parent), 2, o);
+	if(o)
+		free(o);
 	fini_choicebox(line_space_choicebox);
 
 	redraw_text();
@@ -197,24 +207,33 @@ void line_space_choicehandler(int choice, Ewl_Widget *parent)
 
 void margin_handler(int nr, int value, Ewl_Widget *parent)
 {
+	char *o;
 	if(value >= 0) {
 		FBMargins &margins = FBView::margins();
 		switch(nr) {
 			case 0:
 				margins.LeftMarginOption.setValue(value);
+				asprintf(&o, "%d", margins.LeftMarginOption.value());
 				break;
 			case 1:
 				margins.RightMarginOption.setValue(value);
+				asprintf(&o, "%d", margins.RightMarginOption.value());
 				break;
 			case 2:
 				margins.TopMarginOption.setValue(value);
+				asprintf(&o, "%d", margins.TopMarginOption.value());
 				break;
 			case 3:
 				margins.BottomMarginOption.setValue(value);
+				asprintf(&o, "%d", margins.BottomMarginOption.value());
 				break;
 			default:
 				return;
 		}
+	}
+	if(o) {
+		update_label(entry_get_parent(parent), nr, o);
+		free(o);
 	}
 
 	fini_entry(margin_option);
@@ -270,6 +289,12 @@ void fl_indent_handler(int value, Ewl_Widget *parent)
 		ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 		ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
 		decoration->FirstLineIndentDeltaOption.setValue(value);
+
+		char *o;
+		asprintf(&o, "%d", value);
+		update_label(entry_get_parent(parent), 4, o);
+		if(o)
+			free(o);
 	}
 	fini_entry(fl_indent_option);
 
@@ -288,7 +313,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 
 		ewl_widget_show(font_family_choicebox =
 				init_choicebox((const char**)initchoices, (const char**)values, myContext->fontFamilies().size(),
-					font_family_choicehandler, parent));
+					font_family_choicehandler, "Font Family", parent));
 	} else if (choice == 1) {
 		int count = 11;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
@@ -300,7 +325,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 
 		ewl_widget_show(font_size_choicebox =
 				init_choicebox((const char**)initchoices, (const char**)values, count,
-					font_size_choicehandler, parent));
+					font_size_choicehandler, "Font Size", parent));
 	} else if (choice == 2) {
 		int count = 16;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
@@ -311,7 +336,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 		}
 		ewl_widget_show(line_space_choicebox =
 				init_choicebox((const char**)initchoices, (const char**)values, count,
-					line_space_choicehandler, parent));					
+					line_space_choicehandler, "Line Spacing", parent));
 	} else if (choice == 3) {
 		const char *initchoices[] = { 
 			"1. Left Margin",
@@ -333,7 +358,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 			m3,
 		};
 
-		ewl_widget_show(init_choicebox(initchoices, values, 4, margins_choicehandler, parent, true));
+		ewl_widget_show(init_choicebox(initchoices, values, 4, margins_choicehandler, "Margins", parent));
 	} else if (choice == 4) {
 		ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 		ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
@@ -376,6 +401,6 @@ void ZLEwlOptionsDialog(FBReader &f)
 		fl_option_c,
 	};
 
-	ewl_widget_show(init_choicebox(initchoices, values, 5, options_dialog_choicehandler, w, true));
+	ewl_widget_show(init_choicebox(initchoices, values, 5, options_dialog_choicehandler, "Settings", w, true));
 }
 

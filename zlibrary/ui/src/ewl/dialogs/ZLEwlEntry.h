@@ -24,6 +24,7 @@
 
 typedef void (*entry_handler)(int value, Ewl_Widget *parent);
 Ewl_Widget *init_entry(char *text, int value, entry_handler handler, Ewl_Widget *parent, bool master = false);
+Ewl_Widget *entry_get_parent(Ewl_Widget *w);
 void fini_entry(Ewl_Widget *win);
 
 #endif
