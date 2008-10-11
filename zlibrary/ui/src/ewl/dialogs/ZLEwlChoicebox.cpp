@@ -310,10 +310,8 @@ void choicebox_destroy_cb(Ewl_Widget * w, void *event, void *data)
 	fini_choicebox(w);
 	Ewl_Widget *win;
 	win = ewl_widget_name_find("main_win");
-	if(win == data) {
+	if(win == data)
 		redraw_text();
-		manual_update(true);
-	}
 }
 
 Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int numchoices,
@@ -322,8 +320,6 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 	Ewl_Widget *win, *vbox, *tempw1, *tempw2, *w, *v1, *v2;
 
 	w = ewl_widget_name_find("main_win");
-	if(parent == w)
-		manual_update(false);
 
 	set_nav_mode(0);
 	choice_info_struct *info =
@@ -491,10 +487,8 @@ void fini_choicebox(Ewl_Widget * win)
 	free(infostruct->values);
 	free(infostruct);
 	ewl_widget_destroy(win);
-	if(master) {
+	if(master)
 		redraw_text();
-		manual_update(true);
-	}
 }
 
 Ewl_Widget *choicebox_get_parent(Ewl_Widget *w)

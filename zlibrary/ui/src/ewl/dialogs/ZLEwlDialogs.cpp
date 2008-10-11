@@ -55,7 +55,6 @@ static void ZLEwlGotoPageDialog_unrealize(Ewl_Widget *w, void *ev, void *data) {
 static void ZLEwlGotoPageDialog_window_close_cb(Ewl_Widget *w, void *ev, void *data)
 {
 	ewl_widget_destroy(w);
-	manual_update(true);
 }
 
 static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
@@ -81,7 +80,6 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 			ewl_widget_hide(dialog);
 			ewl_widget_destroy(dialog);
 			((GotoPageNumber *)data)->callback(-1);
-			manual_update(true);
 		}
 	} else if(!strcmp(e->base.keyname, "Return")) {
 		s = ewl_text_text_get(EWL_TEXT(entry));
@@ -92,7 +90,6 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 
 		ewl_widget_hide(dialog);
 		ewl_widget_destroy(dialog);
-		manual_update(true);
 		((GotoPageNumber *)data)->callback(n);
 	}
 	set_timer();
@@ -103,7 +100,6 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 	Ewl_Widget *w, *label, *dialog, *entry;
 	Ewl_Widget *entry_hbox;
 
-	manual_update(false);
 
 //	ewl_theme_theme_set("./oitheme.edj");
 
@@ -159,10 +155,8 @@ ZLPaintContext *myContext;
 
 void redraw_text()
 {
-//	manual_update(true);
 	myFbreader->clearTextCaches();
     myFbreader->refreshWindow();
-//	manual_update(false);
 }
 
 void font_family_choicehandler(int choice, Ewl_Widget *parent)

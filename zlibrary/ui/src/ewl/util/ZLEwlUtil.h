@@ -20,8 +20,6 @@
 #ifndef __ZLEWLUTIL_H__
 #define __ZLEWLUTIL_H__
 
-void manual_update(bool enable);
-
 void init_timer();
 void delete_timer();
 void set_timer();

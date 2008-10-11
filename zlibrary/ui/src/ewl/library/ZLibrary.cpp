@@ -123,8 +123,6 @@ void main_loop(ZLApplication *application)
 }
 
 void ZLEwlLibraryImplementation::run(ZLApplication *application) {
-	manual_update(true);
-
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
 	init_timer();
@@ -133,6 +131,4 @@ void ZLEwlLibraryImplementation::run(ZLApplication *application) {
 //	main_loop(application);
 	delete_timer();
 	delete application;
-
-	manual_update(false);
 }

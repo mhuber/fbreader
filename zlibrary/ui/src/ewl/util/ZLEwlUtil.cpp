@@ -22,20 +22,6 @@
 #include <iostream>
 #include <csignal>
 
-void manual_update(bool enable)
-{
-	FILE *manual_refresh;
-
-	manual_refresh = fopen("/sys/class/graphics/fb0/manual_refresh", "w");
-	if(manual_refresh) {
-		if(enable)
-			fputs("1", manual_refresh);
-		else
-			fputs("0", manual_refresh);
-		fclose(manual_refresh);
-	}
-}
-
 bool idle;
 timer_t t_id;
 

@@ -345,7 +345,6 @@ void FBReader::highlightCurrentLink()
 void FBReader::startNavigationMode()
 {
 	if(!pageLinks.empty() && ((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE))) {
-		manual_update(false);
 		setMode(HYPERLINK_NAV_MODE);
 		currentLinkIdx = 0;
 		highlightCurrentLink();
@@ -496,7 +495,6 @@ void FBReader::showBookTextView() {
 void FBReader::restorePreviousMode() {
 	if(myMode == HYPERLINK_NAV_MODE) {
 		invertRegion(pageLinks.at(currentLinkIdx), true);
-		manual_update(true);
 	}
 
 	setMode(myPreviousMode);
