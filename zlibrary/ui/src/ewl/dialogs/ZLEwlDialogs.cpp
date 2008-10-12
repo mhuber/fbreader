@@ -173,7 +173,7 @@ void font_size_choicehandler(int choice, Ewl_Widget *parent)
 	ZLIntegerRangeOption &option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
 	option.setValue(choice + 8);
 	char *o;
-	asprintf(&o, "%d", option.value());
+	asprintf(&o, "%dpt", option.value());
 	update_label(choicebox_get_parent(parent), 1, o);
 	if(o)
 		free(o);
@@ -187,7 +187,7 @@ void line_space_choicehandler(int choice, Ewl_Widget *parent)
 	ZLIntegerOption &option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
 	option.setValue(choice * 10 + 50);
 	char *o;
-	asprintf(&o, "%d", option.value());
+	asprintf(&o, "%d%%", option.value());
 	update_label(choicebox_get_parent(parent), 2, o);
 	if(o)
 		free(o);
@@ -380,8 +380,8 @@ void ZLEwlOptionsDialog(FBReader &f)
 	ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 	ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
 	char *fs_option_c, *lsp_option_c, *fl_option_c;
-	asprintf(&fs_option_c, "%d", fs_option.value());
-	asprintf(&lsp_option_c, "%d", lsp_option.value());
+	asprintf(&fs_option_c, "%dpt", fs_option.value());
+	asprintf(&lsp_option_c, "%d%%", lsp_option.value());
 	asprintf(&fl_option_c, "%d", decoration->FirstLineIndentDeltaOption.value());
 
 	const char *values[] = {
