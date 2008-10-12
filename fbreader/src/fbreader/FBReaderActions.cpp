@@ -198,32 +198,34 @@ void ScrollingAction::run() {
 	shared_ptr<ZLView> view = fbreader().currentView();
 	if (!view.isNull() && ((delay < 0) || (delay >= myOptions.DelayOption.value()))) {
 
-		// jump to next section
-		ZLTextWordCursor endC = fbreader().bookTextView().endCursor();
-		if(myForward
-				&& endC.paragraphCursor().isLast()
-				&& endC.isEndOfParagraph()) {
-			fbreader().doAction(ActionCode::GOTO_NEXT_TOC_SECTION);
-			return;
-		}
+		if(fbreader().getMode() == FBReader::BOOK_TEXT_MODE) {
+			// jump to next section
+			ZLTextWordCursor endC = fbreader().bookTextView().endCursor();
+			if(myForward
+					&& endC.paragraphCursor().isLast()
+					&& endC.isEndOfParagraph()) {
+				fbreader().doAction(ActionCode::GOTO_NEXT_TOC_SECTION);
+				return;
+			}
 
-		// jump to previous section
-		ZLTextWordCursor startC = fbreader().bookTextView().startCursor();
-		ContentsView &contentsView = (ContentsView&)*fbreader().myContentsView;
-		const ContentsModel &contentsModel = (const ContentsModel&)*contentsView.model();
-		size_t current = contentsView.currentTextViewParagraph(false);
-		if(!myForward
+			// jump to previous section
+			ZLTextWordCursor startC = fbreader().bookTextView().startCursor();
+			ContentsView &contentsView = (ContentsView&)*fbreader().myContentsView;
+			const ContentsModel &contentsModel = (const ContentsModel&)*contentsView.model();
+			size_t current = contentsView.currentTextViewParagraph(false);
+			if(!myForward
 					&& !startC.isNull()
 					&& startC.isStartOfParagraph()
 					&& startC.paragraphCursor().isFirst()
 					&& (current > 0)) {
 
-			if(contentsModel.reference((const ZLTextTreeParagraph*)contentsModel[current]) == -1)
-				return;
+				if(contentsModel.reference((const ZLTextTreeParagraph*)contentsModel[current]) == -1)
+					return;
 
-			fbreader().doAction(ActionCode::GOTO_PREVIOUS_TOC_SECTION);
-			fbreader().bookTextView().scrollToEndOfText();
-			return;
+				fbreader().doAction(ActionCode::GOTO_PREVIOUS_TOC_SECTION);
+				fbreader().bookTextView().scrollToEndOfText();
+				return;
+			}
 		}
 
 		ZLTextView::ScrollingMode oType = (ZLTextView::ScrollingMode)myOptions.ModeOption.value();
