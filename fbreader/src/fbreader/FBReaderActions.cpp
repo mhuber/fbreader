@@ -219,7 +219,7 @@ void ScrollingAction::run() {
 					&& startC.paragraphCursor().isFirst()
 					&& (current > 0)) {
 
-				if(contentsModel.reference((const ZLTextTreeParagraph*)contentsModel[current]) == -1)
+				if(current == -1 || contentsModel.reference((const ZLTextTreeParagraph*)contentsModel[current]) == -1)
 					return;
 
 				fbreader().doAction(ActionCode::GOTO_PREVIOUS_TOC_SECTION);
