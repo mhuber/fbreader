@@ -35,11 +35,13 @@ protected:
 	bool fillBuffer();
 
 protected:
-	bool myIsCompressed;
+	int myCompressionMethod;
 
 	size_t myMaxRecordIndex;
 	unsigned short myMaxRecordSize;
 	size_t myRecordIndex;
+	unsigned long myHuffOffset;
+	unsigned long myHuffNumber;
 };
 
 #endif /* __PALMDOCSTREAM_H__ */

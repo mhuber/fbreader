@@ -37,11 +37,11 @@ bool MobipocketStream::open() {
 
 	unsigned short version;
 	PdbUtil::readUnsignedShort(*myBase, version);
-	if ((version != 1) && (version != 2)) {
+	if ((version != 1) && (version != 2) && (version != 17480)) {
 		myErrorCode = ERROR_COMPRESSION;
 		return false;
 	}
-	myIsCompressed = (version == 2);
+	myCompressionMethod = version;
 	myBase->seek(6, false);
 	unsigned short records;
 	PdbUtil::readUnsignedShort(*myBase, records);
@@ -54,6 +54,12 @@ bool MobipocketStream::open() {
 	unsigned short reserved2;
 	PdbUtil::readUnsignedShort(*myBase, reserved2);
 	myBuffer = new char[myMaxRecordSize];
+
+	if (version == 17480) {
+		myBase->seek(0x62, false);
+		PdbUtil::readUnsignedLong(*myBase, myHuffOffset);
+		PdbUtil::readUnsignedLong(*myBase, myHuffNumber);
+	}
 
 	myRecordIndex = 0;
 

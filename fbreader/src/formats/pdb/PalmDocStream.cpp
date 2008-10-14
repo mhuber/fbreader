@@ -21,6 +21,7 @@
 
 #include "PalmDocStream.h"
 #include "DocDecompressor.h"
+#include "HuffDecompressor.h"
 
 PalmDocStream::PalmDocStream(ZLFile &file) : PdbStream(file) {
 }
@@ -36,7 +37,7 @@ bool PalmDocStream::open() {
 
 	unsigned short version;
 	PdbUtil::readUnsignedShort(*myBase, version);
-	myIsCompressed = (version == 2);
+	myCompressionMethod = version;
 	myBase->seek(6, false);
 	unsigned short records;
 	PdbUtil::readUnsignedShort(*myBase, records);
@@ -53,15 +54,24 @@ bool PalmDocStream::open() {
 }
 
 bool PalmDocStream::fillBuffer() {
+
+	HuffDecompressor *huff=NULL;
+
+	if (myCompressionMethod == 17480) {
+		huff = new HuffDecompressor(myBase, myHeader, myHuffOffset, myHuffNumber);
+	}
+
 	while (myBufferOffset == myBufferLength) {
 		if (myRecordIndex + 1 > myMaxRecordIndex) {
 			return false;
 		}
 		++myRecordIndex;
 		size_t currentOffset = myHeader.Offsets[myRecordIndex];
+/*
 		if (currentOffset < myBase->offset()) {
 			return false;
 		}
+*/
 		myBase->seek(currentOffset, true);
 		size_t nextOffset =
 			(myRecordIndex + 1 < myHeader.Offsets.size()) ?
@@ -69,13 +79,17 @@ bool PalmDocStream::fillBuffer() {
 		if (nextOffset < currentOffset) {
 			return false;
 		}
-		if (myIsCompressed) {
+		if (myCompressionMethod == 2) {
 			myBufferLength = DocDecompressor().decompress(*myBase, myBuffer, nextOffset - currentOffset, myMaxRecordSize);
-		} else {
+		} else if (myCompressionMethod == 1) {
 			myBase->read(myBuffer, nextOffset - currentOffset);
 			myBufferLength = nextOffset - currentOffset;
+		} else {
+			myBufferLength = huff->decompress(*myBase, myBuffer, nextOffset - currentOffset, myMaxRecordSize);
 		}
+
 		myBufferOffset = 0;
 	}
+	if (huff) delete huff;
 	return true;
 }
