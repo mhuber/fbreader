@@ -49,6 +49,9 @@ void XMLConfig::load() {
 	for (std::map<std::string,XMLConfigGroup*>::iterator it = myDefaultGroups.begin(); it != myDefaultGroups.end(); ++it) {
 		it->second = new XMLConfigGroup(*it->second);
 	}
+	if (myDelta == 0) {
+		myDelta = new XMLConfigDelta();
+	}
 	shared_ptr<ZLDir> configDir = ZLFile(configDirName()).directory(false);
 	if (configDir.isNull()) {
 		return;
@@ -60,9 +63,6 @@ void XMLConfig::load() {
 		if (configFile.extension() == "xml") {
 			XMLConfigReader(*this, configFile.name(true)).readDocument(configFile.inputStream());
 		}
-	}
-	if (myDelta == 0) {
-		myDelta = new XMLConfigDelta();
 	}
 	XMLConfigReader(*this, UNKNOWN_CATEGORY).readDocument(configDir->itemPath(CHANGES_FILE));
 }
