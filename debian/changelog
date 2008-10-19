@@ -1,3 +1,10 @@
+fbreader (0.8.17-1.oi10) stable; urgency=low
+
+  * fixed pagination issue
+  * fixed saving config files 
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sun, 19 Oct 2008 12:13:04 +0200
+
 fbreader (0.8.17-1.oi9) stable; urgency=low
 
   * fixed section navigation issue (again)
