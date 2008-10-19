@@ -119,7 +119,7 @@ void choicebox_next_page(Ewl_Widget * widget)
 	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(widget), 0);
 	Ewl_Widget *tempw1, *v1, *v2;
 	if (infostruct->numchoices < noptions
-			|| (infostruct->curindex + noptions + 1) >= infostruct->numchoices)
+			|| (infostruct->curindex + noptions) >= infostruct->numchoices)
 		return;
 	infostruct->curindex += noptions;
 
