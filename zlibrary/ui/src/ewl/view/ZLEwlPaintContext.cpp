@@ -96,7 +96,11 @@ void ZLEwlPaintContext::fillFamiliesList(std::vector<std::string> &families) con
 		int nFamilies;
 		pango_context_list_families(myContext, &pangoFamilies, &nFamilies);
 		for (int i = 0; i < nFamilies; ++i) {
-			families.push_back(pango_font_family_get_name(pangoFamilies[i]));
+			const char *name = pango_font_family_get_name(pangoFamilies[i]);
+			if(strncmp(name, "Monospace", 9)
+				&& strncmp(name, "Serif", 5)
+				&& strncmp(name, "Sans", 4))
+				families.push_back(name);
 		}
 		std::sort(families.begin(), families.end());
 		g_free(pangoFamilies);
