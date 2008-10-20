@@ -391,7 +391,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 	ewl_label_text_set(EWL_LABEL(tempw2), header);
 	ewl_widget_show(tempw2);
 
-	for(int i = 0; i < shownum + 1; i++) {
+	for(int i = 0; i < 9 /*shownum + 1*/; i++) {
 
 		tempw1 = ewl_hbox_new();
 		ewl_container_child_append(EWL_CONTAINER(vbox), tempw1);
@@ -421,7 +421,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 			if (get_nav_mode() == 1 && i == 0)
 				ewl_widget_state_set(tempw2, "select", EWL_STATE_PERSISTENT);
 			ewl_label_text_set(EWL_LABEL(tempw2), info->choices[i]);
-		} else {
+		} else if(i == 8) {
 			ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
 					"ewl/label/dlg_label");
@@ -450,8 +450,8 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
 					"ewl/label/dlg_optionlabel/text");
 			ewl_label_text_set(EWL_LABEL(tempw2), info->values[i]);
+			ewl_widget_show(tempw2);
 		}
-		ewl_widget_show(tempw2);
 	}
 	return win;
 }
