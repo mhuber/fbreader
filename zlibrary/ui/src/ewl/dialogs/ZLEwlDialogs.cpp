@@ -188,7 +188,7 @@ void line_space_choicehandler(int choice, Ewl_Widget *parent)
 	option.setValue(choice * 10 + 50);
 	char *o;
 	asprintf(&o, "%d%%", option.value());
-	update_label(choicebox_get_parent(parent), 2, o);
+	update_label(choicebox_get_parent(parent), 3, o);
 	if(o)
 		free(o);
 	fini_choicebox(line_space_choicebox);
@@ -283,7 +283,7 @@ void fl_indent_handler(int value, Ewl_Widget *parent)
 
 		char *o;
 		asprintf(&o, "%d", value);
-		update_label(entry_get_parent(parent), 4, o);
+		update_label(entry_get_parent(parent), 5, o);
 		if(o)
 			free(o);
 	}
