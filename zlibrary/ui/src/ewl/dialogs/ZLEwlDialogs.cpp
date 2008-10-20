@@ -171,7 +171,7 @@ void font_family_choicehandler(int choice, Ewl_Widget *parent)
 void font_size_choicehandler(int choice, Ewl_Widget *parent)
 {
 	ZLIntegerRangeOption &option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
-	option.setValue(choice + 8);
+	option.setValue(choice + 6);
 	char *o;
 	asprintf(&o, "%dpt", option.value());
 	update_label(choicebox_get_parent(parent), 1, o);
@@ -306,11 +306,11 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 				init_choicebox((const char**)initchoices, (const char**)values, myContext->fontFamilies().size(),
 					font_family_choicehandler, "Font Family", parent));
 	} else if (choice == 1) {
-		int count = 11;
+		int count = 13;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
 		char **values = (char **)malloc(count * sizeof(char*));		
 		for(int i = 0; i < count; i++) {		
-			asprintf(&initchoices[i], "%d. %dpt", (i % 8) + 1, i + 8);
+			asprintf(&initchoices[i], "%d. %dpt", (i % 8) + 1, i + 6);
 			asprintf(&values[i], "");
 		}
 
