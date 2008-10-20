@@ -391,16 +391,6 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 	ewl_label_text_set(EWL_LABEL(tempw2), header);
 	ewl_widget_show(tempw2);
 
-	tempw2 = ewl_label_new();
-	ewl_container_child_append(EWL_CONTAINER(v2), tempw2);
-	ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
-			"ewl/label/dlg_label");
-	ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
-			"ewl/label/dlg_label/text");
-	ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
-	ewl_label_text_set(EWL_LABEL(tempw2), "");
-	ewl_widget_show(tempw2);
-
 	for(int i = 0; i < shownum + 1; i++) {
 
 		tempw1 = ewl_hbox_new();
@@ -420,13 +410,6 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 		ewl_object_fill_policy_set(EWL_OBJECT(v1), EWL_FLAG_FILL_HFILL);
 		ewl_widget_show(v1);
 
-		v2 = ewl_vbox_new();
-		ewl_container_child_append(EWL_CONTAINER(tempw1), v2);
-		ewl_theme_data_str_set(EWL_WIDGET(v2), "/hbox/group",
-				"ewl/box/dlg_optionbox");
-		ewl_object_fill_policy_set(EWL_OBJECT(v2), EWL_FLAG_FILL_HFILL);
-		ewl_widget_show(v2);
-
 		tempw2 = ewl_label_new();
 		ewl_container_child_append(EWL_CONTAINER(v1), tempw2);
 		ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
@@ -439,6 +422,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 				ewl_widget_state_set(tempw2, "select", EWL_STATE_PERSISTENT);
 			ewl_label_text_set(EWL_LABEL(tempw2), info->choices[i]);
 		} else {
+			ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
 					"ewl/label/dlg_label");
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
@@ -450,21 +434,22 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 		}
 		ewl_widget_show(tempw2);
 
-		tempw2 = ewl_label_new();
-		ewl_container_child_append(EWL_CONTAINER(v2), tempw2);
-		ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
 		if(i < shownum) { 
+			v2 = ewl_vbox_new();
+			ewl_container_child_append(EWL_CONTAINER(tempw1), v2);
+			ewl_theme_data_str_set(EWL_WIDGET(v2), "/hbox/group",
+					"ewl/box/dlg_optionbox");
+			ewl_object_fill_policy_set(EWL_OBJECT(v2), EWL_FLAG_FILL_HFILL);
+			ewl_widget_show(v2);
+
+			tempw2 = ewl_label_new();
+			ewl_container_child_append(EWL_CONTAINER(v2), tempw2);
+			ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
 					"ewl/label/dlg_optionlabel");
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
 					"ewl/label/dlg_optionlabel/text");
 			ewl_label_text_set(EWL_LABEL(tempw2), info->values[i]);
-		} else {
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
-					"ewl/label/dlg_label");
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
-					"ewl/label/dlg_label/text");
-			ewl_label_text_set(EWL_LABEL(tempw2), "");
 		}
 		ewl_widget_show(tempw2);
 	}

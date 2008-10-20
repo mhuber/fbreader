@@ -318,6 +318,11 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 				init_choicebox((const char**)initchoices, (const char**)values, count,
 					font_size_choicehandler, "Font Size", parent));
 	} else if (choice == 2) {
+		ZLBooleanOption &fbold_option = ZLTextStyleCollection::instance().baseStyle().BoldOption;
+		fbold_option.setValue(fbold_option.value() ? false : true);
+		update_label(parent, 2, fbold_option.value() ? "On" : "Off");
+		redraw_text();
+	} else if (choice == 3) {
 		int count = 16;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
 		char **values = (char **)malloc(count * sizeof(char*));		
@@ -328,7 +333,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 		ewl_widget_show(line_space_choicebox =
 				init_choicebox((const char**)initchoices, (const char**)values, count,
 					line_space_choicehandler, "Line Spacing", parent));
-	} else if (choice == 3) {
+	} else if (choice == 4) {
 		const char *initchoices[] = { 
 			"1. Left Margin",
 			"2. Right Margin",
@@ -350,7 +355,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
 		};
 
 		ewl_widget_show(init_choicebox(initchoices, values, 4, margins_choicehandler, "Margins", parent));
-	} else if (choice == 4) {
+	} else if (choice == 5) {
 		ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 		ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
 
@@ -369,13 +374,15 @@ void ZLEwlOptionsDialog(FBReader &f)
 	const char *initchoices[] = { 
 		"1. Font Family",
 		"2. Font Size",
-		"3. Line Spacing",
-		"4. Margins",
-		"5. First Line Indent",
+		"3. Bold",
+		"4. Line Spacing",
+		"5. Margins",
+		"6. First Line Indent",
 	};
 
 	ZLStringOption &ff_option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
 	ZLIntegerRangeOption &fs_option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
+	ZLBooleanOption &fbold_option = ZLTextStyleCollection::instance().baseStyle().BoldOption;
 	ZLIntegerOption &lsp_option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
 	ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 	ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
@@ -387,11 +394,12 @@ void ZLEwlOptionsDialog(FBReader &f)
 	const char *values[] = {
 		ff_option.value().c_str(),	
 		fs_option_c,
+		fbold_option.value() ? "On" : "Off",
 		lsp_option_c,
 		"",
 		fl_option_c,
 	};
 
-	ewl_widget_show(init_choicebox(initchoices, values, 5, options_dialog_choicehandler, "Settings", w, true));
+	ewl_widget_show(init_choicebox(initchoices, values, 6, options_dialog_choicehandler, "Settings", w, true));
 }
 
