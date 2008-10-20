@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi11) stable; urgency=low
+
+  * some improvements
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Tue, 21 Oct 2008 00:49:59 +0200
+
 fbreader (0.8.17-1.oi10) stable; urgency=low
 
   * fixed pagination issue
