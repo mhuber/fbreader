@@ -146,6 +146,10 @@ size_t ZLTextView::PositionIndicator::sizeOfTextBeforeCursor() const {
 	}
 }
 
+int ZLTextView::PositionIndicator::textPosition() const {
+	return 100 * (1 + sizeOfTextBeforeCursor()) / (1 + sizeOfTextBeforeParagraph(endTextIndex()));
+}
+
 std::string ZLTextView::PositionIndicator::textPositionString() const {
 	std::string buffer;
 	ZLStringUtil::appendNumber(buffer, 1 + sizeOfTextBeforeCursor() / 2048);

@@ -62,6 +62,7 @@ public:
 
 		virtual void draw();
 		bool onStylusPress(int x, int y);
+		int textPosition() const;
 
 	protected:
 		const ZLTextView &textView() const;
@@ -176,6 +177,7 @@ protected:
 	bool empty() const;
 
 	virtual shared_ptr<PositionIndicator> createPositionIndicator(const ZLTextPositionIndicatorInfo&);
+	shared_ptr<ZLTextView::PositionIndicator> positionIndicator();
 
 	virtual int leftMargin() const = 0;
 	virtual int rightMargin() const = 0;
@@ -215,7 +217,7 @@ private:
 
 	std::vector<size_t>::const_iterator nextBreakIterator() const;
 
-	shared_ptr<ZLTextView::PositionIndicator> positionIndicator();
+//	shared_ptr<ZLTextView::PositionIndicator> positionIndicator();
 
 	int viewWidth() const;
 	int viewHeight() const;

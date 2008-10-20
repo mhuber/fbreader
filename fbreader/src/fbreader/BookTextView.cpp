@@ -33,6 +33,7 @@
 #include "../bookmodel/BookModel.h"
 #include "../external/ProgramCollection.h"
 
+static const std::string POSITION_OPTION_NAME = "Position";
 static const std::string PARAGRAPH_OPTION_NAME = "Paragraph";
 static const std::string WORD_OPTION_NAME = "Word";
 static const std::string CHAR_OPTION_NAME = "Char";
@@ -104,6 +105,7 @@ void BookTextView::saveState() {
 		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, CHAR_OPTION_NAME, 0).setValue(cursor.charNumber());
 		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, BUFFER_SIZE, 0).setValue(myPositionStack.size());
 		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, POSITION_IN_BUFFER, 0).setValue(myCurrentPointInStack);
+		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, POSITION_OPTION_NAME, 0).setValue(positionIndicator()->textPosition());
 
 		for (unsigned int i = 0; i < myPositionStack.size(); ++i) {
 			std::string bufferParagraph = BUFFER_PARAGRAPH_PREFIX;
