@@ -85,7 +85,11 @@ ZLEwlApplicationWindow::~ZLEwlApplicationWindow() {
 void ZLEwlApplicationWindow::handleKeyEventSlot(void *ev) {
 	Ewl_Event_Key_Up *e;
 	e = (Ewl_Event_Key_Up *)ev;
-	application().doActionByKey(e->base.keyname);
+
+	if(e->base.modifiers & EWL_KEY_MODIFIER_ALT)
+		application().doActionByKey((std::string("Alt+") + e->base.keyname).c_str());
+	else
+		application().doActionByKey(e->base.keyname);
 }
 
 void ZLEwlApplicationWindow::setFullscreen(bool fullscreen) {
