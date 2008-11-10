@@ -219,6 +219,7 @@ private:
 	void addEntry(char *address);
 
 private:
+public:
 	char *myFirstEntryAddress;
 	size_t myEntryNumber;
 

@@ -28,9 +28,12 @@
 #include <cstring>
 
 #include "../util/ZLEwlUtil.h"
+#include "../../../../../fbreader/src/fbreader/FBReader.h"
 #include "../../../../../fbreader/src/fbreader/FBReaderActions.h"
 #include "../../../../../zlibrary/text/src/view/ZLTextStyle.h"
 #include "../../../../../fbreader/src/fbreader/FBView.h"
+#include "../../../../../fbreader/src/bookmodel/BookModel.h"
+#include "../../../../../fbreader/src/fbreader/BookTextView.h"
 
 static void ZLEwlGotoPageDialog_reveal(Ewl_Widget *w, void *ev, void *data) {
 	ewl_window_move(EWL_WINDOW(w), (600 - CURRENT_W(w)) / 2, (800 - CURRENT_H(w)) / 2);
@@ -403,3 +406,115 @@ void ZLEwlOptionsDialog(FBReader &f)
 	ewl_widget_show(init_choicebox(initchoices, values, 6, options_dialog_choicehandler, "Settings", w, true));
 }
 
+ZLTextTreeParagraph *curTOCParent;
+
+void toc_choicehandler(int choice, Ewl_Widget *parent)
+{
+	Ewl_Widget *w = ewl_widget_name_find("main_win");
+
+	ZLTextTreeParagraph *selEntry;
+	std::vector<ZLTextTreeParagraph*> list;
+	ContentsModel &cm = (ContentsModel&)*myFbreader->myModel->contentsModel();
+
+	if(curTOCParent != cm.myRoot) {
+		if(choice == 0)
+			selEntry = curTOCParent->parent();
+		else
+			selEntry = curTOCParent->children().at(choice - 1);
+	} else {
+		selEntry = curTOCParent->children().at(choice);
+	}
+
+	list = selEntry->children();
+	if(list.empty()) {
+		fini_choicebox(parent);
+		myFbreader->bookTextView().gotoParagraph(cm.reference(selEntry));
+		myFbreader->refreshWindow();
+		return;
+	}
+
+	curTOCParent = selEntry;
+
+	char **initchoices = (char **)malloc((list.size() + 1) * sizeof(char*));
+	char **values = (char **)malloc((list.size() + 1) * sizeof(char*));
+
+	int cnt;
+	if(selEntry != cm.myRoot) {
+		asprintf(&initchoices[0], "1. ..");
+		asprintf(&values[0], "");
+		cnt = 1;
+	} else {
+		cnt = 0;
+	}
+
+	short len;
+	char *p;
+	for(int i = 0; i < list.size(); i++) {
+		p = list.at(i)->myFirstEntryAddress;
+
+		len = 0;
+		memcpy(&len, p + 3, sizeof(short));
+		char *t = (char*)malloc((len + 1) * sizeof(char));
+		bzero(t, len + 1);
+		memcpy(t, p + 7, len);
+
+		if(list.at(i)->children().empty())
+			asprintf(&initchoices[cnt], "%d. %s", cnt % 8 + 1, t);
+		else
+			asprintf(&initchoices[cnt], "%d. + %s", cnt % 8 + 1, t);
+		free(t);
+
+		asprintf(&values[cnt], "");
+		cnt++;
+	}
+
+	fini_choicebox(parent);
+	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
+}
+
+void ZLEwlTOCDialog(FBReader &f)
+{
+	Ewl_Widget *w = ewl_widget_name_find("main_win");
+
+	myFbreader = &f;
+
+	int cnt = 0;
+	ContentsModel &cm = (ContentsModel&)*myFbreader->myModel->contentsModel();
+	for(int i = 0; i < cm.paragraphsNumber(); i++)
+		if(((ZLTextTreeParagraph*)cm[i])->parent() == cm.myRoot)
+			cnt++;
+
+	char **initchoices = (char **)malloc(cnt * sizeof(char*));
+	char **values = (char **)malloc(cnt * sizeof(char*));
+
+
+	cnt = 0;
+	short len;
+	char *p;
+	for(int i = 0; i < cm.paragraphsNumber(); i++) {
+		if(((ZLTextTreeParagraph*)cm[i])->parent() == cm.myRoot) {
+			p = ((ZLTextParagraph*)cm[i])->myFirstEntryAddress;
+
+			len = 0;
+			memcpy(&len, p + 3, sizeof(short));
+			char *t = (char*)malloc((len + 1) * sizeof(char));
+			bzero(t, len + 1);
+			memcpy(t, p + 7, len);
+
+			std::vector<ZLTextTreeParagraph*> vpar = ((ZLTextTreeParagraph*)cm[i])->children();
+
+			if(vpar.empty())
+				asprintf(&initchoices[cnt], "%d. %s", cnt % 8 + 1, t);
+			else
+				asprintf(&initchoices[cnt], "%d. + %s", cnt % 8 + 1, t);
+			free(t);
+
+			asprintf(&values[cnt], "");
+			cnt++;
+		}
+	}
+
+
+	curTOCParent = cm.myRoot;
+	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
+}

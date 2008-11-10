@@ -108,6 +108,7 @@ public:
 	void selectParagraph(size_t index) const;
 
 private:
+public:
 	ZLTextTreeParagraph *myRoot;
 };
 

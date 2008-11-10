@@ -92,7 +92,9 @@ bool ShowContentsAction::isVisible() {
 }
 
 void ShowContentsAction::run() {
-	fbreader().setMode(FBReader::CONTENTS_MODE);
+//	fbreader().setMode(FBReader::CONTENTS_MODE);
+	FBReader &f = fbreader();
+	ZLEwlTOCDialog(f);
 }
 
 AddBookAction::AddBookAction(FBReader &fbreader) : FBAction(fbreader) {
