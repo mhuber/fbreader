@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <keymap>
 	<binding key="Return" action="preferences"/> 
-	<!--	<binding key="&lt;LeftArrow&gt;" action="undo"/>
-	<binding key="&lt;RightArrow&gt;" action="redo"/> -->
 	<binding key="7" action="toc"/>
 	<binding key="Up" action="largeScrollForward"/>
 	<binding key="Down" action="largeScrollBackward"/>
 	<binding key="0" action="largeScrollForward"/>
 	<binding key="9" action="largeScrollBackward"/>
 	<binding key="1" action="undo"/>
-	<!--	<binding key="&lt;Home&gt;" action="gotoSectionStart"/>
-	<binding key="&lt;End&gt;" action="gotoSectionEnd"/> -->
+	<binding key="Alt+1" action="redo"/>
 	<binding key="Escape" action="cancel"/>
 	<binding key="+" action="increaseFont"/>
 	<binding key="-" action="decreaseFont"/>
@@ -18,6 +15,8 @@
 	<!--	<binding key="6" action="bookInfo"/> -->
 	<binding key="5" action="nextTOCSection"/>
 	<binding key="4" action="previousTOCSection"/>
+	<binding key="Alt+4" action="gotoSectionStart"/>
+	<binding key="Alt+5" action="gotoSectionEnd"/>
 	<binding key="2" action="gotoPageNumber"/>
 	<binding key="6" action="showFootnotes"/>
 	<binding key="8" action="hyperlinkNavStart"/>
