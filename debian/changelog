@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi13) stable; urgency=low
+
+  * TOC
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Wed, 12 Nov 2008 00:02:04 +0000
+
 fbreader (0.8.17-1.oi12) stable; urgency=low
 
   * fixed error in the settings dialog
