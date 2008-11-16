@@ -23,14 +23,19 @@ static void _key_handler(Ewl_Widget* w, void *event, void *context)
 
     const char* k = e->base.keyname;
 
-#define HANDLE_ITEM(h, params) { if(handler_info->h) (*handler_info->h)(w,params);}
+#define HANDLE_ITEM(h, params, lp) { if(handler_info->h) (*handler_info->h)(w,params, lp);}
 #define HANDLE_KEY(h) {if(handler_info->h) (*handler_info->h)(w);}
     if(!strcmp(k, "Return")) {
         if(nav_mode == 1)            HANDLE_KEY(nav_sel_handler)
         else                         HANDLE_KEY(ok_handler)
     }
     else if(!strcmp(k, "Escape"))    HANDLE_KEY(esc_handler)
-    else if (isdigit(k[0]) && !k[1]) HANDLE_ITEM(item_handler, k[0]-'0')
+    else if (isdigit(k[0]) && !k[1]) {
+		bool lp = false;
+		if(e->base.modifiers & EWL_KEY_MODIFIER_ALT)
+			lp = true;
+		HANDLE_ITEM(item_handler, k[0]-'0', lp)
+	}
     else if (!strcmp(k,"Up")) {
         if(nav_mode == 1)            HANDLE_KEY(nav_up_handler)
         else                         HANDLE_KEY(nav_right_handler)

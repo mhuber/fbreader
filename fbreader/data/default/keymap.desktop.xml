@@ -11,7 +11,7 @@
 	<binding key="Escape" action="cancel"/>
 	<binding key="+" action="increaseFont"/>
 	<binding key="-" action="decreaseFont"/>
-	<binding key="3" action="toggleIndicator"/>
+	<binding key="Alt+2" action="toggleIndicator"/>
 	<!--	<binding key="6" action="bookInfo"/> -->
 	<binding key="5" action="nextTOCSection"/>
 	<binding key="4" action="previousTOCSection"/>
@@ -20,4 +20,6 @@
 	<binding key="2" action="gotoPageNumber"/>
 	<binding key="6" action="showFootnotes"/>
 	<binding key="8" action="hyperlinkNavStart"/>
+	<binding key="3" action="addBookmark"/>
+	<binding key="Alt+3" action="showBookmarks"/>
 </keymap>

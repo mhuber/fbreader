@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,11 @@
  * 02110-1301, USA.
  */
 
-#include "ZLOptions.h"
+#ifndef ZLEWLMESSAGE_H
+#define ZLEWLMESSAGE_H_H
 
-const ZLCategoryKey ZLCategoryKey::EMPTY("");
-const ZLCategoryKey ZLCategoryKey::LOOK_AND_FEEL("ui");
-const ZLCategoryKey ZLCategoryKey::CONFIG("options");
-const ZLCategoryKey ZLCategoryKey::STATE("state");
-const ZLCategoryKey ZLCategoryKey::BOOKMARKS("bookmarks");
-const ZLCategoryKey ZLCategoryKey::SYSTEM("system");
+#include <Ewl.h>
 
-ZLCategoryKey::ZLCategoryKey(const std::string &name) : Name(name) {
-}
+Ewl_Widget *init_message(char *text, bool master);
 
-bool ZLCategoryKey::operator == (const ZLCategoryKey &key) const {
-	return key.Name == Name;
-}
-
-bool ZLCategoryKey::operator != (const ZLCategoryKey &key) const {
-	return !operator==(key);
-}
+#endif

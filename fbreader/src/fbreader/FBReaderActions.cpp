@@ -491,3 +491,19 @@ void HyperlinkNavStart::run() {
 	else
 		fbreader().startNavigationMode();
 }
+
+BookmarkAdd::BookmarkAdd(FBReader &fbreader) : FBAction(fbreader) {
+}
+
+void BookmarkAdd::run() {
+	FBReader &f = fbreader();
+	fbreader().bookTextView().addBookmark();
+	ZLEwlBMKAddedMsg(f);
+}
+
+BookmarksShow::BookmarksShow(FBReader &fbreader) : FBAction(fbreader) {
+}
+void BookmarksShow::run() {
+	FBReader &f = fbreader();
+	ZLEwlBMKDialog(f);
+}

@@ -61,3 +61,6 @@ const std::string ActionCode::GOTO_PAGE_NUMBER = "gotoPageNumber";
 
 const std::string ActionCode::SHOW_FOOTNOTES = "showFootnotes";
 const std::string ActionCode::HYPERLINK_NAV_START = "hyperlinkNavStart";
+const std::string ActionCode::BMK_ADD = "addBookmark";
+const std::string ActionCode::BMK_SHOW = "showBookmarks";
+

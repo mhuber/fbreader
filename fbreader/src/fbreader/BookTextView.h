@@ -38,6 +38,7 @@ public:
 	void setModel(shared_ptr<ZLTextModel> model, const std::string &fileName);
 	void setContentsModel(shared_ptr<ZLTextModel> contentsModel);
 	void saveState();
+	void saveBookmarks();
 
 	void gotoParagraph(int num, bool last = false);
 	bool canUndoPageMove();
@@ -85,6 +86,17 @@ private:
 	unsigned int myMaxStackSize;
 
 	bool myLockUndoStackChanges;
+
+	typedef std::vector<std::pair<Position, int> > BookmarkVector;
+	typedef std::vector<std::pair<Position, std::pair<int, std::string> > > BookmarkTextVector;
+	BookmarkVector myBookmarks;
+	unsigned int myCurrentBookmarkSize;
+public:
+	unsigned int getBookmarksSize();
+	std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > getBookmarks();
+	void addBookmark();
+	void removeBookmark(unsigned int idx);
+	void gotoBookmark(unsigned int idx);
 };
 
 inline void BookTextView::preparePaintInfo() {

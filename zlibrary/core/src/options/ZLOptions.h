@@ -33,6 +33,7 @@ public:
 	static const ZLCategoryKey LOOK_AND_FEEL;
 	static const ZLCategoryKey CONFIG;
 	static const ZLCategoryKey STATE;
+	static const ZLCategoryKey BOOKMARKS;
 	static const ZLCategoryKey SYSTEM;
 
 protected:

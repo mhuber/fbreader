@@ -71,6 +71,8 @@ public:
 
 	static const std::string SHOW_FOOTNOTES;
 	static const std::string HYPERLINK_NAV_START;
+	static const std::string BMK_ADD;
+	static const std::string BMK_SHOW;
 
 private:
 	ActionCode();
@@ -343,6 +345,20 @@ class HyperlinkNavStart : public FBAction {
 
 public:
 	HyperlinkNavStart(FBReader &fbreader);
+	void run();
+};
+
+class BookmarkAdd : public FBAction {
+
+public:
+	BookmarkAdd(FBReader &fbreader);
+	void run();
+};
+
+class BookmarksShow : public FBAction {
+
+public:
+	BookmarksShow(FBReader &fbreader);
 	void run();
 };
 

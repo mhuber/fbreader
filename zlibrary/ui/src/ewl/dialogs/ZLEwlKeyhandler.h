@@ -2,7 +2,7 @@
 #define ZLEWLKEYHANDLER_H
 
 typedef void (*key_handler_t)(Ewl_Widget *widget);
-typedef void (*item_handler_t)(Ewl_Widget *widget,int index);
+typedef void (*item_handler_t)(Ewl_Widget *widget,int index, bool lp);
 
 typedef struct {
     key_handler_t ok_handler;

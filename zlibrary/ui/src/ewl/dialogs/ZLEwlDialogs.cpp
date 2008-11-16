@@ -20,6 +20,7 @@
 #include "ZLEwlDialogs.h"
 #include "ZLEwlChoicebox.h"
 #include "ZLEwlEntry.h"
+#include "ZLEwlMessage.h"
 
 #include <ewl/Ewl.h>
 
@@ -159,7 +160,7 @@ void redraw_text()
     myFbreader->refreshWindow();
 }
 
-void font_family_choicehandler(int choice, Ewl_Widget *parent)
+void font_family_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	ZLStringOption &option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
 	option.setValue(myContext->fontFamilies().at(choice));
@@ -171,7 +172,7 @@ void font_family_choicehandler(int choice, Ewl_Widget *parent)
 	redraw_text();
 }
 
-void font_size_choicehandler(int choice, Ewl_Widget *parent)
+void font_size_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	ZLIntegerRangeOption &option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
 	option.setValue(choice + 6);
@@ -185,7 +186,7 @@ void font_size_choicehandler(int choice, Ewl_Widget *parent)
 	redraw_text();
 }
 
-void line_space_choicehandler(int choice, Ewl_Widget *parent)
+void line_space_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	ZLIntegerOption &option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
 	option.setValue(choice * 10 + 50);
@@ -240,7 +241,7 @@ void margin_handler_1(int value, Ewl_Widget *parent) { margin_handler(1, value, 
 void margin_handler_2(int value, Ewl_Widget *parent) { margin_handler(2, value, parent); }
 void margin_handler_3(int value, Ewl_Widget *parent) { margin_handler(3, value, parent); }
 
-void margins_choicehandler(int choice, Ewl_Widget *parent)
+void margins_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	std::string text;
 	int value;
@@ -295,7 +296,7 @@ void fl_indent_handler(int value, Ewl_Widget *parent)
 	redraw_text();
 }
 
-void options_dialog_choicehandler(int choice, Ewl_Widget *parent)
+void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	if (choice == 0) {
 		char **initchoices = (char **)malloc(myContext->fontFamilies().size() * sizeof(char*));
@@ -408,7 +409,7 @@ void ZLEwlOptionsDialog(FBReader &f)
 
 ZLTextTreeParagraph *curTOCParent;
 
-void toc_choicehandler(int choice, Ewl_Widget *parent)
+void toc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	Ewl_Widget *w = ewl_widget_name_find("main_win");
 
@@ -427,7 +428,7 @@ void toc_choicehandler(int choice, Ewl_Widget *parent)
 
 	list = selEntry->children();
 	if(list.empty()) {
-		fini_choicebox(parent);
+		fini_choicebox(parent, false);
 		myFbreader->bookTextView().gotoParagraph(cm.reference(selEntry));
 		myFbreader->refreshWindow();
 		return;
@@ -468,7 +469,7 @@ void toc_choicehandler(int choice, Ewl_Widget *parent)
 		cnt++;
 	}
 
-	fini_choicebox(parent);
+	fini_choicebox(parent, false);
 	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
 }
 
@@ -517,4 +518,44 @@ void ZLEwlTOCDialog(FBReader &f)
 
 	curTOCParent = cm.myRoot;
 	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
+}
+
+// Bookmarks
+void bmk_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	if(lp) {
+		myFbreader->bookTextView().removeBookmark(choice);
+		fini_choicebox(parent, false);
+		ZLEwlBMKDialog(*myFbreader);
+	} else {
+		myFbreader->bookTextView().gotoBookmark(choice);
+		//myFbreader->refreshWindow();
+
+		fini_choicebox(parent);
+	}
+}
+
+void ZLEwlBMKDialog(FBReader &f)
+{
+	Ewl_Widget *w = ewl_widget_name_find("main_win");
+
+	myFbreader = &f;
+
+	std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > bookmarks
+		= myFbreader->bookTextView().getBookmarks();
+
+	char **initchoices = (char **)malloc(bookmarks.size() * sizeof(char*));
+	char **values = (char **)malloc(bookmarks.size() * sizeof(char*));
+
+	for(int i = 0; i < bookmarks.size(); i++) {
+			asprintf(&initchoices[i], "%d. Page %d: %s", i % 8 + 1, bookmarks.at(i).second.first, bookmarks.at(i).second.second.c_str());
+			asprintf(&values[i], "");
+	}
+
+	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, bookmarks.size(), bmk_choicehandler, "Bookmarks", w, true));
+}
+
+void ZLEwlBMKAddedMsg(FBReader &f) {
+	myFbreader = &f;
+	ewl_widget_show(init_message("Bookmark added", true));
 }

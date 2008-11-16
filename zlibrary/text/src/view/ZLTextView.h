@@ -63,6 +63,7 @@ public:
 		virtual void draw();
 		bool onStylusPress(int x, int y);
 		int textPosition() const;
+		int currentPage() const;
 
 	protected:
 		const ZLTextView &textView() const;

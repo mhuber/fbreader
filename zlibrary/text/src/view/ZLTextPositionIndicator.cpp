@@ -150,6 +150,10 @@ int ZLTextView::PositionIndicator::textPosition() const {
 	return 100 * (1 + sizeOfTextBeforeCursor()) / (1 + sizeOfTextBeforeParagraph(endTextIndex()));
 }
 
+int ZLTextView::PositionIndicator::currentPage() const {
+	return (1 + sizeOfTextBeforeCursor() / 2048);
+}
+
 std::string ZLTextView::PositionIndicator::textPositionString() const {
 	std::string buffer;
 	ZLStringUtil::appendNumber(buffer, 1 + sizeOfTextBeforeCursor() / 2048);

@@ -25,6 +25,8 @@
 void ZLEwlGotoPageDialog(GotoPageNumber *gpn);
 void ZLEwlOptionsDialog(FBReader &f);
 void ZLEwlTOCDialog(FBReader &f);
+void ZLEwlBMKDialog(FBReader &f);
+void ZLEwlBMKAddedMsg(FBReader &f);
 void redraw_text();
 
 #endif

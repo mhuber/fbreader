@@ -228,7 +228,7 @@ void choicebox_esc(Ewl_Widget * widget)
 	fini_choicebox(widget);
 }
 
-void choicebox_item(Ewl_Widget * widget, int item)
+void choicebox_item(Ewl_Widget * widget, int item, bool lp)
 {
 	choice_info_struct *infostruct;
 	if (item >= 1 && item <= 8) {
@@ -239,7 +239,7 @@ void choicebox_item(Ewl_Widget * widget, int item)
 		curchoice = infostruct->curindex + (item - 1);
 		if (curchoice < infostruct->numchoices) {
 			choicebox_change_selection(widget, item);
-			(infostruct->handler) (curchoice, widget);
+			(infostruct->handler) (curchoice, widget, lp);
 		}			
 	} else if (item == 9)
 		choicebox_previous_page(widget);
@@ -284,7 +284,7 @@ void choicebox_nav_sel(Ewl_Widget * widget)
 	choice_info_struct *infostruct =
 		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
 	(infostruct->handler) (infostruct->curindex * noptions +
-			infostruct->navsel, widget);
+			infostruct->navsel, widget, false);
 
 }
 
@@ -472,7 +472,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 	return win;
 }
 
-void fini_choicebox(Ewl_Widget * win)
+void fini_choicebox(Ewl_Widget * win, bool redraw)
 {
 	bool master = false;
 	ewl_widget_hide(win);
@@ -488,7 +488,7 @@ void fini_choicebox(Ewl_Widget * win)
 	free(infostruct->values);
 	free(infostruct);
 	ewl_widget_destroy(win);
-	if(master)
+	if(master && redraw)
 		redraw_text();
 }
 
