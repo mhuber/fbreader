@@ -469,8 +469,10 @@ void toc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 		cnt++;
 	}
 
-	fini_choicebox(parent, false);
-	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
+	update_choicebox(parent, (const char **)initchoices, (const char **)values, cnt, true); 
+
+//	fini_choicebox(parent, false);
+//	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
 }
 
 void ZLEwlTOCDialog(FBReader &f)
@@ -525,8 +527,19 @@ void bmk_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	if(lp) {
 		myFbreader->bookTextView().removeBookmark(choice);
-		fini_choicebox(parent, false);
-		ZLEwlBMKDialog(*myFbreader);
+
+		std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > bookmarks
+			= myFbreader->bookTextView().getBookmarks();
+
+		char **initchoices = (char **)malloc(bookmarks.size() * sizeof(char*));
+		char **values = (char **)malloc(bookmarks.size() * sizeof(char*));
+
+		for(int i = 0; i < bookmarks.size(); i++) {
+			asprintf(&initchoices[i], "%d. Page %d: %s", i % 8 + 1, bookmarks.at(i).second.first, bookmarks.at(i).second.second.c_str());
+			asprintf(&values[i], "");
+		}
+
+		update_choicebox(parent, (const char **)initchoices, (const char **)values, bookmarks.size()); 
 	} else {
 		myFbreader->bookTextView().gotoBookmark(choice);
 		//myFbreader->refreshWindow();

@@ -373,7 +373,8 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 	ewl_object_fill_policy_set(EWL_OBJECT(vbox), EWL_FLAG_FILL_FILL);
 	ewl_widget_show(vbox);
 
-	int shownum = (numchoices <= noptions) ? numchoices : noptions;
+//	int shownum = (numchoices <= noptions) ? numchoices : noptions;
+	int shownum = noptions;
 
 	tempw1 = ewl_hbox_new();
 	ewl_container_child_append(EWL_CONTAINER(vbox), tempw1);
@@ -435,7 +436,8 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 					"ewl/label/dlg_optionlabel/text");
 			if (get_nav_mode() == 1 && i == 0)
 				ewl_widget_state_set(tempw2, "select", EWL_STATE_PERSISTENT);
-			ewl_label_text_set(EWL_LABEL(tempw2), info->choices[i]);
+			if(numchoices > i)
+				ewl_label_text_set(EWL_LABEL(tempw2), info->choices[i]);
 		} else if(i == 8) {
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
 					"ewl/label/dlg_footer");
@@ -454,7 +456,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 			ewl_theme_data_str_set(EWL_WIDGET(v2), "/hbox/group",
 					"ewl/box/dlg_optionbox");
 			ewl_object_fill_policy_set(EWL_OBJECT(v2), EWL_FLAG_FILL_HFILL);
-			if(strlen(info->values[i]))
+			if((numchoices > i) && strlen(info->values[i]))
 				ewl_widget_show(v2);
 
 			tempw2 = ewl_label_new();
@@ -465,11 +467,22 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 					"ewl/label/dlg_valuelabel");
 			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
 					"ewl/label/dlg_valuelabel/text");
-			ewl_label_text_set(EWL_LABEL(tempw2), info->values[i]);
+			if(numchoices > i)
+				ewl_label_text_set(EWL_LABEL(tempw2), info->values[i]);
 			ewl_widget_show(tempw2);
 		}
 	}
 	return win;
+}
+
+void free_choices(choice_info_struct *infostruct)
+{
+	for (int i = 0; i < infostruct->numchoices; i++) {
+		free(infostruct->choices[i]);
+		free(infostruct->values[i]);
+	}
+	free(infostruct->choices);
+	free(infostruct->values);
 }
 
 void fini_choicebox(Ewl_Widget * win, bool redraw)
@@ -480,17 +493,94 @@ void fini_choicebox(Ewl_Widget * win, bool redraw)
 		(choice_info_struct *) ewl_widget_data_get(win, (void *)"choice_info");
 	if(infostruct->master)
 		master = true;
-	for (int i = 0; i < infostruct->numchoices; i++) {
-		free(infostruct->choices[i]);
-		free(infostruct->values[i]);
-	}
-	free(infostruct->choices);
-	free(infostruct->values);
+	free_choices(infostruct);
 	free(infostruct);
 	ewl_widget_destroy(win);
 	if(master && redraw)
 		redraw_text();
 }
+
+void update_choicebox(Ewl_Widget *w, const char *choicelist[], const char *values[], int numchoices, bool rewind)
+{
+	choice_info_struct *info =
+		(choice_info_struct *) ewl_widget_data_get(w, (void *)"choice_info");
+
+	free_choices(info);
+
+	info->numchoices = numchoices;
+	if(rewind || (info->curindex >= numchoices))
+		info->curindex = 0;
+
+	info->choices = (char **) malloc(sizeof(char *) * numchoices);
+	info->values = (char **) malloc(sizeof(char *) * numchoices);
+	for (int i = 0; i < numchoices; i++) {
+		info->choices[i] =
+			(char *) malloc(sizeof(char) * (strlen(choicelist[i]) + 1));
+		asprintf(&(info->choices[i]), "%s", choicelist[i]);
+
+		info->values[i] = (char *)malloc(sizeof(char) * (strlen(values[i]) + 1));
+		asprintf(&(info->values[i]), "%s", values[i]);
+	}
+
+	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(w), 0);
+	Ewl_Widget *tempw1, *v1, *v2;
+
+	int shownum =
+		((info->numchoices - info->curindex) >
+		 noptions) ? noptions : (info->numchoices -
+			 info->curindex);
+	for (int i = 0; i < noptions; i++) {
+		printf("i: %d\n", i);
+		tempw1 =
+			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
+
+		v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
+		v2 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 1));
+		if (i < shownum) {
+			ewl_label_text_set(EWL_LABEL
+					(ewl_container_child_get
+					 (EWL_CONTAINER(v1), 0)),
+					info->choices[info->curindex +
+					i]);
+
+			ewl_label_text_set(EWL_LABEL
+					(ewl_container_child_get
+					 (EWL_CONTAINER(v2), 0)),
+					info->values[info->curindex +
+					i]);
+
+			if(!strlen(info->values[info->curindex + i]))
+				ewl_widget_hide(v2);
+			else
+				ewl_widget_show(v2);
+
+		} else {
+			ewl_label_text_set(EWL_LABEL
+					(ewl_container_child_get
+					 (EWL_CONTAINER(v1), 0)), "");
+
+			ewl_label_text_set(EWL_LABEL
+					(ewl_container_child_get
+					 (EWL_CONTAINER(v2), 0)), "");
+		}
+	}
+
+	char *p;
+	asprintf(&p, "Page %d of %d", 1 + info->curindex / 8, (7 + info->numchoices) / 8);
+
+	tempw1 =
+		EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), noptions + 1));
+
+	v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
+	ewl_label_text_set(EWL_LABEL
+			(ewl_container_child_get
+			 (EWL_CONTAINER(v1), 0)),
+			p);
+	free(p);
+
+	choicebox_change_selection(w, 0);
+}
+
 
 Ewl_Widget *choicebox_get_parent(Ewl_Widget *w)
 {
