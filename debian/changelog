@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi14) stable; urgency=low
+
+  * Choicebox improvement
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Tue, 18 Nov 2008 11:54:17 +0100
+
 fbreader (0.8.17-1.oi13) stable; urgency=low
 
   * TOC
