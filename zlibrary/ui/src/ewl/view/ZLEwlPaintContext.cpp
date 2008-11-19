@@ -178,6 +178,7 @@ void ZLEwlPaintContext::setFont(const std::string &family, int size, bool bold, 
 }
 
 void ZLEwlPaintContext::setColor(ZLColor color, LineStyle style) {
+	fColor = (0.299 * color.Red + 0.587 * color.Green + 0.114 * color.Blue ) / 64;
 }
 
 void ZLEwlPaintContext::setFillColor(ZLColor color, FillStyle style) {
@@ -517,6 +518,9 @@ void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
 		previous = glyph_idx;
 	}
 
+	if(fColor >= 2)
+		invertRegion(x, y - myStringHeight + myStringHeight / 4, pen.x, y + myStringHeight / 5);
+
 
 //	pango_fc_font_unlock_face((PangoFcFont*)myAnalysis.font);
 }
@@ -705,6 +709,22 @@ void ZLEwlPaintContext::drawGlyph(FT_Bitmap* bitmap, FT_Int x, FT_Int y)
 
 			val = 3 - val / 64;
 			xcb_image_put_pixel (image, i, j, pal[val]);
+		}
+	}
+}
+
+void ZLEwlPaintContext::invertRegion(int x0, int y0, int x1, int y1)
+{
+	int pixel;
+	for(int i = x0; i <= x1; i++) {
+		for(int j = y0; j <= y1; j++) {
+			pixel = 0xffffff & xcb_image_get_pixel(im, i, j);
+			for(int idx = 0; idx < 4; idx++) {
+				if(pixel == (0xffffff & pal[idx])) {
+					xcb_image_put_pixel(im, i, j, pal[3 - idx]);
+					break;
+				}
+			}
 		}
 	}
 }

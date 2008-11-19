@@ -101,6 +101,8 @@ private:
 
 	void drawGlyph(FT_Bitmap* bitmap, FT_Int x, FT_Int y);
 
+	void invertRegion(int x0, int y0, int x1, int y1);
+
 	class Font {
 		public:
 			Font() { }
