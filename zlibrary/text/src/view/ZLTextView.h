@@ -148,7 +148,7 @@ public:
 	const shared_ptr<ZLTextModel> model() const;
 
 	bool hasMultiSectionModel() const;
-	void search(const std::string &text, bool ignoreCase, bool wholeText, bool backward, bool thisSectionOnly);
+	bool search(const std::string &text, bool ignoreCase, bool wholeText, bool backward, bool thisSectionOnly);
 	bool canFindNext() const;
 	void findNext();
 	bool canFindPrevious() const;

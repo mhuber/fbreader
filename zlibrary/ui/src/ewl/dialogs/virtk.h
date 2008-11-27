@@ -17,17 +17,10 @@
  * 02110-1301, USA.
  */
 
-#ifndef _ZLEWLDIALOGS_H_
-#define _ZLEWLDIALOGS_H_
+#ifndef VIRTK_H
+#define VIRTK_H
 
-#include "../../../../../fbreader/src/fbreader/FBReaderActions.h"
-
-void ZLEwlGotoPageDialog(GotoPageNumber *gpn);
-void ZLEwlOptionsDialog(FBReader &f);
-void ZLEwlTOCDialog(FBReader &f);
-void ZLEwlBMKDialog(FBReader &f);
-void ZLEwlBMKAddedMsg(FBReader &f);
-void ZLEwlSearchDialog(FBReader &f);
-void redraw_text();
+typedef void (*virtk_handler)(char *text);
+Ewl_Widget *init_virtk(Ewl_Widget *parent, char *ltext, virtk_handler handler);
 
 #endif

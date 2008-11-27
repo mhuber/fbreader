@@ -27,6 +27,8 @@
 #include "FBReaderActions.h"
 #include "../options/FBOptions.h"
 
+#include "../../../zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.h"
+
 #include <set>
 
 static const std::string SEARCH = "Search";
@@ -98,7 +100,9 @@ bool SearchAction::isVisible() {
 }
 
 void SearchAction::run() {
-	ZLTextView &textView = (ZLTextView&)*fbreader().currentView();
+	FBReader &f = fbreader();
+	ZLEwlSearchDialog(f);
+/*	ZLTextView &textView = (ZLTextView&)*fbreader().currentView();
 
 	shared_ptr<ZLDialog> searchDialog = ZLDialogManager::instance().createDialog(ZLResourceKey("textSearchDialog"));
 
@@ -122,6 +126,7 @@ void SearchAction::run() {
 			SearchThisSectionOnlyOption.value()
 		);
 	}
+*/	
 }
 
 FindNextAction::FindNextAction(FBReader &fbreader) : FBAction(fbreader) {

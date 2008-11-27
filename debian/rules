@@ -32,6 +32,8 @@ install-stamp: build
 		$(MAKE) -C fbreader TARGET_ARCH=desktop UI_TYPE=ewl DESTDIR=$(DEB_DIR)/fbreader do_install
 		mkdir $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/oitheme.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
+		install -m 644 themes/virtktheme.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
+		install -m 644 themes/virtk_layout $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		touch install-stamp
 
 binary-arch: VERSION=$(shell expr "`dpkg-parsechangelog |grep Version:`" : '.*Version: \(.*\)')

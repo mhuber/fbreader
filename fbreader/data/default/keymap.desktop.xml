@@ -20,6 +20,7 @@
 	<binding key="2" action="gotoPageNumber"/>
 	<binding key="6" action="showFootnotes"/>
 	<binding key="8" action="hyperlinkNavStart"/>
+	<binding key="Alt+8" action="search"/>
 	<binding key="3" action="addBookmark"/>
 	<binding key="Alt+3" action="showBookmarks"/>
 </keymap>

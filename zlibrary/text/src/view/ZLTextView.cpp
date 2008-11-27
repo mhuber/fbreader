@@ -236,9 +236,9 @@ bool ZLTextView::hasMultiSectionModel() const {
 	return !myTextBreaks.empty();
 }
 
-void ZLTextView::search(const std::string &text, bool ignoreCase, bool wholeText, bool backward, bool thisSectionOnly) {
+bool ZLTextView::search(const std::string &text, bool ignoreCase, bool wholeText, bool backward, bool thisSectionOnly) {
 	if (text.empty()) {
-		return;
+		return false;
 	}
 
 	size_t startIndex = 0;
@@ -259,9 +259,15 @@ void ZLTextView::search(const std::string &text, bool ignoreCase, bool wholeText
 		ZLTextMark position = startCursor().position();
 		gotoMark(wholeText ?
 							(backward ? myModel->lastMark() : myModel->firstMark()) :
-							(backward ? myModel->previousMark(position) : myModel->nextMark(position)));
+							(backward ? myModel->previousMark(position) : //myModel->nextMark(position)));
+							 myModel->nextMark(position).ParagraphNumber > -1 ? myModel->nextMark(position) : myModel->previousMark(position)));
 		application().refreshWindow();
 	}
+
+	if(myModel->marks().empty())
+		return false;
+	else
+		return true;
 }
 
 bool ZLTextView::canFindNext() const {

@@ -21,6 +21,7 @@
 #include "ZLEwlChoicebox.h"
 #include "ZLEwlEntry.h"
 #include "ZLEwlMessage.h"
+#include "virtk.h"
 
 #include <ewl/Ewl.h>
 
@@ -571,4 +572,134 @@ void ZLEwlBMKDialog(FBReader &f)
 void ZLEwlBMKAddedMsg(FBReader &f) {
 	myFbreader = &f;
 	ewl_widget_show(init_message("Bookmark added", true));
+}
+
+// search dialogs
+
+static void search_info_reveal_cb(Ewl_Widget *w, void *ev, void *data) {
+	ewl_window_move(EWL_WINDOW(w), (600 - CURRENT_W(w)) / 2, (800 - CURRENT_H(w)) - 200);
+	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
+}
+
+static void search_info_realize_cb(Ewl_Widget *w, void *ev, void *data) {
+	Ewl_Widget *win;
+	win = ewl_widget_name_find("main_win");
+	if(win)
+		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 0);
+}
+
+static void search_info_unrealize_cb(Ewl_Widget *w, void *ev, void *data) {
+	Ewl_Widget *win;
+	win = ewl_widget_name_find("main_win");
+	if(win)
+		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
+}
+
+static void search_info_keyhandler(Ewl_Widget *w, void *ev, void *data)
+{
+	Ewl_Event_Key_Down *e;
+	Ewl_Widget *message, *dialog;
+	char *s;
+
+	e = (Ewl_Event_Key_Down*)ev;
+
+
+	if(!strcmp(e->base.keyname, "Escape") || !strcmp(e->base.keyname, "Return")) {
+		ewl_widget_destroy(w);
+		myFbreader->myModel->bookTextModel()->removeAllMarks();
+		redraw_text();
+		return;
+	} else if(!strcmp(e->base.keyname, "Up") || !strcmp(e->base.keyname, "0")) {
+		if(myFbreader->bookTextView().canFindNext())
+			myFbreader->bookTextView().findNext();
+	} else if(!strcmp(e->base.keyname, "Down") || !strcmp(e->base.keyname, "9")) {
+		if(myFbreader->bookTextView().canFindPrevious())
+			myFbreader->bookTextView().findPrevious();
+	}
+
+	Ewl_Widget *l = ewl_widget_name_find("search_info_label");
+	bool n = false, p = false;
+	if(myFbreader->bookTextView().canFindNext())
+		n = true;
+	if(myFbreader->bookTextView().canFindPrevious())
+		p = true;
+
+	if(n && p) 
+		ewl_label_text_set(EWL_LABEL(l), "Search <- ->");
+	else if(n)
+		ewl_label_text_set(EWL_LABEL(l), "Search    ->");
+	else if(p)
+		ewl_label_text_set(EWL_LABEL(l), "Search <-   ");
+	else
+		ewl_label_text_set(EWL_LABEL(l), "Text not found");
+}
+
+Ewl_Widget *init_search_info()
+{
+	Ewl_Widget *w, *label, *message, *message_hbox;
+
+	w = ewl_window_new();
+	ewl_window_title_set(EWL_WINDOW(w), "Message");
+	ewl_window_name_set(EWL_WINDOW(w), "EWL_WINDOW");
+	ewl_window_class_set(EWL_WINDOW(w), "Message");
+	ewl_widget_name_set(w, "message_win");
+	ewl_callback_append(w, EWL_CALLBACK_KEY_UP, search_info_keyhandler, NULL);
+	ewl_callback_append(w, EWL_CALLBACK_REVEAL, search_info_reveal_cb, NULL);
+	ewl_callback_append(w, EWL_CALLBACK_REALIZE, search_info_realize_cb, NULL);
+	ewl_callback_append(w, EWL_CALLBACK_UNREALIZE, search_info_unrealize_cb, NULL);
+	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
+	EWL_EMBED(w)->x = 600;
+	EWL_EMBED(w)->y = 0;
+	ewl_widget_show(w);
+
+	message_hbox = ewl_hbox_new();
+	ewl_container_child_append(EWL_CONTAINER(w), message_hbox);
+	ewl_widget_show(message_hbox);
+
+	label = ewl_label_new();
+	//ewl_label_text_set(EWL_LABEL(label), "Search next(0)/previous(9). Exit - OK");
+	bool n = false, p = false;
+	if(myFbreader->bookTextView().canFindNext())
+		n = true;
+	if(myFbreader->bookTextView().canFindPrevious())
+		p = true;
+
+	if(n && p) 
+		ewl_label_text_set(EWL_LABEL(label), "Search <- ->");
+	else if(n)
+		ewl_label_text_set(EWL_LABEL(label), "Search    ->");
+	else if(p)
+		ewl_label_text_set(EWL_LABEL(label), "Search <-   ");
+	else
+		ewl_label_text_set(EWL_LABEL(label), "Text not found");
+	ewl_widget_name_set(label, "search_info_label");
+	ewl_container_child_append(EWL_CONTAINER(message_hbox), label);
+	ewl_widget_show(label);
+
+	ewl_widget_focus_send(w);
+
+	return w;
+}
+
+void search_input_handler(char *text)
+{
+	if(text && strlen(text)) {
+		if(myFbreader->bookTextView().search(std::string(text), true, false, false, false)) {
+			ewl_widget_show(init_search_info());
+		} else {
+			redraw_text();
+			ewl_widget_show(init_message("Text not found", true));;
+		}
+	} else {
+		redraw_text();
+	}
+}
+
+void ZLEwlSearchDialog(FBReader &f)
+{
+	Ewl_Widget *w = ewl_widget_name_find("main_win");
+
+	myFbreader = &f;
+
+	ewl_widget_show(init_virtk(w, "Search", search_input_handler));
 }
