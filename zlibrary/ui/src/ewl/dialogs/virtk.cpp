@@ -151,7 +151,7 @@ void set_layout(int idx)
 			} else if(x == 0) {
 				asprintf(&text, "%d", y % 10);
 			} else {
-				if(layout->size[y][x]) {
+				if(layout->size[y][x] && layout->keys[y][x]) {
 					if(*layout->keys[y][x] == '\n')
 						asprintf(&text, "ENT");
 					else if(*layout->keys[y][x] == ' ')
@@ -292,7 +292,8 @@ void read_layouts()
 		
 		layout->x = 10;
 		layout->y = 1 + (cnt + 9) / 10;
-		bzero(layout->keys, 10 * 10 * sizeof(char));
+		bzero(layout->keys, 10 * 10 * sizeof(char*));
+		bzero(layout->size, 10 * 10 * sizeof(int));
 
 		for(y = 0; p != end && y < layout->y; y++) {	
 			for(x = 0; p != end && x < 11; x++) {
