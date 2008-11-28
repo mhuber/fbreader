@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi16) stable; urgency=low
+
+  * fixed segmentation fault
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Fri, 28 Nov 2008 01:18:58 +0100
+
 fbreader (0.8.17-1.oi15) stable; urgency=low
 
   * text search
