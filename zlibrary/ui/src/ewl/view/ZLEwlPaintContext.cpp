@@ -519,8 +519,7 @@ void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
 	}
 
 	if(fColor >= 2)
-		invertRegion(x, y - myStringHeight + myStringHeight / 4, pen.x, y + myStringHeight / 5);
-
+		invertRegion(x, y - stringHeight() + stringHeight() / 4, pen.x, y + stringHeight() / 5);
 
 //	pango_fc_font_unlock_face((PangoFcFont*)myAnalysis.font);
 }
