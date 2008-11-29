@@ -114,16 +114,22 @@ void set_layout(int idx)
 	char *name, *text;
 
 	layout = layouts[idx];
-
 	for(y = 0; y < 11; y++) {		
 		asprintf(&name, "hbox_%d", y);
+		hbox = ewl_widget_name_find(name);
+		free(name);
+		ewl_widget_hide(hbox);
+	}
+
+	for(y = 0; y < 11; y++) {		
+/*		asprintf(&name, "hbox_%d", y);
 		hbox = ewl_widget_name_find(name);
 		free(name);
 		if(y >= layout->y) 
 			ewl_widget_hide(hbox);
 		else
 			ewl_widget_show(hbox);
-
+*/
 		for(x = 0; x < 11; x++) {
 
 			asprintf(&name, "vbox_%d_%d", x, y);
@@ -168,6 +174,13 @@ void set_layout(int idx)
 			ewl_label_text_set(EWL_LABEL(label), text);
 			free(text);
 		}
+	}
+
+	for(y = 0; y < layout->y; y++) {		
+		asprintf(&name, "hbox_%d", y);
+		hbox = ewl_widget_name_find(name);
+		free(name);
+		ewl_widget_show(hbox);
 	}
 }
 

@@ -36,6 +36,14 @@ extern void redraw_text();
 
 const int noptions = 8;
 
+#define HIDE_LABELS \
+	for (int i = 1; i <= 8; i++) \
+		ewl_widget_hide(EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i)))
+
+#define SHOW_LABELS \
+	for (int i = 1; i <= 8; i++) \
+		ewl_widget_show(EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i)))
+
 #define REL_THEME "themes/options.edj"
 typedef struct _choice_info_struct {
 	char **choices;
@@ -124,6 +132,9 @@ void choicebox_next_page(Ewl_Widget * widget)
 		((infostruct->numchoices - infostruct->curindex) >
 		 noptions) ? noptions : (infostruct->numchoices -
 			 infostruct->curindex);
+
+	HIDE_LABELS;
+
 	for (int i = 0; i < noptions; i++) {
 		tempw1 =
 			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
@@ -173,6 +184,7 @@ void choicebox_next_page(Ewl_Widget * widget)
 	free(p);
 
 	choicebox_change_selection(widget, 0);
+	SHOW_LABELS;
 }
 
 void choicebox_previous_page(Ewl_Widget * widget)
@@ -185,6 +197,7 @@ void choicebox_previous_page(Ewl_Widget * widget)
 	if (infostruct->numchoices < noptions || infostruct->curindex == 0)
 		return;
 	infostruct->curindex -= noptions;
+	HIDE_LABELS;
 	for (int i = 0; i < noptions; i++) {
 		tempw1 =
 			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
@@ -221,6 +234,7 @@ void choicebox_previous_page(Ewl_Widget * widget)
 	free(p);
 
 	choicebox_change_selection(widget, 0);
+	SHOW_LABELS;
 }
 
 void choicebox_esc(Ewl_Widget * widget)
@@ -529,8 +543,9 @@ void update_choicebox(Ewl_Widget *w, const char *choicelist[], const char *value
 		((info->numchoices - info->curindex) >
 		 noptions) ? noptions : (info->numchoices -
 			 info->curindex);
+
+	HIDE_LABELS;
 	for (int i = 0; i < noptions; i++) {
-		printf("i: %d\n", i);
 		tempw1 =
 			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
 
@@ -579,6 +594,7 @@ void update_choicebox(Ewl_Widget *w, const char *choicelist[], const char *value
 	free(p);
 
 	choicebox_change_selection(w, 0);
+	SHOW_LABELS;
 }
 
 
