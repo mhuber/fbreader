@@ -37,6 +37,13 @@
 #include "../optionsDialog/OptionsDialog.h"
 #include "../../../zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+extern bool turbo;
+
 FBAction::FBAction(FBReader &fbreader) : myFBReader(fbreader) {
 }
 
@@ -187,8 +194,25 @@ bool ScrollingAction::useKeyDelay() const {
 	return false;
 }
 
+#ifndef FBIO_WAITFORVSYNC
+#define FBIO_WAITFORVSYNC       _IOW('F', 0x20, uint32_t)
+#endif
+#define EINK_APOLLOFB_IOCTL_SET_AUTOREDRAW _IOW('F', 0x21, unsigned int)
+#define EINK_APOLLOFB_IOCTL_FORCE_REDRAW _IO('F', 0x22)
+#define EINK_APOLLOFB_IOCTL_SHOW_PREVIOUS _IO('F', 0x23)
+
 void ScrollingAction::run() {
+	static int buffer = 0;
 	if(fbreader().getMode() == FBReader::HYPERLINK_NAV_MODE) {
+		if(buffer != 0) {
+			int x;
+			x = open("/dev/fb0", O_NONBLOCK);
+			ioctl(x, FBIO_WAITFORVSYNC);
+			ioctl(x, EINK_APOLLOFB_IOCTL_SHOW_PREVIOUS);
+			close(x);
+			buffer = 0;
+		}
+
 		if(myForward)
 			fbreader().highlightNextLink();
 		else
@@ -196,10 +220,19 @@ void ScrollingAction::run() {
 		return;
 	}
 
+
+	if(turbo && myForward && (buffer != 0)) {
+		int x;
+		x = open("/dev/fb0", O_NONBLOCK);
+		ioctl(x, FBIO_WAITFORVSYNC);
+		if(buffer == 2)
+			ioctl(x, EINK_APOLLOFB_IOCTL_FORCE_REDRAW);
+		close(x);
+	}
+
 	int delay = fbreader().myLastScrollingTime.millisecondsTo(ZLTime());
 	shared_ptr<ZLView> view = fbreader().currentView();
 	if (!view.isNull() && ((delay < 0) || (delay >= myOptions.DelayOption.value()))) {
-
 		if(fbreader().getMode() == FBReader::BOOK_TEXT_MODE) {
 			// jump to next section
 			ZLTextWordCursor endC = fbreader().bookTextView().endCursor();
@@ -207,6 +240,7 @@ void ScrollingAction::run() {
 					&& endC.paragraphCursor().isLast()
 					&& endC.isEndOfParagraph()) {
 				fbreader().doAction(ActionCode::GOTO_NEXT_TOC_SECTION);
+				buffer = 0;
 				return;
 			}
 
@@ -221,11 +255,14 @@ void ScrollingAction::run() {
 					&& startC.paragraphCursor().isFirst()
 					&& (current > 0)) {
 
-				if(current == -1 || contentsModel.reference((const ZLTextTreeParagraph*)contentsModel[current]) == -1)
+				if(current == -1 || contentsModel.reference((const ZLTextTreeParagraph*)contentsModel[current]) == -1) {
+					buffer = 0;
 					return;
+				}
 
 				fbreader().doAction(ActionCode::GOTO_PREVIOUS_TOC_SECTION);
 				fbreader().bookTextView().scrollToEndOfText();
+				buffer = 0;
 				return;
 			}
 		}
@@ -245,9 +282,37 @@ void ScrollingAction::run() {
 			default:
 				break;
 		}
+
+		if(turbo && myForward && (buffer != 0)) {
+			int x;
+			x = open("/dev/fb0", O_NONBLOCK);
+			ioctl(x, FBIO_WAITFORVSYNC);
+			ioctl(x, EINK_APOLLOFB_IOCTL_SET_AUTOREDRAW, 0);
+			close(x);
+		}
+
+		if(turbo && !myForward && (buffer != 0)) {
+			((ZLTextView&)*view).scrollPage(myForward, oType, oValue);
+			buffer = 0;
+		}
+
 		((ZLTextView&)*view).scrollPage(myForward, oType, oValue);
 		fbreader().refreshWindow();
 		fbreader().myLastScrollingTime = ZLTime();
+
+		if(turbo && myForward) {
+			if(buffer == 0) {
+				buffer = 1;
+				fbreader().doAction(ActionCode::LARGE_SCROLL_FORWARD);
+			} else {
+				buffer = 2;
+				int x;
+				x = open("/dev/fb0", O_NONBLOCK);
+				ioctl(x, FBIO_WAITFORVSYNC);
+				ioctl(x, EINK_APOLLOFB_IOCTL_SET_AUTOREDRAW, 1);
+				close(x);
+			}
+		}
 	}
 }
 
@@ -287,6 +352,11 @@ void CancelAction::run() {
 //	} else if (fbreader().isFullscreen()) {
 //		fbreader().setFullscreen(false);
 	} else if (fbreader().QuitOnCancelOption.value()) {
+		int x;
+		x = open("/dev/fb0", O_NONBLOCK);
+		ioctl(x, FBIO_WAITFORVSYNC);
+		ioctl(x, EINK_APOLLOFB_IOCTL_SET_AUTOREDRAW, 1);
+		close(x);
 		fbreader().quit();
 	}
 }

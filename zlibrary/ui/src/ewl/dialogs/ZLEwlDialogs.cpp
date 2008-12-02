@@ -37,6 +37,8 @@
 #include "../../../../../fbreader/src/bookmodel/BookModel.h"
 #include "../../../../../fbreader/src/fbreader/BookTextView.h"
 
+bool turbo = false;
+
 static void ZLEwlGotoPageDialog_reveal(Ewl_Widget *w, void *ev, void *data) {
 	ewl_window_move(EWL_WINDOW(w), (600 - CURRENT_W(w)) / 2, (800 - CURRENT_H(w)) / 2);
 	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
@@ -366,6 +368,14 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 
 		ewl_widget_show(fl_indent_option =
 				init_entry("First Line Indent", decoration->FirstLineIndentDeltaOption.value(), fl_indent_handler, parent));
+	} else if(choice == 6) {
+		if(turbo) {
+			turbo = false;
+			update_label(parent, 6, "Off");
+		} else {
+			turbo = true;
+			update_label(parent, 6, "On");;
+		}
 	}
 }
 
@@ -376,13 +386,14 @@ void ZLEwlOptionsDialog(FBReader &f)
 	myFbreader = &f;
 	myContext = &(*f.context());
 
-	const char *initchoices[] = { 
+	const char *initchoices[] = { 		
 		"1. Font Family",
 		"2. Font Size",
 		"3. Bold",
 		"4. Line Spacing",
 		"5. Margins",
 		"6. First Line Indent",
+		"7. Turbo mode",
 	};
 
 	ZLStringOption &ff_option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
@@ -403,9 +414,10 @@ void ZLEwlOptionsDialog(FBReader &f)
 		lsp_option_c,
 		"",
 		fl_option_c,
+		turbo ? "On" : "Off",
 	};
 
-	ewl_widget_show(init_choicebox(initchoices, values, 6, options_dialog_choicehandler, "Settings", w, true));
+	ewl_widget_show(init_choicebox(initchoices, values, 7, options_dialog_choicehandler, "Settings", w, true));
 }
 
 ZLTextTreeParagraph *curTOCParent;
