@@ -314,7 +314,7 @@ void choicebox_nav_sel(Ewl_Widget * widget)
 */
 
 static key_handler_info_t choicebox_handlers = {
-	NULL,
+	choicebox_esc,
 	choicebox_esc,
 	choicebox_nav_up,
 	choicebox_nav_down,
