@@ -205,7 +205,7 @@ void line_space_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 
 void margin_handler(int nr, int value, Ewl_Widget *parent)
 {
-	char *o;
+	char *o = NULL;
 	if(value >= 0) {
 		FBMargins &margins = FBView::margins();
 		switch(nr) {
@@ -228,10 +228,10 @@ void margin_handler(int nr, int value, Ewl_Widget *parent)
 			default:
 				return;
 		}
-	}
-	if(o) {
-		update_label(entry_get_parent(parent), nr, o);
-		free(o);
+		if(o) {
+			update_label(entry_get_parent(parent), nr, o);
+			free(o);
+		}
 	}
 
 	fini_entry(margin_option);
