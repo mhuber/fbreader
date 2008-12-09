@@ -247,7 +247,13 @@ inline void ZLTextElementPool::storeControlElement(ZLTextControlElement *element
 }
 
 inline size_t ZLTextParagraphCursor::index() const { return myIndex; }
-inline const ZLTextElement &ZLTextParagraphCursor::operator [] (size_t index) const { return *myElements[index]; }
+inline const ZLTextElement &ZLTextParagraphCursor::operator [] (size_t index) const { 
+	if(index >= paragraphLength())
+		return *myElements[paragraphLength()-1];
+	else
+		return *myElements[index];
+}
+
 inline const ZLTextParagraph &ZLTextParagraphCursor::paragraph() const { return *myModel[myIndex]; }
 inline size_t ZLTextParagraphCursor::paragraphLength() const { return myElements.size(); }
 
