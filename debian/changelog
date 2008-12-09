@@ -1,3 +1,9 @@
+fbreader (0.8.17-1.oi18) stable; urgency=low
+
+  * bugfixes
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Tue, 09 Dec 2008 20:21:55 +0000
+
 fbreader (0.8.17-1.oi17) stable; urgency=low
 
   * bugfixes
