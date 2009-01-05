@@ -356,11 +356,7 @@ Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int n
 	info->choices = (char **) malloc(sizeof(char *) * numchoices);
 	info->values = (char **) malloc(sizeof(char *) * numchoices);
 	for (int i = 0; i < numchoices; i++) {
-		info->choices[i] =
-			(char *) malloc(sizeof(char) * (strlen(choicelist[i]) + 1));
 		asprintf(&(info->choices[i]), "%s", choicelist[i]);
-
-		info->values[i] = (char *)malloc(sizeof(char) * (strlen(values[i]) + 1));
 		asprintf(&(info->values[i]), "%s", values[i]);
 	}
 
@@ -528,11 +524,7 @@ void update_choicebox(Ewl_Widget *w, const char *choicelist[], const char *value
 	info->choices = (char **) malloc(sizeof(char *) * numchoices);
 	info->values = (char **) malloc(sizeof(char *) * numchoices);
 	for (int i = 0; i < numchoices; i++) {
-		info->choices[i] =
-			(char *) malloc(sizeof(char) * (strlen(choicelist[i]) + 1));
 		asprintf(&(info->choices[i]), "%s", choicelist[i]);
-
-		info->values[i] = (char *)malloc(sizeof(char) * (strlen(values[i]) + 1));
 		asprintf(&(info->values[i]), "%s", values[i]);
 	}
 
