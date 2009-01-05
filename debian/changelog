@@ -1,3 +1,10 @@
+fbreader (0.8.17-1.oi19) stable; urgency=low
+
+  * new ewl release
+  * memory leak fixed
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Mon, 05 Jan 2009 15:41:27 +0000
+
 fbreader (0.8.17-1.oi18) stable; urgency=low
 
   * bugfixes
