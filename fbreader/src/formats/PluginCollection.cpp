@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  * 02110-1301, USA.
  */
 
+#include <ZLibrary.h>
 #include <ZLStringUtil.h>
 
 #include "FormatPlugin.h"
@@ -31,6 +32,7 @@
 #include "chm/CHMPlugin.h"
 #include "rtf/RtfPlugin.h"
 #include "openreader/OpenReaderPlugin.h"
+//#include "pdf/PdfPlugin.h"
 
 PluginCollection *PluginCollection::ourInstance = 0;
 
@@ -50,6 +52,7 @@ PluginCollection &PluginCollection::instance() {
 		ourInstance->myPlugins.push_back(new OEBPlugin());
 		ourInstance->myPlugins.push_back(new RtfPlugin());
 		ourInstance->myPlugins.push_back(new OpenReaderPlugin());
+		//ourInstance->myPlugins.push_back(new PdfPlugin());
 	}
 	return *ourInstance;
 }
@@ -63,8 +66,8 @@ void PluginCollection::deleteInstance() {
 
 PluginCollection::PluginCollection() :
 	LanguageAutoDetectOption(ZLCategoryKey::CONFIG, "Format", "AutoDetect", true),
-	DefaultLanguageOption(ZLCategoryKey::CONFIG, "Format", "DefaultLanguageS", "en"),
-	DefaultEncodingOption(ZLCategoryKey::CONFIG, "Format", "DefaultEncoding", "windows-1252") {
+	DefaultLanguageOption(ZLCategoryKey::CONFIG, "Format", "DefaultLanguageS", ZLibrary::Language()),
+	DefaultEncodingOption(ZLCategoryKey::CONFIG, "Format", "DefaultEncoding", "UTF-8") {
 }
 
 PluginCollection::~PluginCollection() {

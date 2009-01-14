@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ DocBookDescriptionReader::DocBookDescriptionReader(BookDescription &description)
 	myDepth = 0;
 }
 
-void DocBookDescriptionReader::characterDataHandler(const char *text, int len) {
+void DocBookDescriptionReader::characterDataHandler(const char *text, size_t len) {
 	if (myReadTitle) {
 		myDescription.title().append(text, len);
 	} else {

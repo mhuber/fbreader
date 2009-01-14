@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 #define __ZLTEXTHYPHENATOR_H__
 
 #include <string>
+
+#include <ZLUnicodeUtil.h>
 
 class ZLTextWord;
 
@@ -59,7 +61,7 @@ public:
 	ZLTextHyphenationInfo info(const ZLTextWord &word) const;
 
 protected:
-	virtual void hyphenate(std::vector<unsigned short> &ucs2String, std::vector<unsigned char> &mask, int length) const = 0;
+	virtual void hyphenate(ZLUnicodeUtil::Ucs4String &ucs4String, std::vector<unsigned char> &mask, int length) const = 0;
 
 protected:
 	static ZLTextHyphenator *ourInstance;

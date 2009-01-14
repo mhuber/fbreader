@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,6 +73,10 @@ const std::string &ZLDialogManager::waitMessageText(const ZLResourceKey &key) {
 
 void ZLDialogManager::informationBox(const ZLResourceKey &key) const {
 	informationBox(key, dialogMessage(key));
+}
+
+void ZLDialogManager::informationBox(const ZLResourceKey &key, const std::string &message) const {
+	informationBox(dialogTitle(key), message);
 }
 
 void ZLDialogManager::errorBox(const ZLResourceKey &key) const {

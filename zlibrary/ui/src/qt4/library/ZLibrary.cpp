@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #include <ZLApplication.h>
 #include <ZLibrary.h>
+#include <ZLLanguageUtil.h>
 
 #include "../../../../core/src/unix/library/ZLibraryImplementation.h"
 
@@ -67,6 +68,9 @@ ZLPaintContext *ZLQtLibraryImplementation::createContext() {
 }
 
 void ZLQtLibraryImplementation::run(ZLApplication *application) {
+	if (ZLLanguageUtil::isRTLLanguage(ZLibrary::Language())) {
+		qApp->setLayoutDirection(Qt::RightToLeft);
+	}
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
 	qApp->exec();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ public:
 	static const std::string SpecialTagNoTagsBooks;
 
 public:
-	ZLBooleanOption ShowTagsOption;
 	ZLBooleanOption ShowAllBooksTagOption;
 
 public:
@@ -46,16 +45,22 @@ public:
 	const std::string &caption() const;
 
 	bool _onStylusPress(int x, int y);
+	bool onStylusMove(int x, int y);
 
 	void paint();
-	void updateModel();
 	void synchronizeModel();
 
-	void selectBook(BookDescriptionPtr book);
+	void openWithBook(BookDescriptionPtr book);
 
 	BookCollection &collection();
 
+	bool organizeByTags() const;
+
 private:
+	bool hasContents() const;
+
+	void selectBook(BookDescriptionPtr book);
+
 	CollectionModel &collectionModel();
 
 	void editBookInfo(BookDescriptionPtr book);
@@ -68,11 +73,15 @@ private:
 
 private:
 	BookCollection myCollection;
+	BookDescriptionPtr mySelectedBook;
 	bool myTreeStateIsFrozen;
-	bool myUpdateModel;
+	bool myDoSynchronizeCollection;
+	bool myDoUpdateModel;
 
-	bool myShowTags;
+	bool myOrganizeByTags;
 	bool myShowAllBooksList;
+
+friend class RebuildCollectionRunnable;
 };
 
 inline BookCollection &CollectionView::collection() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,22 @@
 
 class ZLTextView;
 class ZLApplication;
+class ZLImageData;
+class ZLTextElementArea;
 
 class ZLTextSelectionModel {
+
+public:
+	struct BoundElement {
+		bool Exists;
+		int ParagraphIndex;
+		int ElementIndex;
+		size_t CharIndex;
+
+		bool operator == (const BoundElement &element) const;
+		bool operator != (const BoundElement &element) const;
+	};
+	typedef std::pair<BoundElement,BoundElement> Range;
 
 public:
 	ZLTextSelectionModel(ZLTextView &view, ZLApplication &application);
@@ -43,19 +57,14 @@ public:
 	void deactivate();
 	void clear();
 
-	const std::string &getText() const;
+	bool selectWord(int x, int y);
+	void extendWordSelectionToParagraph();
+
+	const std::string &text() const;
+	shared_ptr<ZLImageData> image() const;
+	const std::vector<Range> &ranges() const;
+
 	bool isEmpty() const;
-
-public:
-	struct BoundElement {
-		bool Exists;
-		int ParagraphNumber;
-		int TextElementNumber;
-		size_t CharNumber;
-
-		bool operator == (const BoundElement &element) const;
-		bool operator != (const BoundElement &element) const;
-	};
 
 private:
 	struct Bound {
@@ -65,15 +74,18 @@ private:
 		bool operator < (const Bound &bound) const;
 	};
 
-public:
-	std::pair<BoundElement,BoundElement> range() const;
-
 private:
+	int charIndex(const ZLTextElementArea &area, int x);
+
+	Range internalRange() const;
 	void setBound(Bound &bound, int x, int y);
 	void startSelectionScrolling(bool forward);
 	void stopSelectionScrolling();
 
 	void scrollAndExtend();
+
+	void clearData() const;
+	void createData() const;
 
 private:
 	ZLTextView &myView;
@@ -91,7 +103,11 @@ private:
 
 	mutable std::set<ZLTextParagraphCursorPtr> myCursors;
 	mutable std::string myText;
+	mutable shared_ptr<ZLImageData> myImage;
 	mutable bool myTextIsUpToDate;
+
+	mutable std::vector<Range> myRanges;
+	mutable bool myRangeVectorIsUpToDate;
 
 friend class ZLTextSelectionScroller;
 };

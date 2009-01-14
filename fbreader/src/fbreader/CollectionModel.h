@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,25 +38,30 @@ public:
 	static const std::string SeriesOrderImageId;
 	static const std::string TagInfoImageId;
 	static const std::string RemoveTagImageId;
+	static const std::string StrutImageId;
 
 public:
 	CollectionModel(CollectionView &view, BookCollection &collection);
 	~CollectionModel();
 
-	BookDescriptionPtr bookByParagraphNumber(int num);
-	const std::vector<int> &paragraphNumbersByBook(BookDescriptionPtr book);
-	const std::string &tagByParagraphNumber(int num);
+	BookDescriptionPtr bookByParagraphIndex(int num);
+	const std::vector<int> &paragraphIndicesByBook(BookDescriptionPtr book);
+	const std::string &tagByParagraphIndex(int num);
 
 	void update();
 
 	void removeBook(BookDescriptionPtr book);
 
+	bool empty() const;
+
 private:
 	void build();
-	void buildWithTags();
-	void buildWithoutTags();
+	void buildOrganizedByTags(bool buildAuthorTree);
+	void buildOrganizedByAuthors();
 
-	void addBooks(const Books &books, ZLTextTreeParagraph *root);
+	void addBooks(bool asTree, const Books &books, ZLTextTreeParagraph *root);
+	void addBooksTree(const Books &books, ZLTextTreeParagraph *root);
+	void addBooksPlain(const Books &books, ZLTextTreeParagraph *root);
 
 	void insertText(FBTextKind kind, const std::string &text);
 	void insertImage(const std::string &id);

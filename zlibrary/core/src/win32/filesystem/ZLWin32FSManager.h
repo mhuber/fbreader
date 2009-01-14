@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,28 @@
 #ifndef __ZLWIN32FSMANAGER_H__
 #define __ZLWIN32FSMANAGER_H__
 
-#include "../../../../core/src/posix/filesystem/ZLPosixFSManager.h"
+#include <ZLUnicodeUtil.h>
 
-class ZLWin32FSManager : public ZLPosixFSManager {
+#include "../../filesystem/ZLFSManager.h"
+
+class ZLWin32FSManager : public ZLFSManager {
 
 public:
 	static void createInstance() { ourInstance = new ZLWin32FSManager(); }
+
+	static ZLUnicodeUtil::Ucs2String longFilePath(const std::string &path);
 	
 private:
 	ZLWin32FSManager() {}
 	
-protected:
+private:
 	void normalize(std::string &path) const;
+	std::string resolveSymlink(const std::string &path) const;
 	ZLFSDir *createPlainDirectory(const std::string &path) const;
+	ZLInputStream *createPlainInputStream(const std::string &path) const;
+	ZLOutputStream *createOutputStream(const std::string &path) const;
 	ZLFSDir *createNewDirectory(const std::string &path) const;
+	bool removeFile(const std::string &path) const;
 
 	ZLFileInfo fileInfo(const std::string &path) const;
 
@@ -42,9 +50,6 @@ protected:
 	shared_ptr<ZLDir> rootDirectory() const;
 	const std::string &rootDirectoryPath() const;
 	std::string parentPath(const std::string &path) const;
-
-	void moveFile(const std::string &oldName, const std::string &newName);
-	void getStat(const std::string &path, bool includeSymlinks, struct stat &fileInfo) const;
 };
 
 #endif /* __ZLWIN32FSMANAGER_H__ */

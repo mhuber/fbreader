@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,49 +19,46 @@
 
 #include "ZLApplication.h"
 #include "../view/ZLView.h"
+#include "../view/ZLViewWidget.h"
 
 ZLApplication::RotationAction::RotationAction(ZLApplication &application) : myApplication(application) {
 }
 
-bool ZLApplication::RotationAction::isVisible() {
+bool ZLApplication::RotationAction::isVisible() const {
 	return (myApplication.myViewWidget != 0) &&
-				 ((myApplication.RotationAngleOption.value() != ZLViewWidget::DEGREES0) ||
-					(myApplication.myViewWidget->rotation() != ZLViewWidget::DEGREES0));
+				 ((myApplication.RotationAngleOption.value() != ZLView::DEGREES0) ||
+					(myApplication.myViewWidget->rotation() != ZLView::DEGREES0));
 }
 
 void ZLApplication::RotationAction::run() {
 	int optionValue = myApplication.RotationAngleOption.value();
-	ZLViewWidget::Angle oldAngle = myApplication.myViewWidget->rotation();
-	ZLViewWidget::Angle newAngle = ZLViewWidget::DEGREES0;
+	ZLView::Angle oldAngle = myApplication.myViewWidget->rotation();
+	ZLView::Angle newAngle = ZLView::DEGREES0;
 	if (optionValue == -1) {
 		switch (oldAngle) {
-			case ZLViewWidget::DEGREES0:
-				newAngle = ZLViewWidget::DEGREES90;
+			case ZLView::DEGREES0:
+				newAngle = ZLView::DEGREES90;
 				break;
-			case ZLViewWidget::DEGREES90:
-				newAngle = ZLViewWidget::DEGREES180;
+			case ZLView::DEGREES90:
+				newAngle = ZLView::DEGREES180;
 				break;
-			case ZLViewWidget::DEGREES180:
-				newAngle = ZLViewWidget::DEGREES270;
+			case ZLView::DEGREES180:
+				newAngle = ZLView::DEGREES270;
 				break;
-			case ZLViewWidget::DEGREES270:
-				newAngle = ZLViewWidget::DEGREES0;
+			case ZLView::DEGREES270:
+				newAngle = ZLView::DEGREES0;
 				break;
 		}
 	} else {
-		newAngle = (oldAngle == ZLViewWidget::DEGREES0) ?
-			(ZLViewWidget::Angle)optionValue : ZLViewWidget::DEGREES0;
+		newAngle = (oldAngle == ZLView::DEGREES0) ?
+			(ZLView::Angle)optionValue : ZLView::DEGREES0;
 	}
 	myApplication.myViewWidget->rotate(newAngle);
 	myApplication.AngleStateOption.setValue(newAngle);
 	myApplication.refreshWindow();
 }
 
-ZLApplication::FullscreenAction::FullscreenAction(ZLApplication &application, bool toggle) : myApplication(application), myIsToggle(toggle) {
-}
-
-bool ZLApplication::FullscreenAction::isVisible() {
-	return myIsToggle || !myApplication.isFullscreen();
+ZLApplication::FullscreenAction::FullscreenAction(ZLApplication &application) : myApplication(application) {
 }
 
 void ZLApplication::FullscreenAction::run() {

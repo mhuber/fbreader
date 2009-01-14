@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include <ZLUnicodeUtil.h>
 
 #include "OEBMigrationReader.h"
+#include "../constants/XMLNamespace.h"
 
 OEBMigrationReader::OEBMigrationReader(BookInfo &info) : myInfo(info) {
 }
@@ -29,19 +30,19 @@ static const std::string METADATA = "metadata";
 static const std::string DC_METADATA = "dc-metadata";
 static const std::string SUBJECT_TAG = ":subject";
 
-void OEBMigrationReader::characterDataHandler(const char *text, int len) {
+void OEBMigrationReader::characterDataHandler(const char *text, size_t len) {
 	if (myReadSubject) {
 		myBuffer.append(text, len);
 	}
 }
 
 bool OEBMigrationReader::isDublinCoreNamespace(const std::string &nsId) const {
-	static const std::string DC_SCHEME_PREFIX = "http://purl.org/dc/elements";
 	const std::map<std::string,std::string> &namespaceMap = namespaces();
 	std::map<std::string,std::string>::const_iterator iter = namespaceMap.find(nsId);
 	return
-		(iter != namespaceMap.end()) &&
-		ZLStringUtil::stringStartsWith(iter->second, DC_SCHEME_PREFIX);
+		((iter != namespaceMap.end()) &&
+		 (ZLStringUtil::stringStartsWith(iter->second, XMLNamespace::DublinCorePrefix) ||
+		  ZLStringUtil::stringStartsWith(iter->second, XMLNamespace::DublinCoreLegacyPrefix)));
 }
 
 void OEBMigrationReader::startElementHandler(const char *tag, const char**) {

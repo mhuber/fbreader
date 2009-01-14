@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,14 @@
 #include <ZLFile.h>
 #include <ZLStringUtil.h>
 #include <ZLDir.h>
+#include <ZLInputStream.h>
 
 #include "OEBPlugin.h"
 #include "OEBDescriptionReader.h"
 #include "OEBBookReader.h"
+#include "OEBTextStream.h"
 #include "../../description/BookDescription.h"
+#include "../../bookmodel/BookModel.h"
 
 static const std::string OPF = "opf";
 static const std::string OEBZIP = "oebzip";
@@ -64,10 +67,30 @@ std::string OEBPlugin::opfFileName(const std::string &oebFileName) {
 }
 
 bool OEBPlugin::readDescription(const std::string &path, BookDescription &description) const {
-	return OEBDescriptionReader(description).readDescription(opfFileName(path));
+	shared_ptr<ZLInputStream> lock = ZLFile(path).inputStream();
+	const std::string opf = opfFileName(path);
+	shared_ptr<ZLInputStream> oebStream = new OEBTextStream(opf);
+	detectLanguage(description, *oebStream);
+	return OEBDescriptionReader(description).readDescription(opf);
+}
+
+class InputStreamLock : public ZLUserData {
+
+public:
+	InputStreamLock(shared_ptr<ZLInputStream> stream);
+
+private:
+	shared_ptr<ZLInputStream> myStream;
+};
+
+InputStreamLock::InputStreamLock(shared_ptr<ZLInputStream> stream) : myStream(stream) {
 }
 
 bool OEBPlugin::readModel(const BookDescription &description, BookModel &model) const {
+	model.addUserData(
+		"inputStreamLock",
+		new InputStreamLock(ZLFile(description.fileName()).inputStream())
+	);
 	return OEBBookReader(model).readBook(opfFileName(description.fileName()));
 }
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <node name="menu">
-	  <node name="bookInfo" value="Book Info..."/>
-	  <node name="toc" value="Table of Contents"/>
+	<node name="menu">
+		<node name="bookInfo" value="Book Info..."/>
+		<node name="toc" value="Table of Contents"/>
 		<node name="library" value="Library">
 			<node name="showLibrary" value="Open"/>
 			<node name="previousBook" value="Previous Book"/>
@@ -39,12 +39,21 @@
 		<node name="quit" value="Close"/>
 	</node>
 	<node name="toolbar">
-		<node name="showLibrary" value="Show Library Tree"/>
+		<node name="showReading" value="Show Reading Mode"/>
+		<node name="showLibrary" value="Show Library Tree">
+			<node name="popup" value="Show Recent Books List"/>
+		</node>
 		<node name="showRecent" value="Show Recent Books List"/>
+		<node name="byAuthor" value="Organize Books by Author"/>
+		<node name="byTag" value="Organize Books by Tag"/>
 		<node name="addBook" value="Add File to Library"/>
+		<node name="showNetLibrary" value="Search in Network Libraries"/>
+		<node name="searchOnNetwork" value="Network Search"/>
+		<node name="advancedSearchOnNetwork" value="Advanced Network Search"/>
 		<node name="gotoHome" value="Go to Start of Text"/>
 		<node name="undo" value="Go Back"/>
 		<node name="redo" value="Go Forward"/>
+		<node name="gotoPageNumberWithParameter" value="Go to Page"/>
 		<node name="toc" value="Table of Contents"/>
 		<node name="search" value="Text Search"/>
 		<node name="findNext" value="Find Next"/>
@@ -66,9 +75,15 @@
 				<node name="Library" value="Library">
 					<node name="bookPath" value="Book Path"/>
 					<node name="lookInSubdirectories" value="Look for Books in Subdirectories"/>
-					<node name="recentListSize" value="Recent Books List Size"/>
-					<node name="showTags" value="Show Tag Hierarchies"/>
-					<node name="showAllBooksList" value="Show All Books Branch"/>
+					<node name="collectBooksWithoutMetaInfo" value="Collect Books without MetaInfo"/>
+					<node name="downloadDirectory" value="Directory for Downloaded Books"/>
+					<node name="showAllBooksTag" value="All Books Branch in Book Tree"/>
+				</node>
+				<node name="NetworkLibrary" value="Network Search">
+					<node name="useProxy" value="Use Proxy"/>
+					<node name="proxyHost" value="Proxy Host"/>
+					<node name="proxyPort" value="Proxy Port"/>
+					<node name="timeout" value="Network Operations Timeout, seconds"/>
 				</node>
 				<node name="Language" value="Language">
 					<node name="autoDetect" value="Automatically Detect Language and Encoding"/>
@@ -78,7 +93,11 @@
 					<node name="useWindows1252Hack" value="Use windows-1252 instead of iso-8859-1"/>
 				</node>
 				<node name="Indicator" value="Indicator">
-					<node name="show" value="Show Position Indicator"/>
+					<node name="type" value="Show as">
+						<node name="osScrollbar" value="OS Scrollbar"/>
+						<node name="fbIndicator" value="Old Style Indicator"/>
+						<node name="none" value="Don&apos;t Show"/>
+					</node>
 					<node name="height" value="Indicator Height"/>
 					<node name="offset" value="Offset from Text"/>
 					<node name="pageNumber" value="Show Position as Numbers"/>
@@ -110,6 +129,9 @@
 				<node name="Selection" value="Selection">
 					<node name="enableSelection" value="Enable Text Selection"/>
 				</node>
+				<node name="CSS" value="CSS">
+					<node name="overrideSpecifiedFonts" value="Always Use My Own Fonts"/>
+				</node>
 				<node name="Margins" value="Margins">
 					<node name="left" value="Left Margin"/>
 					<node name="right" value="Right Margin"/>
@@ -131,8 +153,8 @@
 					</node>
 					<node name="spaceBefore" value="Space Before"/>
 					<node name="spaceAfter" value="Space After"/>
-					<node name="leftIndent" value="Left Indent"/>
-					<node name="rightIndent" value="Right Indent"/>
+					<node name="startIndent" value="Line Start Indent"/>
+					<node name="endIndent" value="Line End Indent"/>
 				</node>
 				<node name="Styles" value="Styles">
 					<node name="optionsFor" value="Options for"/>
@@ -162,6 +184,7 @@
 						<node name="text" value="Regular Text"/>
 						<node name="internalLink" value="Internal Hyperlink Text"/>
 						<node name="externalLink" value="External Hyperlink Text"/>
+						<node name="bookLink" value="Link to Another Book"/>
 						<node name="highlighted" value="Highlighted Text"/>
 						<node name="treeLines" value="Tree Lines"/>
 						<node name="indicator" value="Position Indicator"/>
@@ -198,7 +221,6 @@
 						<node name="decreaseFont" value="Decrease Font Size"/>
 						<node name="toggleIndicator" value="Toggle Position Indicator"/>
 						<node name="toggleFullscreen" value="Toggle Fullscreen Mode"/>
-						<node name="onFullscreen" value="Switch to Fullscreen Mode"/>
 						<node name="rotate" value="Rotate Screen"/>
 						<node name="preferences" value="Show Options Dialog"/>
 						<node name="bookInfo" value="Show Book Info Dialog"/>
@@ -276,6 +298,14 @@
 			<node name="backward" value="&amp;Backward"/>
 			<node name="currentSection" value="&amp;This section only"/>
 		</node>
+		<node name="networkSearchDialog">
+			<node name="title" value="Network Search"/>
+			<node name="bookTitle" value="Title"/>
+			<node name="author" value="Author"/>
+			<node name="category" value="Category"/>
+			<node name="series" value="Series"/>
+			<node name="description" value="Description"/>
+		</node>
 		<node name="gotoPageDialog">
 			<node name="title" value="Go To Page"/>
 			<node name="pageNumber" value="Go to Page Number"/>
@@ -299,7 +329,7 @@
 		</node>
 		<node name="openBookErrorBox">
 			<node name="title" value="Error"/>
-			<node name="message" value="Couldn't open:&#10;%s"/>
+			<node name="message" value="Couldn&apos;t open:&#10;%s"/>
 		</node>
 		<node name="noHelpBox">
 			<node name="title" value="Error"/>
@@ -313,10 +343,28 @@
 			<node name="title" value="Error"/>
 			<node name="message" value="Tag name must not contain a &#8220;,&#8221; symbol"/>
 		</node>
+		<node name="networkError">
+			<node name="title" value="Network error"/>
+			<node name="unknownErrorMessage" value="Unknown error"/>
+			<node name="couldntCreateDirectoryMessage" value="Couldn&apos;t create a directory&#10;%s"/>
+			<node name="couldntCreateFileMessage" value="Couldn&apos;t create a file&#10;%s"/>
+			<node name="couldntConnectMessage" value="Couldn&apos;t connect to host %s"/>
+			<node name="couldntResolveHostMessage" value="Couldn&apos;t resolve host %s"/>
+			<node name="couldntResolveProxyMessage" value="Couldn&apos;t resolve proxy %s"/>
+			<node name="operationTimedOutMessage" value="Operation is timed out"/>
+			<node name="somethingWrongMessage" value="Something goes wrong for&#10;%s"/>
+			<node name="emptyLibrariesList" value="Empty libraries list"/>
+		</node>
+		<node name="downloadError">
+			<node name="title" value="Error while downloading"/>
+			<node name="message" value="Can&apos;t download this book at the moment"/>
+		</node>
 		<node name="waitMessage">
 			<node name="loadingBook" value="Loading book. Please, wait..."/>
 			<node name="loadingBookList" value="Loading book list. Please, wait..."/>
 			<node name="migrate" value="Upgrading to the new version. Please, wait..."/>
+			<node name="downloadBookList" value="Downloading book list. Please, wait..."/>
+			<node name="downloadBook" value="Downloading book. Please, wait..."/>
 		</node>
 	</node>
 	<node name="style">
@@ -344,8 +392,7 @@
 		<node name="Code" value="Code"/>
 		<node name="StrikeThrough" value="StrikeThrough"/>
 		<node name="Contents Table" value="Contents Table"/>
-		<node name="Author in Library" value="Author in Library"/>
-		<node name="Book in Library" value="Book in Library"/>
+		<node name="Library Entry" value="Library Entry"/>
 		<node name="Recent Book List" value="Recent Book List"/>
 		<node name="Italic" value="Italic"/>
 		<node name="Bold" value="Bold"/>
@@ -358,6 +405,7 @@
 		<node name="Header 5" value="Header 5"/>
 		<node name="Header 6" value="Header 6"/>
 		<node name="External Hyperlink" value="External Hyperlink"/>
+		<node name="Link to Another Book" value="Link to Another Book"/>
 	</node>
 	<node name="external">
 		<node name="browser" value="Browser"/>
@@ -367,6 +415,11 @@
 		<node name="unknown" value="Unknown Error"/>
 		<node name="unsupportedCompressionMethod" value="Unsupported Compression Method"/>
 		<node name="encriptedFile" value="DRM-protected File"/>
+	</node>
+	<node name="networkLibrary">
+		<node name="caption" value="Network Library"/>
+		<node name="startText" value="Please enter a search pattern in the text field on the toolbar and press &lt;Return&gt;."/>
+		<node name="notFound" value="Sorry, no suitable books were found."/>
 	</node>
 	<node name="library">
 		<node name="caption" value="Library"/>

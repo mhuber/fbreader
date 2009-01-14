@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,11 +27,16 @@ void ZLTextView::rebuildPaintInfo(bool strong) {
 		return;
 	}
 
+	if ((myPaintState == TO_SCROLL_FORWARD) || (myPaintState == TO_SCROLL_BACKWARD)) {
+		preparePaintInfo();
+	}
+
 	myLineInfos.clear();
 	if (strong) {
 		ZLTextParagraphCursorCache::clear();
 		myLineInfoCache.clear();
 	}
+
 	if (!myStartCursor.isNull()) {
 		if (strong) {
 			myStartCursor.rebuild();
@@ -53,7 +58,7 @@ void ZLTextView::setStartCursor(ZLTextParagraphCursorPtr cursor) {
 	myPaintState = myStartCursor.isNull() ? NOTHING_TO_PAINT : START_IS_KNOWN;
 }
 
-void ZLTextView::moveStartCursor(int paragraphNumber, int wordNumber, int charNumber) {
+void ZLTextView::moveStartCursor(int paragraphIndex, int elementIndex, int charIndex) {
 	if (myPaintState == NOTHING_TO_PAINT) {
 		return;
 	}
@@ -61,14 +66,14 @@ void ZLTextView::moveStartCursor(int paragraphNumber, int wordNumber, int charNu
 	if (myStartCursor.isNull()) {
 		myStartCursor = myEndCursor;
 	}
-	myStartCursor.moveToParagraph(paragraphNumber);
-	myStartCursor.moveTo(wordNumber, charNumber);
+	myStartCursor.moveToParagraph(paragraphIndex);
+	myStartCursor.moveTo(elementIndex, charIndex);
 	myEndCursor = 0;
 	myLineInfos.clear();
 	myPaintState = START_IS_KNOWN;
 }
 
-void ZLTextView::moveEndCursor(int paragraphNumber, int wordNumber, int charNumber) {
+void ZLTextView::moveEndCursor(int paragraphIndex, int elementIndex, int charIndex) {
 	if (myPaintState == NOTHING_TO_PAINT) {
 		return;
 	}
@@ -76,12 +81,12 @@ void ZLTextView::moveEndCursor(int paragraphNumber, int wordNumber, int charNumb
 	if (myEndCursor.isNull()) {
 		myEndCursor = myStartCursor;
 	}
-	myEndCursor.moveToParagraph(paragraphNumber);
-	if ((paragraphNumber > 0) && (wordNumber == 0) && (charNumber == 0)) {
+	myEndCursor.moveToParagraph(paragraphIndex);
+	if ((paragraphIndex > 0) && (elementIndex == 0) && (charIndex == 0)) {
 		myEndCursor.previousParagraph();
 		myEndCursor.moveToParagraphEnd();
 	} else {
-		myEndCursor.moveTo(wordNumber, charNumber);
+		myEndCursor.moveTo(elementIndex, charIndex);
 	}
 	myStartCursor = 0;
 	myLineInfos.clear();
@@ -164,6 +169,7 @@ void ZLTextView::preparePaintInfo() {
 	if ((myPaintState == NOTHING_TO_PAINT) || (myPaintState == READY)) {
 		return;
 	}
+	myDoUpdateScrollbar = true;
 
 	myLineInfoCache.insert(myLineInfos.begin(), myLineInfos.end());
 
@@ -245,6 +251,16 @@ void ZLTextView::preparePaintInfo() {
 			break;
 		case START_IS_KNOWN:
 			myEndCursor = buildInfos(myStartCursor);
+			if (pageIsEmpty()) {
+				ZLTextWordCursor startCursor = findLineFromStart(1);
+				if (!startCursor.isNull()) {
+					myStartCursor = startCursor;
+					if (myStartCursor.isEndOfParagraph()) {
+						myStartCursor.nextParagraph();
+					}
+					myEndCursor = buildInfos(myStartCursor);
+				}
+			}
 			break;
 		case END_IS_KNOWN:
 			myStartCursor = findStart(myEndCursor, PIXEL_UNIT, textAreaHeight());
@@ -303,7 +319,7 @@ ZLTextWordCursor ZLTextView::buildInfos(const ZLTextWordCursor &start) {
 
 		myStyle.reset();
 		myStyle.applyControls(paragraphStart, cursor);
-		ZLTextLineInfoPtr infoPtr = new ZLTextLineInfo(cursor, myStyle.textStyle());
+		ZLTextLineInfoPtr infoPtr = new ZLTextLineInfo(cursor, myStyle.textStyle(), myStyle.bidiLevel());
 
 		while (!infoPtr->End.isEndOfParagraph()) {
 			infoPtr = processTextLine(infoPtr->End, paragraphEnd);
@@ -336,7 +352,7 @@ int ZLTextView::paragraphSize(const ZLTextWordCursor &cursor, bool beforeCurrent
 
 	int size = 0;
 
-	while (!word.equalWordNumber(end)) {
+	while (!word.equalElementIndex(end)) {
 		const ZLTextLineInfoPtr info = processTextLine(word, end);
 		word = info->End;
 		size += infoSize(*info, unit);

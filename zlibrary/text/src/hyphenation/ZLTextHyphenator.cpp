@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
  * 02110-1301, USA.
  */
 
-#include <ZLUnicodeUtil.h>
 #include <ZLTextWord.h>
 
 #include "ZLTextHyphenator.h"
@@ -33,10 +32,10 @@ void ZLTextHyphenator::deleteInstance() {
 }
 
 ZLTextHyphenationInfo ZLTextHyphenator::info(const ZLTextWord &word) const {
-	ZLUnicodeUtil::Ucs2String ucs2Vector;
-	ZLUnicodeUtil::utf8ToUcs2(ucs2Vector, word.Data, word.Size, word.Length);
+	ZLUnicodeUtil::Ucs4String ucs4Vector;
+	ZLUnicodeUtil::utf8ToUcs4(ucs4Vector, word.Data, word.Size, word.Length);
 
-	static std::vector<unsigned short> pattern;
+	ZLUnicodeUtil::Ucs4String pattern;
 	pattern.clear();
 	pattern.reserve(word.Length + 2);
 
@@ -45,9 +44,10 @@ ZLTextHyphenationInfo ZLTextHyphenator::info(const ZLTextWord &word) const {
 	isLetter.reserve(word.Length);
 
 	pattern.push_back(' ');
-	for (unsigned int i = 0; i < ucs2Vector.size(); ++i) {
-		unsigned short symbol = ucs2Vector[i];
-		bool letter = ZLUnicodeUtil::isLetter(symbol);
+	for (unsigned int i = 0; i < ucs4Vector.size(); ++i) {
+		ZLUnicodeUtil::Ucs4Char symbol = ucs4Vector[i];
+		// TODO: get special symbols from pattern file
+		bool letter = (symbol == '\'') || (symbol == '^') || ZLUnicodeUtil::isLetter(symbol);
 		isLetter.push_back(letter);
 		pattern.push_back(letter ? ZLUnicodeUtil::toLower(symbol) : ' ');
 	}
@@ -59,12 +59,12 @@ ZLTextHyphenationInfo ZLTextHyphenator::info(const ZLTextWord &word) const {
 	for (int i = 0; i < word.Length + 1; ++i) {
 		if ((i < 2) || (i > word.Length - 2)) {
 			info.myMask[i] = false;
-		} else if (ucs2Vector[i - 1] == '-') {
+		} else if (ucs4Vector[i - 1] == '-') {
 			info.myMask[i] = (i >= 3) &&
-				(isLetter[i - 3] || (ucs2Vector[i - 3] == '-')) &&
-				(isLetter[i - 2] || (ucs2Vector[i - 2] == '-')) &&
-				(isLetter[i] || (ucs2Vector[i] == '-')) &&
-				(isLetter[i + 1] || (ucs2Vector[i + 1] == '-'));
+				(isLetter[i - 3] || (ucs4Vector[i - 3] == '-')) &&
+				(isLetter[i - 2] || (ucs4Vector[i - 2] == '-')) &&
+				(isLetter[i] || (ucs4Vector[i] == '-')) &&
+				(isLetter[i + 1] || (ucs4Vector[i + 1] == '-'));
 		} else {
 			info.myMask[i] = info.myMask[i] &&
 				isLetter[i - 2] &&

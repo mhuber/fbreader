@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,117 @@
  * 02110-1301, USA.
  */
 
+#include <algorithm>
+
 #include "ZLWin32ViewWidget.h"
 #include "ZLWin32PaintContext.h"
 
-ZLWin32ViewWidget::ZLWin32ViewWidget(ZLWin32ApplicationWindow &window) : ZLViewWidget((ZLViewWidget::Angle)window.application().AngleStateOption.value()), myWindow(window), myMouseCaptured(false), myRotator(0) {
+static ZLWin32ViewWidget *viewWidgetInstance = 0;
+
+LRESULT CALLBACK ZLWin32ViewWidget::ViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	return viewWidgetInstance->Callback(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT ZLWin32ViewWidget::Callback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	WndProc orig = myOriginalCallback;
+
+	switch (uMsg) {
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+			return 0;
+		case WM_LBUTTONDOWN:
+			if (!myWindow.mouseEventsAreBlocked()) {
+				myWindow.resetFocus();
+				if (myMouseCaptured) {
+					SetCapture(myHandle);
+				}
+				onMousePress(LOWORD(lParam), HIWORD(lParam));
+			}
+			return 0;
+		case WM_LBUTTONUP:
+			if (!myWindow.mouseEventsAreBlocked()) {
+				onMouseRelease(LOWORD(lParam), HIWORD(lParam));
+			}
+			if (myHandle == GetCapture()) {
+				ReleaseCapture();
+			}
+			return 0;
+		case WM_MOUSEMOVE:
+			if (!myWindow.mouseEventsAreBlocked()) {
+				if (wParam & MK_LBUTTON) {
+					onMouseMovePressed(LOWORD(lParam), HIWORD(lParam));
+				} else {
+					onMouseMove(LOWORD(lParam), HIWORD(lParam));
+				}
+			}
+			myWindow.updateCursor();
+			return 0;
+		case WM_ERASEBKGND:
+			return 0;
+		case WM_PAINT:
+			doPaint();
+			return 0;
+		case WM_HSCROLL:
+		case WM_VSCROLL:
+		{
+			const int dir = (uMsg == WM_VSCROLL) ? SB_VERT : SB_HORZ;
+			const size_t extra = 
+				(uMsg == WM_VSCROLL) ? myVScrollBarExtra : myHScrollBarExtra;
+			SCROLLINFO info;
+			info.cbSize = sizeof(SCROLLINFO);
+			info.fMask = SIF_ALL;
+			GetScrollInfo(myHandle, dir, &info);
+			ZLView::Direction direction =
+				(uMsg == WM_VSCROLL) ? ZLView::VERTICAL : ZLView::HORIZONTAL;
+			switch (LOWORD(wParam)) {
+				case SB_TOP:
+					onScrollbarPageStep(direction, -1);
+					break;
+				case SB_BOTTOM:
+					onScrollbarPageStep(direction, 1);
+					break;
+				case SB_LINEUP:
+					onScrollbarStep(direction, -1);
+					break;
+				case SB_LINEDOWN:
+					onScrollbarStep(direction, 1);
+					break;
+				case SB_PAGEUP:
+					onScrollbarPageStep(direction, -1);
+					break;
+				case SB_PAGEDOWN:
+					onScrollbarPageStep(direction, 1);
+					break;
+				case SB_THUMBTRACK:
+					info.nPos = info.nTrackPos;
+					info.fMask = SIF_POS;
+					SetScrollInfo(myHandle, dir, &info, true);
+					info.fMask = SIF_ALL;
+					GetScrollInfo(myHandle, dir, &info);
+					onScrollbarMoved(
+						direction,
+						info.nMax - info.nMin - extra,
+						info.nPos,
+						info.nPos + info.nPage - extra
+					);
+					break;
+			}
+			SendMessage(hWnd, WM_PAINT, 0, 0);
+			return orig(hWnd, uMsg, wParam, lParam);
+		}
+		case WM_CAPTURECHANGED:
+			repaint();
+			return orig(hWnd, uMsg, wParam, lParam);
+		default:
+			return orig(hWnd, uMsg, wParam, lParam);
+	}
+}
+
+ZLWin32ViewWidget::ZLWin32ViewWidget(ZLWin32ApplicationWindow &window) : ZLViewWidget((ZLView::Angle)window.application().AngleStateOption.value()), myWindow(window), myMouseCaptured(false), myRotator(0), myHScrollBarIsEnabled(false), myVScrollBarIsEnabled(false) {
+	viewWidgetInstance = this;
+	myHandle = CreateWindow(WC_EDIT, 0, (WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL) & ~WS_BORDER, 0, 0, 0, 0, myWindow.mainWindow(), 0, GetModuleHandle(0), 0);
+	myOriginalCallback = (WndProc)SetWindowLong(myHandle, GWL_WNDPROC, (LONG)ViewWndProc);
+	ShowScrollBar(myHandle, SB_BOTH, false);
 }
 
 void ZLWin32ViewWidget::trackStylus(bool track) {
@@ -29,9 +136,8 @@ void ZLWin32ViewWidget::trackStylus(bool track) {
 
 void ZLWin32ViewWidget::repaint()	{
 	RECT rectangle;
-	GetClientRect(myWindow.mainWindow(), &rectangle);
-	rectangle.top += myWindow.topOffset();
-	InvalidateRect(myWindow.mainWindow(), &rectangle, false);
+	GetClientRect(myHandle, &rectangle);
+	InvalidateRect(myHandle, &rectangle, false);
 }
 
 ZLWin32ViewWidget::Rotator::Rotator(int width, int height) : myWidth(width), myHeight(height), mySign(-1) {
@@ -84,7 +190,7 @@ void ZLWin32ViewWidget::Rotator::rotate() {
 	}
 }
 
-void ZLWin32ViewWidget::Rotator::draw(HDC dc, int topOffset) {
+void ZLWin32ViewWidget::Rotator::draw(HDC dc) {
 	BITMAPINFO bi;
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
   bi.bmiHeader.biWidth = myWidth;
@@ -95,44 +201,41 @@ void ZLWin32ViewWidget::Rotator::draw(HDC dc, int topOffset) {
   bi.bmiHeader.biSizeImage = 4 * myWidth * myHeight;
   bi.bmiHeader.biClrUsed = 0;
   bi.bmiHeader.biClrImportant = 0;
-	int offset = (mySign == 1) ? topOffset : topOffset - 1;
-	SetDIBitsToDevice(dc, 0, offset, myWidth, myHeight, 0, 0, 0, myHeight, myBuffer1, &bi, DIB_RGB_COLORS);
+	SetDIBitsToDevice(dc, 0, 0, myWidth, myHeight, 0, 0, 0, myHeight, myBuffer1, &bi, DIB_RGB_COLORS);
 }
 
 void ZLWin32ViewWidget::doPaint()	{
 	ZLWin32PaintContext &win32Context = (ZLWin32PaintContext&)view()->context();
-	HWND window = myWindow.mainWindow();
-	int offset = myWindow.topOffset();
 
 	RECT rectangle;
-	GetClientRect(window, &rectangle);
+	GetClientRect(myHandle, &rectangle);
 	const int width = rectangle.right - rectangle.left;
-	const int height = rectangle.bottom - rectangle.top - offset;
+	const int height = rectangle.bottom - rectangle.top;
 
 	switch (rotation()) {
-		case DEGREES0:
-		case DEGREES180:
-			win32Context.updateInfo(window, width, height);
+		case ZLView::DEGREES0:
+		case ZLView::DEGREES180:
+			win32Context.updateInfo(myHandle, width, height);
 			break;
-		case DEGREES90:
-		case DEGREES270:
-			win32Context.updateInfo(window, height, width);
+		case ZLView::DEGREES90:
+		case ZLView::DEGREES270:
+			win32Context.updateInfo(myHandle, height, width);
 			break;
 	}
 	view()->paint();
 
 	PAINTSTRUCT paintStructure;
-	HDC dc = BeginPaint(window, &paintStructure);
+	HDC dc = BeginPaint(myHandle, &paintStructure);
 	switch (rotation()) {
-		case DEGREES0:
+		case ZLView::DEGREES0:
 			if (myRotator != 0) {
 				delete myRotator;
 				myRotator = 0;
 			}
 			SetMapMode(dc, MM_TEXT);
-			BitBlt(dc, 0, offset, width + 1, height + 1, win32Context.displayContext(), 0, 0, SRCCOPY);
+			BitBlt(dc, 0, 0, width, height, win32Context.displayContext(), 0, 0, SRCCOPY);
 			break;
-		case DEGREES180:
+		case ZLView::DEGREES180:
 		{
 			if (myRotator != 0) {
 				delete myRotator;
@@ -142,40 +245,72 @@ void ZLWin32ViewWidget::doPaint()	{
 			SIZE size;
 			GetViewportExtEx(dc, &size);
 			SetViewportExtEx(dc, -size.cx, -size.cy, 0);
-			SetViewportOrgEx(dc, width - 1, height + 2 * offset - 1, 0);
-			BitBlt(dc, 0, offset, width + 1, height + 1, win32Context.displayContext(), 0, 0, SRCCOPY);
+			SetViewportOrgEx(dc, width - 1, height - 1, 0);
+			BitBlt(dc, 0, 0, width + 1, height + 1, win32Context.displayContext(), 0, -1, SRCCOPY);
 			break;
 		}
-		case DEGREES90:
-		case DEGREES270:
+		case ZLView::DEGREES90:
+		case ZLView::DEGREES270:
 			if (myRotator == 0) {
-				myRotator = new Rotator(width + 1, height + 1);
+				myRotator = new Rotator(width, height);
 			} else {
-				myRotator->setSize(width + 1, height + 1);
+				myRotator->setSize(width, height);
 			}
 
-			myRotator->setRotation(rotation() == DEGREES90);
+			myRotator->setRotation(rotation() == ZLView::DEGREES90);
 			myRotator->retrieve(win32Context.displayContext(), win32Context.buffer());
 			myRotator->rotate();
-			myRotator->draw(dc, offset);
+			myRotator->draw(dc);
 			break;
 	}
-	EndPaint(window, &paintStructure);
+	EndPaint(myHandle, &paintStructure);
+}
+
+void ZLWin32ViewWidget::rotateXY(int &x, int &y) const {
+	ZLPaintContext &context = view()->context();
+	const int maxX = context.width() - 1;
+	const int maxY = context.height() - 1;
+	switch (rotation()) {
+		case ZLView::DEGREES0:
+			break;
+		case ZLView::DEGREES90:
+		{
+			int tmp = maxX - y;
+			y = x;
+			x = tmp;
+			break;
+		}
+		case ZLView::DEGREES180:
+			x = maxX - x;
+			y = maxY - y;
+			break;
+		case ZLView::DEGREES270:
+		{
+			int tmp = y;
+			y = maxY - x;
+			x = tmp;
+			break;
+		}
+	}
 }
 
 void ZLWin32ViewWidget::onMousePress(int x, int y) {
+	rotateXY(x, y);
 	view()->onStylusPress(x, y);
 }
 
 void ZLWin32ViewWidget::onMouseRelease(int x, int y) {
+	rotateXY(x, y);
 	view()->onStylusRelease(x, y);
 }
 
 void ZLWin32ViewWidget::onMouseMove(int x, int y) {
+	rotateXY(x, y);
 	view()->onStylusMove(x, y);
 }
 
 void ZLWin32ViewWidget::onMouseMovePressed(int x, int y) {
+	rotateXY(x, y);
 	ZLPaintContext &context = view()->context();
 	if (x < 0) {
 		x = 0;
@@ -188,4 +323,67 @@ void ZLWin32ViewWidget::onMouseMovePressed(int x, int y) {
 		y = context.height() - 1;
 	}
 	view()->onStylusMovePressed(x, y);
+}
+
+void ZLWin32ViewWidget::setScrollbarEnabled(ZLView::Direction direction, bool enabled) {
+	if (direction == ZLView::VERTICAL) {
+		if (enabled == myVScrollBarIsEnabled) {
+			return;
+		}
+		myVScrollBarIsEnabled = enabled;
+	} else {
+		if (enabled == myHScrollBarIsEnabled) {
+			return;
+		}
+		myHScrollBarIsEnabled = enabled;
+	}
+
+	ShowScrollBar(myHandle, (direction == ZLView::VERTICAL) ? SB_VERT : SB_HORZ, enabled);
+
+	doPaint();
+}
+
+void ZLWin32ViewWidget::setScrollbarPlacement(ZLView::Direction direction, bool standard) {
+	/*
+	int style = GetWindowLong(xxx, GWL_STYLE);
+	if (direction == ZLView::VERTICAL) {
+		xxx 
+	SetWindowLong(myMainWindow, GWL_STYLE, style & ~WS_CAPTION);
+	*/
+}
+
+void ZLWin32ViewWidget::setScrollbarParameters(ZLView::Direction direction, size_t full, size_t from, size_t to) {
+	if (direction == ZLView::VERTICAL) {
+		if (!myVScrollBarIsEnabled) {
+			return;
+		}
+	} else {
+		if (!myHScrollBarIsEnabled) {
+			return;
+		}
+	}
+
+	SCROLLINFO info;
+	info.cbSize = sizeof(SCROLLINFO);
+	info.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
+	info.nMin = 0;
+	info.nMax = full;
+	info.nPage = to - from;
+	info.nPos = from;
+	size_t extra = 0;
+	if (info.nPage < full / 20) {
+		extra = full / 20 - info.nPage;
+		info.nPage = full / 20;
+	}
+	info.nMax += extra;
+	if (direction == ZLView::VERTICAL) {
+		myVScrollBarExtra = extra;
+	} else {
+		myHScrollBarExtra = extra;
+	}
+	SetScrollInfo(myHandle, (direction == ZLView::VERTICAL) ? SB_VERT : SB_HORZ, &info, true);
+}
+
+HWND ZLWin32ViewWidget::handle() const {
+	return myHandle;
 }

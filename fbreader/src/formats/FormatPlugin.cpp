@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,36 +27,67 @@
 void FormatPlugin::detectEncodingAndLanguage(BookDescription &description, ZLInputStream &stream) {
 	std::string language = description.language();
 	std::string encoding = description.encoding();
-	if (encoding.empty() || language.empty()) {
-		PluginCollection &collection = PluginCollection::instance();
-		if (language.empty()) {
-			language = collection.DefaultLanguageOption.value();
-		}
-		if (encoding.empty()) {
-			encoding = collection.DefaultEncodingOption.value();
-		}
-		if (collection.LanguageAutoDetectOption.value() && stream.open()) {
-			static const int BUFSIZE = 65536;
-			char *buffer = new char[BUFSIZE];
-			const size_t size = stream.read(buffer, BUFSIZE);
-			stream.close();
-			shared_ptr<ZLLanguageDetector::LanguageInfo> info =
-				ZLLanguageDetector().findInfo(buffer, size);
-			delete[] buffer;
-			if (!info.isNull()) {
+	if (!encoding.empty() && !language.empty()) {
+		return;
+	}
+
+	PluginCollection &collection = PluginCollection::instance();
+	if (language.empty()) {
+		language = collection.DefaultLanguageOption.value();
+	}
+	if (encoding.empty()) {
+		encoding = collection.DefaultEncodingOption.value();
+	}
+	if (collection.LanguageAutoDetectOption.value() && stream.open()) {
+		static const int BUFSIZE = 65536;
+		char *buffer = new char[BUFSIZE];
+		const size_t size = stream.read(buffer, BUFSIZE);
+		stream.close();
+		shared_ptr<ZLLanguageDetector::LanguageInfo> info =
+			ZLLanguageDetector().findInfo(buffer, size);
+		delete[] buffer;
+		if (!info.isNull()) {
+			if (!info->Language.empty()) {
 				language = info->Language;
-				encoding = info->Encoding;
-				if ((encoding == "US-ASCII") || (encoding == "ISO-8859-1")) {
-					encoding = "windows-1252";
-				}
+			}
+			encoding = info->Encoding;
+			if ((encoding == "US-ASCII") || (encoding == "ISO-8859-1")) {
+				encoding = "windows-1252";
 			}
 		}
-		WritableBookDescription(description).encoding() = encoding;
-		WritableBookDescription(description).language() = language;
 	}
+	WritableBookDescription(description).encoding() = encoding;
+	WritableBookDescription(description).language() = language;
 }
 
-const std::string &FormatPlugin::tryOpen(const std::string &path) const {
+void FormatPlugin::detectLanguage(BookDescription &description, ZLInputStream &stream) {
+	std::string language = description.language();
+	if (!language.empty()) {
+		return;
+	}
+
+	PluginCollection &collection = PluginCollection::instance();
+	if (language.empty()) {
+		language = collection.DefaultLanguageOption.value();
+	}
+	if (collection.LanguageAutoDetectOption.value() && stream.open()) {
+		static const int BUFSIZE = 65536;
+		char *buffer = new char[BUFSIZE];
+		const size_t size = stream.read(buffer, BUFSIZE);
+		stream.close();
+		shared_ptr<ZLLanguageDetector::LanguageInfo> info =
+			ZLLanguageDetector().findInfo(buffer, size);
+		delete[] buffer;
+		if (!info.isNull()) {
+			if (!info->Language.empty()) {
+				language = info->Language;
+			}
+		}
+	}
+	WritableBookDescription(description).language() = language;
+}
+
+const std::string &FormatPlugin::tryOpen(const std::string&) const {
 	static const std::string EMPTY = "";
 	return EMPTY;
 }

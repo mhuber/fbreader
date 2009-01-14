@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ public:
 	static const std::string PathDelimiter;
 	static const std::string EndOfLine;
 	static std::string Language();
+	static std::string Country();
 
 	static const std::string BaseDirectory;
 	static const std::string &ZLibraryDirectory();
@@ -50,7 +51,12 @@ public:
 	static void shutdown();
 
 private:
+	static void initLocale();
+
+private:
+	static bool ourLocaleIsInitialized;
 	static std::string ourLanguage;
+	static std::string ourCountry;
 	static std::string ourZLibraryDirectory;
 
 	static std::string ourImageDirectory;

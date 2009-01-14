@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 ORBookReader::ORBookReader(BookModel &model) : myModelReader(model) {
 }
 
-void ORBookReader::characterDataHandler(const char *data, int len) {
+void ORBookReader::characterDataHandler(const char *data, size_t len) {
 	if (myState == READ_TOCTITLE) {
 		myTOCTitle.append(data, len);
 	}

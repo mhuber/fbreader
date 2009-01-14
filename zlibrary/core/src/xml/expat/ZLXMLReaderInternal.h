@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 #include <expat.h>
 
+#include <set>
+
 class ZLXMLReader;
 
 class ZLXMLReaderInternal {
@@ -41,6 +43,8 @@ private:
 	ZLXMLReader &myReader;
 	XML_Parser myParser;
 	bool myInitialized;
+
+	std::set<shared_ptr<ZLInputStream> > myDTDStreamLocks;
 };
 
 #endif /* __ZLXMLREADERINTERNAL_H__ */

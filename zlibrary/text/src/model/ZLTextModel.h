@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,12 +62,13 @@ public:
 	ZLTextMark previousMark(ZLTextMark position) const;
 
 	void addControl(ZLTextKind textKind, bool isStart);
-	void addControl(const ZLTextForcedControlEntry &entry);
-	void addHyperlinkControl(ZLTextKind textKind, const std::string &label);
+	void addControl(const ZLTextStyleEntry &entry);
+	void addHyperlinkControl(ZLTextKind textKind, const std::string &label, const std::string &hyperlinkType);
 	void addText(const std::string &text);
 	void addText(const std::vector<std::string> &text);
 	void addImage(const std::string &id, const ZLImageMap &imageMap, short vOffset);
 	void addFixedHSpace(unsigned char length);
+	void addBidiReset();
 
 protected:
 	void addParagraphInternal(ZLTextParagraph *paragraph);

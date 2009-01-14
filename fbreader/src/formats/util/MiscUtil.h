@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,15 @@
 
 #include <string>
 
+#include "../../bookmodel/FBTextKind.h"
+
 class MiscUtil {
 
 private:
 	MiscUtil();
 
 public:
-	static bool isReference(const std::string &text);
+	static FBTextKind referenceType(const std::string &link);
 	static std::string htmlDirectoryPrefix(const std::string &fileName);
 	static std::string htmlFileName(const std::string &fileName);
 	static std::string decodeHtmlURL(const std::string &encodedURL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,12 @@
 
 #include <algorithm>
 
+#include <ZLUnicodeUtil.h>
 #include <ZLImage.h>
 
 #include "ZLTextParagraph.h"
+
+const shared_ptr<ZLTextParagraphEntry> ResetBidiEntry::Instance = new ResetBidiEntry();
 
 size_t ZLTextEntry::dataLength() const {
 	size_t len;
@@ -31,11 +34,45 @@ size_t ZLTextEntry::dataLength() const {
 	return len;
 }
 
-ZLTextForcedControlEntry::ZLTextForcedControlEntry(char *address) {
-	myMask = *address;
-	memcpy(&myLeftIndent, address + 1, sizeof(short));
-	memcpy(&myRightIndent, address + 1 + sizeof(short), sizeof(short));
-	myAlignmentType = (ZLTextAlignmentType)*(address + 1 + 2 * sizeof(short));
+short ZLTextStyleEntry::length(Length name, const Metrics &metrics) const {
+	switch (myLengths[name].Unit) {
+		default:
+		case SIZE_UNIT_PIXEL:
+			return myLengths[name].Size;
+		case SIZE_UNIT_EM_100:
+			return (myLengths[name].Size * metrics.FontSize + 50) / 100;
+		case SIZE_UNIT_EX_100:
+			return (myLengths[name].Size * metrics.FontXHeight + 50) / 100;
+		case SIZE_UNIT_PERCENT:
+			switch (name) {
+				default:
+				case LENGTH_LEFT_INDENT:
+				case LENGTH_RIGHT_INDENT:
+				case LENGTH_FIRST_LINE_INDENT_DELTA:
+					return (myLengths[name].Size * metrics.FullWidth + 50) / 100;
+				case LENGTH_SPACE_BEFORE:
+				case LENGTH_SPACE_AFTER:
+					return (myLengths[name].Size * metrics.FullHeight + 50) / 100;
+			}
+	}
+}
+
+ZLTextStyleEntry::ZLTextStyleEntry(char *address) {
+	memcpy(&myMask, address, sizeof(int));
+	address += sizeof(int);
+	for (int i = 0; i < NUMBER_OF_LENGTHS; ++i) {
+		myLengths[i].Unit = (SizeUnit)*address++;
+		memcpy(&myLengths[i].Size, address, sizeof(short));
+		address += sizeof(short);
+	}
+	const char mask = *address++;
+	myBold = mask & 1;
+	myItalic = mask & 2;
+	myAlignmentType = (ZLTextAlignmentType)*address++;
+	myFontSizeMag = (signed char)*address++;
+	if (fontFamilySupported()) {
+		myFontFamily = address;
+	}
 }
 
 const shared_ptr<ZLTextParagraphEntry> ZLTextParagraph::Iterator::entry() const {
@@ -62,11 +99,14 @@ const shared_ptr<ZLTextParagraphEntry> ZLTextParagraph::Iterator::entry() const 
 				myEntry = new ImageEntry(myPointer + sizeof(const ZLImageMap*) + sizeof(short) + 1, imageMap, vOffset);
 				break;
 			}
-			case ZLTextParagraphEntry::FORCED_CONTROL_ENTRY:
-				myEntry = new ZLTextForcedControlEntry(myPointer + 1);
+			case ZLTextParagraphEntry::STYLE_ENTRY:
+				myEntry = new ZLTextStyleEntry(myPointer + 1);
 				break;
 			case ZLTextParagraphEntry::FIXED_HSPACE_ENTRY:
 				myEntry = new ZLTextFixedHSpaceEntry((unsigned char)*(myPointer + 1));
+				break;
+			case ZLTextParagraphEntry::RESET_BIDI_ENTRY:
+				myEntry = ResetBidiEntry::Instance;
 				break;
 		}
 	}
@@ -94,6 +134,10 @@ void ZLTextParagraph::Iterator::next() {
 					++myPointer;
 				}
 				++myPointer;
+				while (*myPointer != '\0') {
+					++myPointer;
+				}
+				++myPointer;
 				break;
 			case ZLTextParagraphEntry::IMAGE_ENTRY:
 				myPointer += sizeof(const ZLImageMap*) + sizeof(short) + 1;
@@ -102,11 +146,25 @@ void ZLTextParagraph::Iterator::next() {
 				}
 				++myPointer;
 				break;
-			case ZLTextParagraphEntry::FORCED_CONTROL_ENTRY:
-				myPointer += 2 * sizeof(short) + 3;
+			case ZLTextParagraphEntry::STYLE_ENTRY:
+			{
+				int mask;
+				memcpy(&mask, myPointer + 1, sizeof(int));
+				bool withFontFamily = mask & ZLTextStyleEntry::SUPPORT_FONT_FAMILY;
+				myPointer += sizeof(int) + ZLTextStyleEntry::NUMBER_OF_LENGTHS * (sizeof(short) + 1) + 4;
+				if (withFontFamily) {
+					while (*myPointer != '\0') {
+						++myPointer;
+					}
+					++myPointer;
+				}
 				break;
+			}
 			case ZLTextParagraphEntry::FIXED_HSPACE_ENTRY:
 				myPointer += 2;
+				break;
+			case ZLTextParagraphEntry::RESET_BIDI_ENTRY:
+				++myPointer;
 				break;
 		}
 		if (*myPointer == 0) {
@@ -128,11 +186,31 @@ shared_ptr<ZLTextParagraphEntry> ZLTextControlEntryPool::controlEntry(ZLTextKind
 	return entry;
 }
 	
-size_t ZLTextParagraph::textLength() const {
+size_t ZLTextParagraph::textDataLength() const {
 	size_t len = 0;
 	for (Iterator it = *this; !it.isEnd(); it.next()) {
 		if (it.entryKind() == ZLTextParagraphEntry::TEXT_ENTRY) {
 			len += ((ZLTextEntry&)*it.entry()).dataLength();
+		}
+	}
+	return len;
+}
+
+size_t ZLTextParagraph::characterNumber() const {
+	size_t len = 0;
+	for (Iterator it = *this; !it.isEnd(); it.next()) {
+		switch (it.entryKind()) {
+			case ZLTextParagraphEntry::TEXT_ENTRY:
+			{
+				const ZLTextEntry &entry = (ZLTextEntry&)*it.entry();
+				len += ZLUnicodeUtil::utf8Length(entry.data(), entry.dataLength());
+				break;
+			}
+			case ZLTextParagraphEntry::IMAGE_ENTRY:
+				len += 100;
+				break;
+			default:
+				break;
 		}
 	}
 	return len;
@@ -170,4 +248,7 @@ int ZLTextTreeParagraph::fullSize() const {
 		size += (*it)->fullSize();
 	}
 	return size;
+}
+
+ResetBidiEntry::ResetBidiEntry() {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@ BookTextView::~BookTextView() {
 	saveState();
 }
 
-void BookTextView::setModel(shared_ptr<ZLTextModel> model, const std::string &fileName) {
-	FBView::setModel(model);
+void BookTextView::setModel(shared_ptr<ZLTextModel> model, const std::string &language, const std::string &fileName) {
+	FBView::setModel(model, language);
 
 	myFileName = fileName;
 
@@ -100,8 +100,8 @@ void BookTextView::saveState() {
 
 	if (!cursor.isNull()) {
 		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, PARAGRAPH_OPTION_NAME, 0).setValue(cursor.paragraphCursor().index());
-		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, WORD_OPTION_NAME, 0).setValue(cursor.wordNumber());
-		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, CHAR_OPTION_NAME, 0).setValue(cursor.charNumber());
+		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, WORD_OPTION_NAME, 0).setValue(cursor.elementIndex());
+		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, CHAR_OPTION_NAME, 0).setValue(cursor.charIndex());
 		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, BUFFER_SIZE, 0).setValue(myPositionStack.size());
 		ZLIntegerOption(ZLCategoryKey::STATE, myFileName, POSITION_IN_BUFFER, 0).setValue(myCurrentPointInStack);
 
@@ -117,7 +117,7 @@ void BookTextView::saveState() {
 }
 
 BookTextView::Position BookTextView::cursorPosition(const ZLTextWordCursor &cursor) const {
-	return Position(cursor.paragraphCursor().index(), cursor.wordNumber());
+	return Position(cursor.paragraphCursor().index(), cursor.elementIndex());
 }
 
 bool BookTextView::pushCurrentPositionIntoStack(bool doPushSamePosition) {
@@ -148,7 +148,7 @@ void BookTextView::replaceCurrentPositionInStack() {
 	}
 }
 
-void BookTextView::gotoParagraph(int num, bool last) {
+void BookTextView::gotoParagraph(int num, bool end) {
 	if (!empty()) {
 		if (!myLockUndoStackChanges) {
 			if (myPositionStack.size() > myCurrentPointInStack) {
@@ -158,7 +158,7 @@ void BookTextView::gotoParagraph(int num, bool last) {
 			myCurrentPointInStack = myPositionStack.size();
 		}
 
-		FBView::gotoParagraph(num, last);
+		FBView::gotoParagraph(num, end);
 	}
 }
 
@@ -219,22 +219,23 @@ void BookTextView::redoPageMove() {
 	}
 }
 
-bool BookTextView::getHyperlinkId(const ZLTextElementArea &area, std::string &id, bool &isExternal) const {
+bool BookTextView::getHyperlinkInfo(const ZLTextElementArea &area, std::string &id, std::string &type) const {
 	if ((area.Kind != ZLTextElement::WORD_ELEMENT) &&
 			(area.Kind != ZLTextElement::IMAGE_ELEMENT)) {
 		return false;
 	}
 	ZLTextWordCursor cursor = startCursor();
-	cursor.moveToParagraph(area.ParagraphNumber);
+	cursor.moveToParagraph(area.ParagraphIndex);
 	cursor.moveToParagraphStart();
 	ZLTextKind hyperlinkKind = REGULAR;
-	for (int i = 0; i < area.TextElementNumber; ++i) {
+	for (int i = 0; i < area.ElementIndex; ++i) {
 		const ZLTextElement &element = cursor.element();
 		if (element.kind() == ZLTextElement::CONTROL_ELEMENT) {
 			const ZLTextControlEntry &control = ((const ZLTextControlElement&)element).entry();
 			if (control.isHyperlink()) {
 				hyperlinkKind = control.kind();
 				id = ((const ZLTextHyperlinkControlEntry&)control).label();
+				type = ((const ZLTextHyperlinkControlEntry&)control).hyperlinkType();
 			} else if (!control.isStart() && (control.kind() == hyperlinkKind)) {
 				hyperlinkKind = REGULAR;
 			}
@@ -242,17 +243,36 @@ bool BookTextView::getHyperlinkId(const ZLTextElementArea &area, std::string &id
 		cursor.nextWord();
 	}
 
-	isExternal = hyperlinkKind == EXTERNAL_HYPERLINK;
 	return hyperlinkKind != REGULAR;
 }
 
 bool BookTextView::_onStylusPress(int x, int y) {
+	myPressedX = x;
+	myPressedY = y;
+
+	return false;
+}
+
+bool BookTextView::onStylusRelease(int x, int y) {
+	if (FBView::onStylusRelease(x, y)) {
+		return true;
+	}
+
+	const int deltaX = x - myPressedX;
+	if ((deltaX > 5) || (deltaX < -5)) {
+		return false;
+	}
+	const int deltaY = y - myPressedY;
+	if ((deltaY > 5) || (deltaY < -5)) {
+		return false;
+	}
+
 	const ZLTextElementArea *area = elementByCoordinates(x, y);
 	if (area != 0) {
 		std::string id;
-		bool isExternal;
-		if (getHyperlinkId(*area, id, isExternal)) {
-			fbreader().tryShowFootnoteView(id, isExternal);
+		std::string type;
+		if (getHyperlinkInfo(*area, id, type)) {
+			fbreader().tryShowFootnoteView(id, type);
 			return true;
 		}
 		
@@ -272,8 +292,8 @@ bool BookTextView::_onStylusPress(int x, int y) {
 bool BookTextView::onStylusMove(int x, int y) {
 	const ZLTextElementArea *area = elementByCoordinates(x, y);
 	std::string id;
-	bool isExternal;
-	fbreader().setHyperlinkCursor((area != 0) && getHyperlinkId(*area, id, isExternal));
+	std::string type;
+	fbreader().setHyperlinkCursor((area != 0) && getHyperlinkInfo(*area, id, type));
 	return true;
 }
 
@@ -323,4 +343,11 @@ void BookTextView::scrollToHome() {
 
 	gotoParagraph(0, false);
 	fbreader().refreshWindow();
+}
+
+void BookTextView::paint() {
+	FBView::paint();
+	std::string pn;
+	ZLStringUtil::appendNumber(pn, pageIndex());
+	fbreader().setVisualParameter(FBReader::PageIndexParameter, pn);
 }

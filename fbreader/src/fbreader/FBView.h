@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ private:
 class FBIndicatorStyle : public ZLTextPositionIndicatorInfo {
 
 public:
-	ZLBooleanOption ShowOption;
+	ZLIntegerRangeOption TypeOption;
 	ZLBooleanOption IsSensitiveOption;
 	ZLBooleanOption ShowTextPositionOption;
 	ZLBooleanOption ShowTimeOption;
@@ -55,7 +55,7 @@ public:
 public:
 	FBIndicatorStyle();
 
-	bool isVisible() const;
+	Type type() const;
 	bool isSensitive() const;
 	bool isTextPositionShown() const;
 	bool isTimeShown() const;
@@ -71,6 +71,10 @@ public:
 	static FBMargins& margins();
 	static FBIndicatorStyle& commonIndicatorInfo();
 	static ZLBooleanOption &selectionOption();
+
+	void scrollAndUpdatePage(bool forward, ScrollingMode mode, unsigned int value);
+
+	virtual bool hasContents() const;
 
 private:
 	static shared_ptr<ZLTextPositionIndicatorInfo> ourIndicatorInfo;

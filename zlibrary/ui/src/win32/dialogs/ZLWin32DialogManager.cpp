@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "ZLWin32DialogManager.h"
 #include "ZLWin32Dialog.h"
 #include "../application/ZLWin32ApplicationWindow.h"
+#include "../image/ZLWin32ImageManager.h"
 #include "ZLWin32OptionsDialog.h"
 #include "ZLWin32SelectionDialog.h"
 #include "ZLWin32MessageBox.h"
@@ -40,8 +41,8 @@ shared_ptr<ZLOptionsDialog> ZLWin32DialogManager::createOptionsDialog(const ZLRe
 	return new ZLWin32OptionsDialog(*myApplicationWindow, resource()[key], applyAction, showApplyButton);
 }
 
-void ZLWin32DialogManager::informationBox(const ZLResourceKey &key, const std::string &message) const {
-	ZLWin32MessageBox box(*myApplicationWindow, W32StandardIcon::ID_INFORMATION, dialogTitle(key), message);
+void ZLWin32DialogManager::informationBox(const std::string &title, const std::string &message) const {
+	ZLWin32MessageBox box(*myApplicationWindow, W32StandardIcon::ID_INFORMATION, title, message);
 	box.addButton(buttonName(OK_BUTTON));
 	box.run();
 }
@@ -96,6 +97,42 @@ void ZLWin32DialogManager::setClipboardText(const std::string &text, ClipboardTy
 			EmptyClipboard();
 			SetClipboardData(CF_UNICODETEXT, hData);
 			CloseClipboard();
+		}
+	}
+}
+
+void ZLWin32DialogManager::setClipboardImage(const ZLImageData &image, ClipboardType type) const {
+	if (type == CLIPBOARD_MAIN) {
+		ZLWin32ImageData &win32Image = (ZLWin32ImageData&)image;
+		const BYTE *pixels = win32Image.pixels(ZLColor(255, 255, 255));
+		if (pixels != 0) {
+			if (OpenClipboard(myApplicationWindow->mainWindow())) {
+				EmptyClipboard();
+				HDC dc = GetDC(myApplicationWindow->mainWindow());
+				BITMAPINFOHEADER header;
+				ZeroMemory(&header, sizeof(header));
+				header.biSize = sizeof(header);
+				header.biWidth = image.width();
+				header.biHeight = image.height();
+				header.biPlanes = 1;
+				header.biBitCount = 24;
+				header.biCompression = BI_RGB;
+				header.biSizeImage = 0;
+				HBITMAP bitmap = CreateDIBitmap(
+					dc, &header,
+					CBM_INIT,
+					pixels, win32Image.info(),
+					DIB_RGB_COLORS
+				);
+					/*
+					x, y - height, width, height,
+					0, 0, width, height,
+					pixels, win32Image.info(), DIB_RGB_COLORS, SRCCOPY);
+					*/
+				SetClipboardData(CF_BITMAP, bitmap);
+				ReleaseDC(myApplicationWindow->mainWindow(), dc);
+				CloseClipboard();
+			}
 		}
 	}
 }

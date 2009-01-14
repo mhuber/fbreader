@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,12 +31,12 @@ struct ZLTextTreeNodeInfo {
 	bool IsLeaf;
 	bool IsOpen;
 	bool IsFirstLine;
-	int ParagraphNumber;
+	int ParagraphIndex;
 	std::vector<bool> VerticalLinesStack;
 };
 
 struct ZLTextLineInfo {
-	ZLTextLineInfo(const ZLTextWordCursor &word, ZLTextStylePtr style);
+	ZLTextLineInfo(const ZLTextWordCursor &word, ZLTextStylePtr style, unsigned char bidiLevel);
 
 	ZLTextWordCursor Start;
 	ZLTextWordCursor RealStart;
@@ -49,6 +49,7 @@ struct ZLTextLineInfo {
 	int VSpaceAfter;
 	int SpaceCounter;
 	ZLTextStylePtr StartStyle;
+	unsigned char StartBidiLevel;
 	shared_ptr<ZLTextTreeNodeInfo> NodeInfo;
 
 private:
@@ -65,7 +66,7 @@ public:
 	bool operator < (const ZLTextLineInfoPtr &info) const;
 };
 
-inline ZLTextLineInfo::ZLTextLineInfo(const ZLTextWordCursor &word, ZLTextStylePtr style) : Start(word), RealStart(word), End(word), IsVisible(false), LeftIndent(0), Width(0), Height(0), Descent(0), VSpaceAfter(0), SpaceCounter(0), StartStyle(style) {}
+inline ZLTextLineInfo::ZLTextLineInfo(const ZLTextWordCursor &word, ZLTextStylePtr style, unsigned char bidiLevel) : Start(word), RealStart(word), End(word), IsVisible(false), LeftIndent(0), Width(0), Height(0), Descent(0), VSpaceAfter(0), SpaceCounter(0), StartStyle(style), StartBidiLevel(bidiLevel) {}
 
 inline ZLTextLineInfoPtr::ZLTextLineInfoPtr(ZLTextLineInfo *ptr) : shared_ptr<ZLTextLineInfo>(ptr) {}
 inline bool ZLTextLineInfoPtr::operator < (const ZLTextLineInfoPtr &info) const { return (*this)->Start < info->Start; }

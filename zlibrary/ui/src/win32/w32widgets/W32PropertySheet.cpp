@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #include <windows.h>
 #include <prsht.h>
 
+#include <ZLibrary.h>
+#include <ZLLanguageUtil.h>
 #include <ZLDialogManager.h>
 
 #include "W32DialogPanel.h"
@@ -94,6 +96,10 @@ bool W32PropertySheet::run(const std::string &selectedTabName) {
 int CALLBACK W32PropertySheet::PSCallback(HWND hDialog, UINT message, LPARAM lParam) {
 	if (message == PSCB_INITIALIZED) {
 		SendMessage(hDialog, PSM_CHANGED, 0, 0);
+		if (ZLLanguageUtil::isRTLLanguage(ZLibrary::Language())) {
+			int exStyle = GetWindowLong(hDialog, GWL_EXSTYLE);
+			SetWindowLong(hDialog, GWL_EXSTYLE, exStyle | WS_EX_LAYOUTRTL);
+		}
 	}
 	return 0;
 }

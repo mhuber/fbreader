@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ class FBCategoryKey : public ZLCategoryKey {
 
 public:
 	static const FBCategoryKey BOOKS;
+	static const FBCategoryKey NETWORK;
 	static const FBCategoryKey SEARCH;
 	static const FBCategoryKey EXTERNAL;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,20 @@
 #ifndef __ZLZIP_H__
 #define __ZLZIP_H__
 
+#include <map>
+
 #include <shared_ptr.h>
 
 #include "../ZLInputStream.h"
 #include "../ZLDir.h"
 
 class ZLZDecompressor;
+class ZLFile;
 
 class ZLZipInputStream : public ZLInputStream {
 
 private:
-	ZLZipInputStream(shared_ptr<ZLInputStream> &base, const std::string &name);
+	ZLZipInputStream(shared_ptr<ZLInputStream> &base, const std::string &entryName);
 
 public:
 	~ZLZipInputStream();
@@ -44,7 +47,8 @@ public:
 
 private:
 	shared_ptr<ZLInputStream> myBaseStream;
-	std::string myCompressedFileName;
+	size_t myBaseOffset;
+	std::string myEntryName;
 	bool myIsDeflated;
 
 	size_t myUncompressedSize;

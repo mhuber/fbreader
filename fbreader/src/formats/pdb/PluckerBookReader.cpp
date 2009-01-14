@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -185,6 +185,10 @@ static unsigned int twoBytes(char *ptr) {
 	return 256 * (unsigned char)*ptr + (unsigned char)*(ptr + 1);
 }
 
+static unsigned int fourBytes(char *ptr) {
+	return 65536 * twoBytes(ptr) + twoBytes(ptr + 2);
+}
+
 static std::string fromNumber(unsigned int num) {
 	std::string str;
 	ZLStringUtil::appendNumber(str, num);
@@ -217,16 +221,22 @@ void PluckerBookReader::processTextFunction(char *ptr) {
 		case 0x22:
 			if (!myParagraphStarted) {
 				if (myForcedEntry == 0) {
-					myForcedEntry = new ZLTextForcedControlEntry();
+					myForcedEntry = new ZLTextStyleEntry();
 				}
-				myForcedEntry->setLeftIndent(*(ptr + 1));
-				myForcedEntry->setRightIndent(*(ptr + 2));
+				myForcedEntry->setLength(
+					ZLTextStyleEntry::LENGTH_LEFT_INDENT,
+					*(ptr + 1), ZLTextStyleEntry::SIZE_UNIT_PIXEL
+				);
+				myForcedEntry->setLength(
+					ZLTextStyleEntry::LENGTH_RIGHT_INDENT,
+					*(ptr + 2), ZLTextStyleEntry::SIZE_UNIT_PIXEL
+				);
 			}
 			break;
 		case 0x29:
 			if (!myParagraphStarted) {
 				if (myForcedEntry == 0) {
-					myForcedEntry = new ZLTextForcedControlEntry();
+					myForcedEntry = new ZLTextStyleEntry();
 				}
 				switch (*(ptr + 1)) {
 					case 0: myForcedEntry->setAlignmentType(ALIGN_LEFT); break;
@@ -262,17 +272,18 @@ void PluckerBookReader::processTextFunction(char *ptr) {
 		case 0x78: // strike-through text is ignored
 			break;
 		case 0x83: 
+		case 0x85:
 		{
-			char utf8[4];
-			int len = ZLUnicodeUtil::ucs2ToUtf8(utf8, twoBytes(ptr + 2));
+			ZLUnicodeUtil::Ucs4Char symbol =
+				(((unsigned char)*ptr) == 0x83) ? twoBytes(ptr + 2) : fourBytes(ptr + 2);
+			char utf8[6];
+			int len = ZLUnicodeUtil::ucs4ToUtf8(utf8, symbol);
 			safeBeginParagraph();
 			addData(std::string(utf8, len));
 			myBufferIsEmpty = false;
 			myBytesToSkip = *(ptr + 1);
 			break;
 		}
-		case 0x85: // TODO: process 4-byte unicode character
-			break;
 		case 0x8E: // custom font operations are ignored
 		case 0x8C:
 		case 0x8A:

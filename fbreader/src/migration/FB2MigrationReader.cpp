@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 FB2MigrationReader::FB2MigrationReader(BookInfo &info, bool updateSeries) : myInfo(info), myUpdateSeries(updateSeries), myUpdateTags(info.TagsOption.value().empty()) {
 }
 
-void FB2MigrationReader::characterDataHandler(const char *text, int len) {
+void FB2MigrationReader::characterDataHandler(const char *text, size_t len) {
 	if (myReadState == READ_GENRE) {
 		myGenreBuffer.append(text, len);
 	}

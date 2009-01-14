@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,7 +88,8 @@ static int fUnknownEncodingHandler(void*, const XML_Char *name, XML_Encoding *en
 
 static void parseDTD(XML_Parser parser, const std::string &fileName) {
 	XML_Parser entityParser = XML_ExternalEntityParserCreate(parser, 0, 0);
-	shared_ptr<ZLInputStream> entityStream = ZLFile(fileName).inputStream();
+	ZLFile dtdFile(fileName);
+	shared_ptr<ZLInputStream> entityStream = dtdFile.inputStream();
 	if (!entityStream.isNull() && entityStream->open()) {
 		const size_t BUFSIZE = 2048;
 		char buffer[BUFSIZE];
@@ -113,24 +114,27 @@ ZLXMLReaderInternal::~ZLXMLReaderInternal() {
 }
 
 void ZLXMLReaderInternal::init(const char *encoding) {
-	if (!myInitialized) {
-		myInitialized = true;
-		XML_UseForeignDTD(myParser, XML_TRUE);
-
-		const std::vector<std::string> &dtds = myReader.externalDTDs();
-		for (std::vector<std::string>::const_iterator it = dtds.begin(); it != dtds.end(); ++it) {
-			parseDTD(myParser, *it);
-		}
-
-		XML_SetUserData(myParser, &myReader);
-		if (encoding != 0) {
-			XML_SetEncoding(myParser, encoding);
-		}
-		XML_SetStartElementHandler(myParser, fStartElementHandler);
-		XML_SetEndElementHandler(myParser, fEndElementHandler);
-		XML_SetCharacterDataHandler(myParser, fCharacterDataHandler);
-		XML_SetUnknownEncodingHandler(myParser, fUnknownEncodingHandler, 0);
+	if (myInitialized) {
+		XML_ParserReset(myParser, encoding);
 	}
+
+	myInitialized = true;
+	XML_UseForeignDTD(myParser, XML_TRUE);
+
+	const std::vector<std::string> &dtds = myReader.externalDTDs();
+	for (std::vector<std::string>::const_iterator it = dtds.begin(); it != dtds.end(); ++it) {
+		myDTDStreamLocks.insert(ZLFile(*it).inputStream());
+		parseDTD(myParser, *it);
+	}
+
+	XML_SetUserData(myParser, &myReader);
+	if (encoding != 0) {
+		XML_SetEncoding(myParser, encoding);
+	}
+	XML_SetStartElementHandler(myParser, fStartElementHandler);
+	XML_SetEndElementHandler(myParser, fEndElementHandler);
+	XML_SetCharacterDataHandler(myParser, fCharacterDataHandler);
+	XML_SetUnknownEncodingHandler(myParser, fUnknownEncodingHandler, 0);
 }
 
 bool ZLXMLReaderInternal::parseBuffer(const char *buffer, size_t len) {

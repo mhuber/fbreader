@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -444,14 +444,9 @@ void W32LineEditor::init(HWND parent, W32ControlCollection *collection) {
 }
 
 void W32LineEditor::setEditable(bool editable) {
-	if (editable) {
-		myStyle &= ~ES_READONLY;
-	} else {
-		myStyle |= ES_READONLY;
-	}
 	if (myWindow != 0) {
 		// TODO: check
-		SetWindowLong(myWindow, GWL_STYLE, myStyle);
+		PostMessage(myWindow, EM_SETREADONLY, !editable, 0);
 	}
 }
 
@@ -536,14 +531,9 @@ void W32KeyNameEditor::init(HWND parent, W32ControlCollection *collection) {
 }
 
 void W32KeyNameEditor::setEditable(bool editable) {
-	if (editable) {
-		myStyle &= ~ES_READONLY;
-	} else {
-		myStyle |= ES_READONLY;
-	}
 	if (myWindow != 0) {
 		// TODO: check
-		SetWindowLong(myWindow, GWL_STYLE, myStyle);
+		PostMessage(myWindow, EM_SETREADONLY, !editable, 0);
 	}
 }
 

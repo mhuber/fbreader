@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "FB2BookReader.h"
 #include "Base64EncodedImage.h"
 #include "../../bookmodel/BookModel.h"
+#include "../../constants/XMLNamespace.h"
 
 FB2BookReader::FB2BookReader(BookModel &model) : myModelReader(model) {
 	myInsideCoverpage = false;
@@ -42,7 +43,7 @@ FB2BookReader::FB2BookReader(BookModel &model) : myModelReader(model) {
 	myInsideTitle = false;
 }
 
-void FB2BookReader::characterDataHandler(const char *text, int len) {
+void FB2BookReader::characterDataHandler(const char *text, size_t len) {
 	if ((len > 0) && (myProcessingImage || myModelReader.paragraphIsOpen())) {
 		std::string str(text, len);
 		if (myProcessingImage) {
@@ -159,7 +160,13 @@ void FB2BookReader::startElementHandler(int tag, const char **xmlattributes) {
 			const char *ref = attributeValue(xmlattributes, myHrefAttributeName.c_str());
 			if (ref != 0) {
 				if (ref[0] == '#') {
-					myHyperlinkType = FOOTNOTE;
+					const char *type = attributeValue(xmlattributes, "type");
+					static const std::string NOTE = "note";
+					if ((type != 0) && (NOTE == type)) {
+						myHyperlinkType = FOOTNOTE;
+					} else {
+						myHyperlinkType = INTERNAL_HYPERLINK;
+					}
 					++ref;
 				} else {
 					myHyperlinkType = EXTERNAL_HYPERLINK;
@@ -174,8 +181,8 @@ void FB2BookReader::startElementHandler(int tag, const char **xmlattributes) {
 		case _IMAGE:
 		{
 			const char *ref = attributeValue(xmlattributes, myHrefAttributeName.c_str());
-			const char *vOffset = attributeValue(xmlattributes, "voffset");
-			char offset = (vOffset != 0) ? atoi(vOffset) : 0;
+			//const char *vOffset = attributeValue(xmlattributes, "voffset");
+			//char offset = (vOffset != 0) ? atoi(vOffset) : 0;
 			if ((ref != 0) && (*ref == '#')) {
 				++ref;
 				if ((myCoverImageReference != ref) ||
@@ -314,10 +321,9 @@ bool FB2BookReader::processNamespaces() const {
 }
 
 void FB2BookReader::namespaceListChangedHandler() {
-	const std::string XLINK_REFERENCE = "http://www.w3.org/1999/xlink";
 	const std::map<std::string,std::string> namespaceMap = namespaces();
 	for (std::map<std::string,std::string>::const_iterator it = namespaceMap.begin(); it != namespaceMap.end(); ++it) {
-		if (ZLStringUtil::stringStartsWith(it->second, XLINK_REFERENCE)) {
+		if (ZLStringUtil::stringStartsWith(it->second, XMLNamespace::XLink)) {
 			myHrefAttributeName = it->first + ":href";
 			return;
 		}

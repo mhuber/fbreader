@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,9 +79,10 @@ void HtmlSectionHrefTagAction::run(const HtmlReader::HtmlTag &tag) {
 			} else if ((hyperlinkType() == REGULAR) && (tag.Attributes[i].Name == "HREF")) {
 				const std::string &value = tag.Attributes[i].Value;
 				if (!value.empty()) {
-					if (MiscUtil::isReference(value)) {
-						bookReader().addHyperlinkControl(EXTERNAL_HYPERLINK, value);
-						setHyperlinkType(EXTERNAL_HYPERLINK);
+					FBTextKind referenceType = MiscUtil::referenceType(value);
+					if (referenceType != INTERNAL_HYPERLINK) {
+						bookReader().addHyperlinkControl(referenceType, value);
+						setHyperlinkType(referenceType);
 					} else {
 						const int index = value.find('#');
 						std::string sectionName = (index == -1) ? value : value.substr(0, index);

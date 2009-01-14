@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,12 @@
 #include <ZLFileImage.h>
 
 #include "OEBBookReader.h"
+#include "NCXReader.h"
 #include "../xhtml/XHTMLReader.h"
 #include "../util/MiscUtil.h"
 #include "../../bookmodel/BookModel.h"
 
 OEBBookReader::OEBBookReader(BookModel &model) : myModelReader(model) {
-}
-
-void OEBBookReader::characterDataHandler(const char*, int) {
 }
 
 static const std::string MANIFEST = "manifest";
@@ -48,6 +46,10 @@ void OEBBookReader::startElementHandler(const char *tag, const char **xmlattribu
 	if (MANIFEST == tagString) {
 		myState = READ_MANIFEST;
 	} else if (SPINE == tagString) {
+		const char *toc = attributeValue(xmlattributes, "toc");
+		if (toc != 0) {
+			myNCXTOCFileName = myIdToHref[toc];
+		}
 		myState = READ_SPINE;
 	} else if (GUIDE == tagString) {
 		myState = READ_GUIDE;
@@ -103,6 +105,7 @@ bool OEBBookReader::readBook(const std::string &fileName) {
 
 	myIdToHref.clear();
 	myHtmlFileNames.clear();
+	myNCXTOCFileName.erase();
 	myTourTOC.clear();
 	myGuideTOC.clear();
 	myState = READ_NONE;
@@ -114,8 +117,47 @@ bool OEBBookReader::readBook(const std::string &fileName) {
 	myModelReader.setMainTextModel();
 	myModelReader.pushKind(REGULAR);
 
+	XHTMLReader xhtmlReader(myModelReader);
 	for (std::vector<std::string>::const_iterator it = myHtmlFileNames.begin(); it != myHtmlFileNames.end(); ++it) {
-		XHTMLReader(myModelReader).readFile(myFilePrefix, *it, *it);
+		if (it != myHtmlFileNames.begin()) {
+			myModelReader.insertEndOfSectionParagraph();
+		}
+		xhtmlReader.readFile(myFilePrefix, *it, *it);
+	}
+
+	generateTOC();
+
+	return true;
+}
+
+void OEBBookReader::generateTOC() {
+	if (!myNCXTOCFileName.empty()) {
+		NCXReader ncxReader(myModelReader);
+		if (ncxReader.readDocument(myFilePrefix + myNCXTOCFileName)) {
+			const std::map<int,NCXReader::NavPoint> navigationMap = ncxReader.navigationMap();
+			if (!navigationMap.empty()) {
+				size_t level = 0;
+				for (std::map<int,NCXReader::NavPoint>::const_iterator it = navigationMap.begin(); it != navigationMap.end(); ++it) {
+					const NCXReader::NavPoint &point = it->second;
+					int index = myModelReader.model().label(point.ContentHRef).ParagraphNumber;
+					while (level > point.Level) {
+						myModelReader.endContentsParagraph();
+						--level;
+					}
+					while (++level <= point.Level) {
+						myModelReader.beginContentsParagraph(-2);
+						myModelReader.addContentsData("...");
+					}
+					myModelReader.beginContentsParagraph(index);
+					myModelReader.addContentsData(point.Text);
+				}
+				while (level > 0) {
+					myModelReader.endContentsParagraph();
+					--level;
+				}
+				return;
+			}
+		}
 	}
 
 	std::vector<std::pair<std::string,std::string> > &toc = myTourTOC.empty() ? myGuideTOC : myTourTOC;
@@ -127,6 +169,4 @@ bool OEBBookReader::readBook(const std::string &fileName) {
 			myModelReader.endContentsParagraph();
 		}
 	}
-
-	return true;
 }

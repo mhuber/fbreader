@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ BookInfo::BookInfo(const std::string &fileName) :
 	TitleOption(FBCategoryKey::BOOKS, fileName, "Title", EMPTY),
 	SeriesNameOption(FBCategoryKey::BOOKS, fileName, "Sequence", EMPTY),
 	NumberInSeriesOption(FBCategoryKey::BOOKS, fileName, "Number in seq", 0, 100, 0),
-	LanguageOption(FBCategoryKey::BOOKS, fileName, "Language", PluginCollection::instance().DefaultLanguageOption.value()),
+	LanguageOption(FBCategoryKey::BOOKS, fileName, "Language", EMPTY),
 	EncodingOption(FBCategoryKey::BOOKS, fileName, "Encoding", EMPTY),
 	TagsOption(FBCategoryKey::BOOKS, fileName, "TagList", EMPTY) {
 }
@@ -53,7 +53,7 @@ void BookInfo::reset() {
 	TitleOption.setValue(EMPTY);
 	SeriesNameOption.setValue(EMPTY);
 	NumberInSeriesOption.setValue(0);
-	LanguageOption.setValue(PluginCollection::instance().DefaultLanguageOption.value());
+	LanguageOption.setValue(EMPTY);
 	EncodingOption.setValue(EMPTY);
 	TagsOption.setValue(EMPTY);
 }
@@ -81,7 +81,10 @@ BookDescriptionPtr BookDescription::getDescription(const std::string &fileName, 
 
 	if (!checkFile || BookDescriptionUtil::checkInfo(file)) {
 		BookInfo info(fileName);
-		description->myAuthor = SingleAuthor::create(info.AuthorDisplayNameOption.value(), info.AuthorSortKeyOption.value());
+		const std::string &authorDisplayName = info.AuthorDisplayNameOption.value();
+		if (!authorDisplayName.empty()) {
+			description->myAuthor = SingleAuthor::create(authorDisplayName, info.AuthorSortKeyOption.value());
+		}
 		description->myTitle = info.TitleOption.value();
 		description->mySeriesName = info.SeriesNameOption.value();
 		description->myNumberInSeries = info.NumberInSeriesOption.value();
@@ -126,18 +129,24 @@ BookDescriptionPtr BookDescription::getDescription(const std::string &fileName, 
 	if (description->myLanguage.empty()) {
 		description->myLanguage = PluginCollection::instance().DefaultLanguageOption.value();
 	}
-	{
-		BookInfo info(fileName);
-		info.AuthorDisplayNameOption.setValue(description->myAuthor->displayName());
-		info.AuthorSortKeyOption.setValue(description->myAuthor->sortKey());
-		info.TitleOption.setValue(description->myTitle);
-		info.SeriesNameOption.setValue(description->mySeriesName);
-		info.NumberInSeriesOption.setValue(description->myNumberInSeries);
-		info.LanguageOption.setValue(description->myLanguage);
-		info.EncodingOption.setValue(description->myEncoding);
-		description->saveTags(info.TagsOption);
-	}
+	description->saveInfo();
 	return description;
+}
+
+void BookDescription::saveInfo() {
+	BookInfo info(fileName());
+	info.AuthorDisplayNameOption.setValue(myAuthor->displayName());
+	info.AuthorSortKeyOption.setValue(myAuthor->sortKey());
+	info.TitleOption.setValue(myTitle);
+	info.SeriesNameOption.setValue(mySeriesName);
+	info.NumberInSeriesOption.setValue(myNumberInSeries);
+	info.LanguageOption.setValue(myLanguage);
+	info.EncodingOption.setValue(myEncoding);
+	saveTags(info.TagsOption);
+}
+
+void WritableBookDescription::saveInfo() {
+	myDescription.saveInfo();
 }
 
 BookDescription::BookDescription(const std::string &fileName) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #ifndef __ZLBZIP2INPUTSTREAM_H__
 #define __ZLBZIP2INPUTSTREAM_H__
 
-#include "bzlib.h"
+#include <bzlib.h>
 
 #include <shared_ptr.h>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ DummyBookReader::DummyBookReader(BookModel &model) : myModelReader(model) {
 }
 
 /*
-void DummyBookReader::characterDataHandler(const char *text, int len) {
+void DummyBookReader::characterDataHandler(const char *text, size_t len) {
 }
 
 void DummyBookReader::startElementHandler(int tag, const char **xmlattributes) {

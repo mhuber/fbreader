@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2008-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -208,7 +208,9 @@ void CollectionView::editTagInfo(const std::string &tag) {
 		} else {
 			myCollection.cloneTag(tag, tagValue, includeSubtags);
 		}
-		updateModel();
+		myCollection.rebuild(true);
+		myDoUpdateModel = true;
+		selectBook(mySelectedBook);
 		application().refreshWindow();
 		break;
 	}

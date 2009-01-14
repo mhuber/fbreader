@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  * 02110-1301, USA.
  */
 
+#include <ZLibrary.h>
+#include <ZLLanguageUtil.h>
 #include <ZLUnicodeUtil.h>
 
 #include "W32DialogPanel.h"
@@ -96,11 +98,13 @@ DLGTEMPLATE *W32DialogPanel::dialogTemplate() {
 	size += size % 2;
 	myAddress = new WORD[size];
 
+	static const DWORD extendedStyle = ZLLanguageUtil::isRTLLanguage(ZLibrary::Language()) ? WS_EX_LAYOUTRTL : 0;
+
 	WORD *p = myAddress;
 	*p++ = LOWORD(style());
 	*p++ = HIWORD(style());
-	*p++ = 0;
-	*p++ = 0;
+	*p++ = LOWORD(extendedStyle);
+	*p++ = HIWORD(extendedStyle);
 	*p++ = myElement->controlNumber();
 	*p++ = 0; // X
 	*p++ = 0; // Y

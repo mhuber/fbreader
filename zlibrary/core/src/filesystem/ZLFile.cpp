@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@
 #include "tar/ZLTar.h"
 #include "bzip2/ZLBzip2InputStream.h"
 #include "ZLFSManager.h"
+
+std::map<std::string,weak_ptr<ZLInputStream> > ZLFile::ourPlainStreamCache;
 
 ZLFile::ZLFile(const std::string &path) : myPath(path), myInfoIsFilled(false) {
 	ZLFSManager::instance().normalize(myPath);
@@ -71,21 +73,24 @@ ZLFile::ZLFile(const std::string &path) : myPath(path), myInfoIsFilled(false) {
 
 	int index = myNameWithoutExtension.rfind('.');
 	if (index > 0) {
-		myExtension = myNameWithoutExtension.substr(index + 1);
+		myExtension = ZLUnicodeUtil::toLower(myNameWithoutExtension.substr(index + 1));
 		myNameWithoutExtension = myNameWithoutExtension.substr(0, index);
 	}
 }
 
 shared_ptr<ZLInputStream> ZLFile::inputStream() const {
-	if (isDirectory()) {
-		return 0;
-	}
-
-	ZLInputStream *stream = 0;
+	shared_ptr<ZLInputStream> stream;
 	
 	int index = ZLFSManager::instance().findArchiveFileNameDelimiter(myPath);
 	if (index == -1) {
-		stream = ZLFSManager::instance().createPlainInputStream(myPath);
+		stream = ourPlainStreamCache[myPath];
+		if (stream.isNull()) {
+			if (isDirectory()) {
+				return 0;
+			}
+			stream = ZLFSManager::instance().createPlainInputStream(myPath);
+			ourPlainStreamCache[myPath] = stream;
+		}
 	} else {
 		ZLFile baseFile(myPath.substr(0, index));
 		shared_ptr<ZLInputStream> base = baseFile.inputStream();
@@ -136,30 +141,36 @@ shared_ptr<ZLDir> ZLFile::directory(bool createUnexisting) const {
 }
 
 void ZLFile::fillInfo() const {
+	myInfoIsFilled = true;
+
 	int index = ZLFSManager::instance().findArchiveFileNameDelimiter(myPath);
 	if (index == -1) {
 		myInfo = ZLFSManager::instance().fileInfo(myPath);
 	} else {
-		std::string archivePath = myPath.substr(0, index);
+		const std::string archivePath = myPath.substr(0, index);
 		ZLFile archive(archivePath);
 		if (archive.exists()) {
-			std::string itemName = myPath.substr(index + 1);
-			myInfo = archive.myInfo;
-			myInfo.IsDirectory = false;
-			myInfo.Exists = false;
-			std::vector<std::string> items;
-			archive.directory()->collectFiles(items, true);
-			for (std::vector<std::string>::const_iterator it = items.begin(); it != items.end(); ++it) {
-				if (*it == itemName) {
-					myInfo.Exists = true;
-					break;
+			shared_ptr<ZLDir> dir = archive.directory();
+			if (!dir.isNull()) {
+				std::string itemName = myPath.substr(index + 1);
+				myInfo = archive.myInfo;
+				myInfo.IsDirectory = false;
+				myInfo.Exists = false;
+				std::vector<std::string> items;
+				dir->collectFiles(items, true);
+				for (std::vector<std::string>::const_iterator it = items.begin(); it != items.end(); ++it) {
+					if (*it == itemName) {
+						myInfo.Exists = true;
+						break;
+					}
 				}
+			} else {
+				myInfo.Exists = false;
 			}
 		} else {
 			myInfo.Exists = false;
 		}
 	}
-	myInfoIsFilled = true;
 }
 
 bool ZLFile::remove() const {
@@ -181,12 +192,40 @@ void ZLFile::forceArchiveType(ArchiveType type) {
 std::string ZLFile::physicalFilePath() const {
 	std::string path = myPath;
 	int index;
-	while ((index = ZLFSManager::instance().findArchiveFileNameDelimiter(path)) != -1) {
+	const ZLFSManager &manager = ZLFSManager::instance();
+	while ((index = manager.findArchiveFileNameDelimiter(path)) != -1) {
 		path = path.substr(0, index);
 	}
 	return path;
 }
 
+std::string ZLFile::resolvedPath() const {
+	std::string physical = physicalFilePath();
+	std::string postfix = myPath.substr(physical.length());
+	return ZLFSManager::instance().resolveSymlink(physical) + postfix;
+}
+
 std::string ZLFile::fileNameToUtf8(const std::string &fileName) {
 	return ZLFSManager::instance().convertFilenameToUtf8(fileName);
+}
+
+bool ZLFile::exists() const {
+	if (!myInfoIsFilled) {
+		fillInfo();
+	}
+	return myInfo.Exists;
+}
+
+size_t ZLFile::size() const {
+	if (!myInfoIsFilled) {
+		fillInfo();
+	}
+	return myInfo.Size;
+}
+
+bool ZLFile::isDirectory() const {
+	if (!myInfoIsFilled) {
+		fillInfo();
+	}
+	return myInfo.IsDirectory;
 }

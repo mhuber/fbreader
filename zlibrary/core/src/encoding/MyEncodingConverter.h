@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,17 @@
 #include "ZLEncodingConverter.h"
 #include "ZLEncodingConverterProvider.h"
 
+#include <set>
+
 class MyEncodingConverterProvider : public ZLEncodingConverterProvider {
 
 public:
+	MyEncodingConverterProvider();
 	bool providesConverter(const std::string &encoding);
 	shared_ptr<ZLEncodingConverter> createConverter(const std::string &encoding);
+
+private:
+	std::set<std::string> myProvidedEncodings;
 };
 
 #endif /* __MYENCODINGCONVERTER_H__ */

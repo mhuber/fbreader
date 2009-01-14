@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <keymap>
 	<binding key="&lt;L&gt;" action="showLibrary"/>
+	<binding key="&lt;W&gt;" action="showNetLibrary"/>
 	<binding key="&lt;O&gt;" action="preferences"/>
 	<binding key="&lt;LeftArrow&gt;" action="undo"/>
 	<binding key="&lt;RightArrow&gt;" action="redo"/>
@@ -27,7 +28,6 @@
 	<binding key="&lt;A&gt;" action="addBook"/>
 	<binding key="&lt;I&gt;" action="bookInfo"/>
 	<binding key="&lt;R&gt;" action="rotate"/>
-	<binding key="&lt;Z&gt;" action="showRecent"/>
 	<binding key="&lt;Ctrl&gt;+&lt;DownArrow&gt;" action="nextTOCSection"/>
 	<binding key="&lt;Ctrl&gt;+&lt;UpArrow&gt;" action="previousTOCSection"/>
 	<binding key="&lt;Ctrl&gt;+&lt;C&gt;" action="copyToClipboard"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 
+#include "../image/ZLGtkImageManager.h"
 #include "ZLGtkDialogManager.h"
 #include "ZLGtkDialog.h"
 #include "ZLGtkOptionsDialog.h"
@@ -34,20 +35,20 @@ shared_ptr<ZLOptionsDialog> ZLGtkDialogManager::createOptionsDialog(const ZLReso
 	return new ZLGtkOptionsDialog(resource()[id], applyAction, showApplyButton);
 }
 
-void ZLGtkDialogManager::informationBox(const ZLResourceKey &key, const std::string &message) const {
-	internalBox(GTK_STOCK_DIALOG_INFO, key, message);
+void ZLGtkDialogManager::informationBox(const std::string &title, const std::string &message) const {
+	internalBox(GTK_STOCK_DIALOG_INFO, title, message);
 }
 
 void ZLGtkDialogManager::errorBox(const ZLResourceKey &key, const std::string &message) const {
-	internalBox(GTK_STOCK_DIALOG_ERROR, key, message);
+	internalBox(GTK_STOCK_DIALOG_ERROR, dialogTitle(key), message);
 }
 
 int ZLGtkDialogManager::questionBox(const ZLResourceKey &key, const std::string &message, const ZLResourceKey &button0, const ZLResourceKey &button1, const ZLResourceKey &button2) const {
-	return internalBox(GTK_STOCK_DIALOG_QUESTION, key, message, button0, button1, button2);
+	return internalBox(GTK_STOCK_DIALOG_QUESTION, dialogTitle(key), message, button0, button1, button2);
 }
 
-int ZLGtkDialogManager::internalBox(const gchar *icon, const ZLResourceKey &key, const std::string &message, const ZLResourceKey &button0, const ZLResourceKey &button1, const ZLResourceKey &button2) const {
-	GtkDialog *dialog = createGtkDialog(dialogTitle(key));
+int ZLGtkDialogManager::internalBox(const gchar *icon, const std::string &title, const std::string &message, const ZLResourceKey &button0, const ZLResourceKey &button1, const ZLResourceKey &button2) const {
+	GtkDialog *dialog = createGtkDialog(title);
 
 	if (!button0.Name.empty()) {
 		gtk_dialog_add_button(dialog, gtkString(buttonName(button0)).c_str(), 0);
@@ -95,5 +96,14 @@ void ZLGtkDialogManager::setClipboardText(const std::string &text, ClipboardType
 		GdkAtom atom = (type == CLIPBOARD_MAIN) ? GDK_SELECTION_CLIPBOARD : GDK_SELECTION_PRIMARY;
 		GtkClipboard *clipboard = gtk_clipboard_get(atom);
 		gtk_clipboard_set_text(clipboard, text.data(), text.length());
+	}
+}
+
+void ZLGtkDialogManager::setClipboardImage(const ZLImageData &image, ClipboardType type) const {
+	GdkPixbuf *imageRef = ((const ZLGtkImageData&)image).pixbuf();
+	if (imageRef != 0) {
+		GdkAtom atom = (type == CLIPBOARD_MAIN) ? GDK_SELECTION_CLIPBOARD : GDK_SELECTION_PRIMARY;
+		GtkClipboard *clipboard = gtk_clipboard_get(atom);
+		gtk_clipboard_set_image(clipboard, imageRef);
 	}
 }

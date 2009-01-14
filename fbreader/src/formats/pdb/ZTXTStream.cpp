@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ bool ZTXTStream::fillBuffer() {
 		++myRecordIndex;
 		size_t currentOffset = myHeader.Offsets[myRecordIndex];
 		// Hmm, this works on examples from manybooks.net,
-		// but I don't what thi code means :((
+		// but I don't understand what this code means :((
 		if (myRecordIndex == 1) {
 			currentOffset += 2;
 		}

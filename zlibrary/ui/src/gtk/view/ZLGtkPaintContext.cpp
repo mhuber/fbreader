@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -226,7 +226,7 @@ void ZLGtkPaintContext::setFillColor(ZLColor color, FillStyle style) {
 	}
 }
 
-int ZLGtkPaintContext::stringWidth(const char *str, int len) const {
+int ZLGtkPaintContext::stringWidth(const char *str, int len, bool rtl) const {
 	if (myContext == 0) {
 		return 0;
 	}
@@ -235,6 +235,7 @@ int ZLGtkPaintContext::stringWidth(const char *str, int len) const {
 		return 0;
 	}
 
+	myAnalysis.level = rtl ? 1 : 0;
 	pango_shape(str, len, &myAnalysis, myString);
 	PangoRectangle logicalRectangle;
 	pango_glyph_string_extents(myString, myAnalysis.font, 0, &logicalRectangle);
@@ -243,7 +244,7 @@ int ZLGtkPaintContext::stringWidth(const char *str, int len) const {
 
 int ZLGtkPaintContext::spaceWidth() const {
 	if (mySpaceWidth == -1) {
-		mySpaceWidth = stringWidth(" ", 1);
+		mySpaceWidth = stringWidth(" ", 1, false);
 	}
 	return mySpaceWidth;
 }
@@ -271,17 +272,18 @@ int ZLGtkPaintContext::descent() const {
 	return myDescent;
 }
 
-void ZLGtkPaintContext::drawString(int x, int y, const char *str, int len) {
+void ZLGtkPaintContext::drawString(int x, int y, const char *str, int len, bool rtl) {
 	if (!g_utf8_validate(str, len, 0)) {
 		return;
 	}
 
+	myAnalysis.level = rtl ? 1 : 0;
 	pango_shape(str, len, &myAnalysis, myString);
 	gdk_draw_glyphs(myPixmap, myTextGC, myAnalysis.font, x, y, myString);
 }
 
 void ZLGtkPaintContext::drawImage(int x, int y, const ZLImageData &image) {
-	GdkPixbuf *imageRef = ((ZLGtkImageData&)image).pixbuf();
+	GdkPixbuf *imageRef = ((const ZLGtkImageData&)image).pixbuf();
 	if (imageRef != 0) {
 		gdk_pixbuf_render_to_drawable(
 			imageRef, myPixmap,
@@ -330,6 +332,7 @@ void ZLGtkPaintContext::drawFilledCircle(int x, int y, int r) {
 }
 
 void ZLGtkPaintContext::clear(ZLColor color) {
+	myBackColor = color;
 	if (myPixmap != 0) {
 		::setColor(myBackGC, color);
 		gdk_draw_rectangle(myPixmap, myBackGC, true, 0, 0, myWidth, myHeight);

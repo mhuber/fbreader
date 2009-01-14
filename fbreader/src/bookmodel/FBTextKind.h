@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,9 +49,10 @@ enum FBTextKind {
 	CODE = 21,
 	STRIKETHROUGH = 22,
 	CONTENTS_TABLE_ENTRY = 23,
-	LIBRARY_AUTHOR_ENTRY = 24,
-	LIBRARY_BOOK_ENTRY = 25,
-	RECENT_BOOK_LIST = 26,
+	//LIBRARY_AUTHOR_ENTRY = 24,
+	//LIBRARY_BOOK_ENTRY = 25,
+	LIBRARY_ENTRY = 25,
+	//RECENT_BOOK_LIST = 26,
 	ITALIC = 27,
 	BOLD = 28,
 	DEFINITION = 29,
@@ -63,6 +64,7 @@ enum FBTextKind {
 	H5 = 35,
 	H6 = 36,
 	EXTERNAL_HYPERLINK = 37,
+	BOOK_HYPERLINK = 38,
 };
 
 #endif /* __FBTEXTKIND_H__ */

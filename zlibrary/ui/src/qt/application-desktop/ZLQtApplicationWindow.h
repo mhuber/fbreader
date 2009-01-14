@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,9 @@
 #include <map>
 
 #include <qmainwindow.h>
-#include <qaction.h>
+#include <qtoolbutton.h>
 #include <qcursor.h>
+#include <qlineedit.h>
 
 #include "../../../../core/src/desktop/application/ZLDesktopApplicationWindow.h"
 
@@ -35,11 +36,12 @@ public:
 	ZLQtApplicationWindow(ZLApplication *application);
 	~ZLQtApplicationWindow();
 
+	void setFocusToMainWidget();
+
 private:
 	ZLViewWidget *createViewWidget();
-	void addToolbarItem(ZLApplication::Toolbar::ItemPtr item);
+	void addToolbarItem(ZLToolbar::ItemPtr item);
 	void init();
-	void refresh();
 	void close();
 
 	void grabAllKeys(bool grab);
@@ -52,18 +54,18 @@ private:
 	void setFullscreen(bool fullscreen);
 
 	void closeEvent(QCloseEvent *event);
-	void keyPressEvent(QKeyEvent *event);
+	void keyReleaseEvent(QKeyEvent *event);
 	void wheelEvent(QWheelEvent *event);
 
-	void setToggleButtonState(const ZLApplication::Toolbar::ButtonItem &button);
-	void setToolbarItemState(ZLApplication::Toolbar::ItemPtr item, bool visible, bool enabled);
+	void setToggleButtonState(const ZLToolbar::ToggleButtonItem &button);
+	void setToolbarItemState(ZLToolbar::ItemPtr item, bool visible, bool enabled);
 
 private:
 	class QToolBar *myToolBar;
 
-friend class ZLQtToolBarAction;
-	std::map<const ZLApplication::Toolbar::Item*, class ZLQtToolBarAction*> myActions;
-	std::map<ZLApplication::Toolbar::ItemPtr,QWidget*> mySeparatorMap;
+friend class ZLQtToolButton;
+	std::map<const ZLToolbar::Item*,QWidget*> myItemToWidgetMap;
+	std::map<const ZLToolbar::MenuButtonItem*,size_t> myPopupIdMap;
 
 	bool myFullScreen;
 	bool myWasMaximized;
@@ -72,19 +74,38 @@ friend class ZLQtToolBarAction;
 	QCursor myStoredCursor;
 
 friend class ZLQtViewWidgetPositionInfo;
+
+private:
+	class LineEditParameter : public QLineEdit, public VisualParameter {
+
+	public:
+		LineEditParameter(QToolBar *toolbar, ZLQtApplicationWindow &window, const ZLToolbar::TextFieldItem &textFieldItem);
+
+	private:
+		void keyReleaseEvent(QKeyEvent *event);
+
+		std::string internalValue() const;
+		void internalSetValue(const std::string &value);
+		void setValueList(const std::vector<std::string> &values) {}
+
+	private:
+		ZLQtApplicationWindow &myWindow;
+		const std::string &myActionId;
+	};
 };
 
-class ZLQtToolBarAction : public QAction {
+class ZLQtToolButton : public QToolButton {
 	Q_OBJECT
 
 public:
-	ZLQtToolBarAction(ZLQtApplicationWindow *parent, ZLApplication::Toolbar::ButtonItem &item);
+	ZLQtToolButton(ZLQtApplicationWindow &window, ZLToolbar::AbstractButtonItem &item);
 
 private slots:
 	void onActivated();
 
 private:
-	ZLApplication::Toolbar::ButtonItem &myItem;
+	ZLQtApplicationWindow &myWindow;
+	ZLToolbar::AbstractButtonItem &myItem;
 };
 
 #endif /* __ZLQTAPPLICATIONWINDOW_H__ */

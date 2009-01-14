@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ protected:
 public:
 	virtual ~ZLOutputStream();
 	virtual bool open() = 0;
+	virtual void write(const char *data, size_t len) = 0;
 	virtual void write(const std::string &str) = 0;
 	virtual void close() = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,6 +131,10 @@ void ZLTreeResource::buildTree() {
 		const std::string language = ZLibrary::Language();
 		if (language != "en") {
 			loadData(language);
+		}
+		const std::string country = ZLibrary::Country();
+		if (!country.empty()) {
+			loadData(language + '_' + country);
 		}
 	}
 }

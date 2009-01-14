@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -222,7 +222,7 @@ void RtfBookReader::setEncoding(int) {
 }
 
 void RtfBookReader::setAlignment() {
-	ZLTextForcedControlEntry entry;
+	ZLTextStyleEntry entry;
 	entry.setAlignmentType(myState.Alignment);
 	myBookReader.addControl(entry);
 }

@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/bash
 
 version=`cat fbreader/VERSION`
 tmpdir=fbreader-$version
@@ -14,7 +14,7 @@ else
 	prepare_nonGPL=false
 fi
 
-if [ $# != 1 ]; then
+if [ $# -lt 1 ]; then
 	echo "usage:"
 	echo "  $0 [-non-GPL] <architecture>"
 	echo "or"
@@ -31,12 +31,15 @@ fi
 
 create_tmpdir() {
 	mkdir $tmpdir
-	cp -r Makefile build_packages.sh zlibrary fbreader makefiles README.build $distdir $tmpdir
+	cp -r Makefile build_packages.sh zlibrary fbreader makefiles README.build distributions distributions-nonGPL $tmpdir
 	rm -rf `find $tmpdir -name ".svn"`
 	make -C $tmpdir distclean 1> /dev/null 2>&1
 
 	if [ "$prepare_nonGPL" == "true" ]; then
 		pushd $tmpdir > /dev/null;
+		echo -en "Removing Arabic localization... ";
+		rm -rf fbreader/data/resources/ar.xml zlibrary/core/data/resources/ar.xml fbreader/data/help/MiniHelp.*.ar.fb2;
+		echo OK;
 		echo -en "Removing Finnish localization... ";
 		rm -rf fbreader/data/resources/fi.xml zlibrary/core/data/resources/fi.xml fbreader/data/help/MiniHelp.*.fi.fb2;
 		echo OK;
@@ -50,7 +53,7 @@ create_tmpdir() {
 		zip -dq zlibrary/text/data/hyphenationPatterns.zip id.pattern;
 		echo OK;
 		echo -en "Removing Qt-based interface... ";
-		rm -rf zlibrary/ui/src/qt zlibrary/ui/src/qt4
+		rm -rf zlibrary/ui/src/opie zlibrary/ui/src/qtopia zlibrary/ui/src/qt zlibrary/ui/src/qt4
 		echo OK;
 		popd > /dev/null;
 	fi;
@@ -82,27 +85,27 @@ build_package() {
 					$make_package ARCHITECTURE=$1 $2
 					;;
 			esac;
-			mkdirhier $pkgdir/$1
+			mkdir -p $pkgdir/$1
 			mv -f $tmpdir/*.deb $tmpdir/*.dsc $tmpdir/*.changes $tmpdir/*.tar.gz $pkgdir/$1
 			;;
 		ipk|debipk)
 			$make_package ARCHITECTURE=$1 $2
-			mkdirhier $pkgdir/$1
+			mkdir -p $pkgdir/$1
 			mv -f $tmpdir/*.ipk $pkgdir/$1
 			;;
 		motopkg)
 			$make_package ARCHITECTURE=$1 $2
-			mkdirhier $pkgdir/$1
+			mkdir -p $pkgdir/$1
 			mv -f $tmpdir/*.pkg $pkgdir/$1
 			;;
 		tarball)
 			$make_package ARCHITECTURE=$1 $2
-			mkdirhier $pkgdir/$1
+			mkdir -p $pkgdir/$1
 			mv -f $tmpdir/*.tgz $pkgdir/$1
 			;;
 		nsi)
 			$make_package ARCHITECTURE=$1 $2
-			mkdirhier $pkgdir/$1
+			mkdir -p $pkgdir/$1
 			mv -f $tmpdir/*.exe $pkgdir/$1
 			;;
 		*)
@@ -120,15 +123,18 @@ if [ $1 == all ]; then
 	done;
 	remove_tmpdir
 else
-	archtype=`echo $1 | cut -d "-" -f 1`;
-	pkgtype=`echo $1 | cut -d "-" -f 2`;
-	extra=`echo $1 | cut -d "-" -f 3`;
+	while [ $# -gt 0 ] ; do
+		archtype=`echo $1 | cut -d "-" -f 1`;
+		pkgtype=`echo $1 | cut -d "-" -f 2`;
+		extra=`echo $1 | cut -d "-" -f 3`;
 
-	if [ "$pkgtype" != "" -a "$extra" == "" -a -d $distdir/$pkgtype/$archtype ]; then
-		create_tmpdir
-		build_package $archtype $pkgtype
-		remove_tmpdir
-	else 
-		echo "unknown architecture: $1"
-	fi;
+		if [ "$pkgtype" != "" -a "$extra" == "" -a -d $distdir/$pkgtype/$archtype ]; then
+			create_tmpdir
+			build_package $archtype $pkgtype
+			remove_tmpdir
+		else 
+			echo "unknown architecture: $1"
+		fi;
+		shift;
+	done;
 fi;

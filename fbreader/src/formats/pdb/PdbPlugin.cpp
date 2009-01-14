@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 #include <ZLFile.h>
 #include <ZLInputStream.h>
 #include <ZLOptions.h>
-#include <ZLUnicodeUtil.h>
 
 #include "PdbPlugin.h"
 #include "../../description/BookDescriptionUtil.h"
@@ -30,7 +29,7 @@ PdbPlugin::~PdbPlugin() {
 }
 
 std::string PdbPlugin::fileType(const ZLFile &file) {
-	const std::string extension = ZLUnicodeUtil::toLower(file.extension());
+	const std::string &extension = file.extension();
 	if ((extension != "prc") && (extension != "pdb") && (extension != "mobi")) {
 		return "";
 	}

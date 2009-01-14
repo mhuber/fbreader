@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ void ZLTextModel::search(const std::string &text, size_t startIndex, size_t endI
 
 void ZLTextModel::selectParagraph(size_t index) const {
 	if (index < paragraphsNumber()) {
-		myMarks.push_back(ZLTextMark(index, 0, (*this)[index]->textLength()));
+		myMarks.push_back(ZLTextMark(index, 0, (*this)[index]->textDataLength()));
 	}
 }
 
@@ -134,7 +134,7 @@ ZLTextTreeParagraph *ZLTextTreeModel::createParagraph(ZLTextTreeParagraph *paren
 void ZLTextTreeModel::search(const std::string &text, size_t startIndex, size_t endIndex, bool ignoreCase) const {
 	ZLTextModel::search(text, startIndex, endIndex, ignoreCase);
 	for (std::vector<ZLTextMark>::const_iterator it = marks().begin(); it != marks().end(); ++it) {
-		((ZLTextTreeParagraph*)(*this)[it->ParagraphNumber])->openTree();
+		((ZLTextTreeParagraph*)(*this)[it->ParagraphIndex])->openTree();
 	}
 }
 
@@ -217,22 +217,47 @@ void ZLTextModel::addControl(ZLTextKind textKind, bool isStart) {
 	myParagraphs.back()->addEntry(myLastEntryStart);
 }
 
-void ZLTextModel::addControl(const ZLTextForcedControlEntry &entry) {
-	myLastEntryStart = myAllocator.allocate(3 + 2 * sizeof(short));
-	*myLastEntryStart = ZLTextParagraphEntry::FORCED_CONTROL_ENTRY;
-	*(myLastEntryStart + 1) = entry.myMask;
-	memcpy(myLastEntryStart + 2, &entry.myLeftIndent, sizeof(short));
-	memcpy(myLastEntryStart + 2 + sizeof(short), &entry.myRightIndent, sizeof(short));
-	*(myLastEntryStart + 2 + 2 * sizeof(short)) = entry.myAlignmentType;
+void ZLTextModel::addControl(const ZLTextStyleEntry &entry) {
+	int len = sizeof(int) + 4 + ZLTextStyleEntry::NUMBER_OF_LENGTHS * (sizeof(short) + 1);
+	if (entry.fontFamilySupported()) {
+		len += entry.fontFamily().length() + 1;
+	}
+	myLastEntryStart = myAllocator.allocate(len);
+	char *address = myLastEntryStart;
+	*address++ = ZLTextParagraphEntry::STYLE_ENTRY;
+	memcpy(address, &entry.myMask, sizeof(int));
+	address += sizeof(int);
+	for (int i = 0; i < ZLTextStyleEntry::NUMBER_OF_LENGTHS; ++i) {
+		*address++ = entry.myLengths[i].Unit;
+		memcpy(address, &entry.myLengths[i].Size, sizeof(short));
+		address += sizeof(short);
+	}
+	char &mask = *address++;
+	mask = 0;
+	if (entry.myBold) {
+		mask |= 1;
+	}
+	if (entry.myItalic) {
+		mask |= 2;
+	}
+	*address++ = entry.myAlignmentType;
+	*address++ = entry.myFontSizeMag;
+	if (entry.fontFamilySupported()) {
+		memcpy(address, entry.fontFamily().data(), entry.fontFamily().length());
+		address += entry.fontFamily().length();
+		*address++ = '\0';
+	}
 	myParagraphs.back()->addEntry(myLastEntryStart);
 }
 
-void ZLTextModel::addHyperlinkControl(ZLTextKind textKind, const std::string &label) {
-	myLastEntryStart = myAllocator.allocate(label.length() + 3);
+void ZLTextModel::addHyperlinkControl(ZLTextKind textKind, const std::string &label, const std::string &hyperlinkType) {
+	myLastEntryStart = myAllocator.allocate(label.length() + hyperlinkType.length() + 4);
 	*myLastEntryStart = ZLTextParagraphEntry::HYPERLINK_CONTROL_ENTRY;
 	*(myLastEntryStart + 1) = textKind;
 	memcpy(myLastEntryStart + 2, label.data(), label.length());
 	*(myLastEntryStart + label.length() + 2) = '\0';
+	memcpy(myLastEntryStart + label.length() + 3, hyperlinkType.data(), hyperlinkType.length());
+	*(myLastEntryStart + label.length() + hyperlinkType.length() + 3) = '\0';
 	myParagraphs.back()->addEntry(myLastEntryStart);
 }
 
@@ -244,5 +269,11 @@ void ZLTextModel::addImage(const std::string &id, const ZLImageMap &imageMap, sh
 	memcpy(myLastEntryStart + 1 + sizeof(const ZLImageMap*), &vOffset, sizeof(short));
 	memcpy(myLastEntryStart + 1 + sizeof(const ZLImageMap*) + sizeof(short), id.data(), id.length());
 	*(myLastEntryStart + 1 + sizeof(const ZLImageMap*) + sizeof(short) + id.length()) = '\0';
+	myParagraphs.back()->addEntry(myLastEntryStart);
+}
+
+void ZLTextModel::addBidiReset() {
+	myLastEntryStart = myAllocator.allocate(1);
+	*myLastEntryStart = ZLTextParagraphEntry::RESET_BIDI_ENTRY;
 	myParagraphs.back()->addEntry(myLastEntryStart);
 }

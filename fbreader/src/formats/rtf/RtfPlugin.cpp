@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
  * 02110-1301, USA.
  */
 
-#include <ZLTime.h>
-
 #include <ZLStringUtil.h>
 #include <ZLFile.h>
 #include <ZLInputStream.h>
@@ -33,8 +31,7 @@ bool RtfPlugin::providesMetaInfo() const {
 }
 
 bool RtfPlugin::acceptsFile(const ZLFile &file) const {
-	const std::string &extension = file.extension();
-	return (extension == "rtf");
+	return file.extension() == "rtf";
 }
 
 bool RtfPlugin::readDescription(const std::string &path, BookDescription &description) const {
