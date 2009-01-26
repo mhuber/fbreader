@@ -8,17 +8,17 @@
 #TARGET_ARCH = qvfb
 #UI_TYPE = opie
 
-TARGET_ARCH = maemo
+#TARGET_ARCH = maemo
 #UI_TYPE = maemo2
-UI_TYPE = maemo4
+#UI_TYPE = maemo4
 
 #TARGET_ARCH = ebr
 #UI_TYPE = nanoX
 
-#TARGET_ARCH = desktop
+TARGET_ARCH = desktop
 #UI_TYPE = gtk
 #UI_TYPE = qt
-#UI_TYPE = qt4
+UI_TYPE = qt4
 
 #TARGET_ARCH = pepperpad3
 #UI_TYPE = gtk
