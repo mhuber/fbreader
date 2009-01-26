@@ -182,6 +182,8 @@ public:
 
 	virtual bool isSelectionEnabled() const = 0;
 
+	ZLTextElementMap myTextElementMap;
+
 protected:
 	bool onStylusPress(int x, int y);
 	bool onStylusMove(int x, int y);
@@ -282,7 +284,6 @@ private:
 
 	int myOldWidth, myOldHeight;
 
-	ZLTextElementMap myTextElementMap;
 	std::vector<ZLTextElementMap> myTextElementsToRevert;
 	ZLTextTreeNodeMap myTreeNodeMap;
 

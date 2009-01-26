@@ -321,7 +321,7 @@ bool ZLTextView::search(const std::string &text, bool ignoreCase, bool wholeText
 		gotoMark(wholeText ?
 							(backward ? myModel->lastMark() : myModel->firstMark()) :
 							(backward ? myModel->previousMark(position) : //myModel->nextMark(position)));
-							 myModel->nextMark(position).ParagraphNumber > -1 ? myModel->nextMark(position) : myModel->previousMark(position)));
+							 myModel->nextMark(position).ParagraphIndex > -1 ? myModel->nextMark(position) : myModel->previousMark(position)));
 		application().refreshWindow();
 	}
 

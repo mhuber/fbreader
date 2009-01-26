@@ -24,8 +24,8 @@ UI_TYPE = ewl
 #TARGET_ARCH = pepperpad3
 #UI_TYPE = gtk
 
-TARGET_ARCH = win32
-UI_TYPE = win32
+#TARGET_ARCH = win32
+#UI_TYPE = win32
 
 #TARGET_ARCH = pocketpc
 #UI_TYPE = win32

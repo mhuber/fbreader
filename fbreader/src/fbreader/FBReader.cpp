@@ -381,7 +381,7 @@ void FBReader::openHyperlink()
 {
 	if(!pageLinks.empty()) {
 		restorePreviousMode();
-		tryShowFootnoteView(pageLinks.at(currentLinkIdx).id, false);
+		tryShowFootnoteView(pageLinks.at(currentLinkIdx).id, "internal");
 	}
 }
 

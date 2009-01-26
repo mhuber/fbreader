@@ -31,7 +31,7 @@ bool link_not_terminated;
 
 void ZLTextView::paint() {
 	FBReader& fbreader = (FBReader&)application();
-	if (fbreader.getMode() == FBReader::BOOK_TEXT_MODE)
+	if (fbreader.mode() == FBReader::BOOK_TEXT_MODE)
 		fbreader.pageFootnotes.erase(fbreader.pageFootnotes.begin(), fbreader.pageFootnotes.end());
 
 	if(!fbreader.pageLinks.empty())
@@ -263,22 +263,16 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, int y, size_t from, si
 	cur_link.y1 = 0;
 	cur_link.next = false;
 
-	bool started = false;
-
-//	for (ZLTextWordCursor pos = info.Start; !pos.equalWordNumber(info.End); pos.nextWord()) {
-//		const ZLTextElement &element = paragraph[pos.wordNumber()];
-//
 	ZLTextElementIterator it = fromIt;
-	const int endElementIndex = info.End.elementIndex();
-	for (; (it != toIt) && (it->ElementIndex != endElementIndex); ++it) {
-		const ZLTextElement &element = paragraph[it->ElementIndex];
+	for (ZLTextWordCursor pos = info.Start; !pos.equalElementIndex(info.End); pos.nextWord()) {
+		const ZLTextElement &element = paragraph[pos.elementIndex()];
+
+//	const int endElementIndex = info.End.elementIndex();
+//	for (; (it != toIt) && (it->ElementIndex != endElementIndex); ++it) {
+//		const ZLTextElement &element = paragraph[it->ElementIndex];
 		ZLTextElement::Kind kind = element.kind();
 
-	
-		if(it->ElementIndexi == info.RealStart)
-			started = true;
-
-		if (started && (kind == ZLTextElement::WORD_ELEMENT) || (kind == ZLTextElement::IMAGE_ELEMENT)) {
+		if((pos.elementIndex() == it->ElementIndex) && ((kind == ZLTextElement::WORD_ELEMENT) || (kind == ZLTextElement::IMAGE_ELEMENT))) {
 			myStyle.setTextStyle(it->Style, it->BidiLevel);
 			const int wx = (myStyle.baseBidiLevel() % 2 == 1) ? context().width() - it->XEnd : it->XStart;
 			const int wy = it->YEnd - myStyle.elementDescent(element) - myStyle.textStyle()->verticalShift();
@@ -287,6 +281,7 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, int y, size_t from, si
 			} else {
 				context().drawImage(wx, wy, *((const ZLTextImageElement&)element).image());
 			}
+			++it;
 		} else if(kind == ZLTextElement::CONTROL_ELEMENT) {
 			const ZLTextControlEntry &control = ((const ZLTextControlElement&)element).entry();
 
@@ -324,8 +319,11 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, int y, size_t from, si
 						cur_link.x0 = fromIt->XStart;
 
 					if(cur_link.id.empty() && fbreader.pageLinks.empty()) {
-						for (ZLTextWordCursor pos2 = pos; pos2.wordNumber() > 0; pos2.previousWord()) {
-							const ZLTextElement &element2 = paragraph[pos2.wordNumber()];
+//						for (ZLTextWordCursor pos2(it); pos2.wordIndex() > 0; pos2.previousWord()) {
+//						ZLTextElementIterator it2 = it;
+//						for (; (it2 != fromIt) && (it->ElementIndex != info.RealStart.elementIndex()); --it) {
+						for (ZLTextWordCursor pos2 = pos; pos2.elementIndex() > 0; pos2.previousWord()) {
+							const ZLTextElement &element2 = paragraph[it->ElementIndex];
 							ZLTextElement::Kind kind2 = element2.kind();
 							if(kind2 == ZLTextElement::CONTROL_ELEMENT) {
 								const ZLTextControlEntry &control2 = ((const ZLTextControlElement&)element2).entry();
@@ -365,7 +363,7 @@ void ZLTextView::drawTextLine(const ZLTextLineInfo &info, int y, size_t from, si
 
 		ZLTextWordCursor pos = info.RealStart;
 
-		const ZLTextElement &element = paragraph[info.End.wordNumber()];
+		const ZLTextElement &element = paragraph[info.End.elementIndex()];
 		const int y = lit->YEnd - myStyle.elementDescent(element) - myStyle.textStyle()->verticalShift();
 		if(cur_link.id.empty()) {
 			cur_link.x0 = fromIt->XStart;

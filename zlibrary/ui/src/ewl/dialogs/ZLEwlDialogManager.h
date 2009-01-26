@@ -53,6 +53,10 @@ public:
 	void grabKeyboard(bool grab) { myIsKeyboardGrabbed = grab; }
 	bool isKeyboardGrabbed() const { return myIsKeyboardGrabbed; }
 
+	void informationBox(const std::string&, const std::string&) const {} 
+	void setClipboardImage(const ZLImageData&, ZLDialogManager::ClipboardType) const {}
+
+
 private:
 	int internalBox(const gchar *icon, const ZLResourceKey &key, const std::string &message, const ZLResourceKey &button0 = OK_BUTTON, const ZLResourceKey &button1 = ZLResourceKey(), const ZLResourceKey &button2 = ZLResourceKey()) const;
 

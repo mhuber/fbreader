@@ -45,9 +45,13 @@ private:
 	bool isFullscreen() const;
 	void setFullscreen(bool fullscreen);
 
+	void addToolbarItem(shared_ptr<ZLToolbar::Item>) {} 
+	void setToggleButtonState(const ZLToolbar::ToggleButtonItem&) {}
+	void processAllEvents() {}
+
 private:
 	void grabAllKeys(bool grab) { }
-	void addToolbarItem(ZLApplication::Toolbar::ItemPtr item) { }
+	//void addToolbarItem(ZLApplication::Toolbar::ItemPtr item) { }
 
 public:
 	void handleKeyEventSlot(void *ev);

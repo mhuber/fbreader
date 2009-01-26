@@ -167,11 +167,11 @@ size_t ZLTextView::PositionIndicator::sizeOfTextBeforeCursor(const ZLTextWordCur
 }
 
 int ZLTextView::PositionIndicator::textPosition() const {
-	return 100 * (1 + sizeOfTextBeforeCursor()) / (1 + sizeOfTextBeforeParagraph(endTextIndex()));
+	return 100 * (1 + sizeOfTextBeforeCursor(myTextView.endCursor())) / (1 + sizeOfTextBeforeParagraph(endTextIndex()));
 }
 
 int ZLTextView::PositionIndicator::currentPage() const {
-	return (1 + sizeOfTextBeforeCursor() / 2048);
+	return (1 + sizeOfTextBeforeCursor(myTextView.endCursor()) / 2048);
 }
 
 std::string ZLTextView::PositionIndicator::textPositionString() const {

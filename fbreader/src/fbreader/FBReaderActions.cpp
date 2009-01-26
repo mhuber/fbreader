@@ -84,19 +84,11 @@ ShowOptionsDialogAction::ShowOptionsDialogAction(FBReader &fbreader) : FBAction(
 
 void ShowOptionsDialogAction::run() {
 	FBReader &f = fbreader();
-	if(f.getMode() != FBReader::HYPERLINK_NAV_MODE)
+	if(f.mode() != FBReader::HYPERLINK_NAV_MODE)
 		ZLEwlOptionsDialog(f);
 }
 
 ShowContentsAction::ShowContentsAction(FBReader &fbreader) : SetModeAction(fbreader, FBReader::CONTENTS_MODE, FBReader::BOOK_TEXT_MODE) {
-}
-
-bool ShowContentsAction::isVisible() {
-	if (((ContentsView&)*fbreader().myContentsView).isEmpty()) {
-		return false;
-	}
-	FBReader::ViewMode mode = fbreader().getMode();
-	return (mode == FBReader::BOOK_TEXT_MODE) || (mode == FBReader::FOOTNOTE_MODE);
 }
 
 void ShowContentsAction::run() {
@@ -228,7 +220,7 @@ bool ScrollingAction::useKeyDelay() const {
 
 void ScrollingAction::run() {
 	static int buffer = 0;
-	if(fbreader().getMode() == FBReader::HYPERLINK_NAV_MODE) {
+	if(fbreader().mode() == FBReader::HYPERLINK_NAV_MODE) {
 		if(buffer != 0) {
 			int x;
 			x = open("/dev/fb0", O_NONBLOCK);
@@ -258,7 +250,7 @@ void ScrollingAction::run() {
 	int delay = fbreader().myLastScrollingTime.millisecondsTo(ZLTime());
 	shared_ptr<ZLView> view = fbreader().currentView();
 	if (!view.isNull() && ((delay < 0) || (delay >= myOptions.DelayOption.value()))) {
-		if(fbreader().getMode() == FBReader::BOOK_TEXT_MODE) {
+		if(fbreader().mode() == FBReader::BOOK_TEXT_MODE) {
 			// jump to next section
 			ZLTextWordCursor endC = fbreader().bookTextView().endCursor();
 			if(myForward
@@ -381,6 +373,14 @@ CancelAction::CancelAction(FBReader &fbreader) : FBAction(fbreader) {
 }
 
 void CancelAction::run() {
+	if (fbreader().QuitOnCancelOption.value()) {
+		int x;
+		x = open("/dev/fb0", O_NONBLOCK);
+		ioctl(x, FBIO_WAITFORVSYNC);
+		ioctl(x, EINK_APOLLOFB_IOCTL_SET_AUTOREDRAW, 1);
+		close(x);
+		fbreader().quit();
+	}
 	switch (fbreader().myActionOnCancel) {
 		case FBReader::UNFULLSCREEN:
 			if (fbreader().isFullscreen()) {
@@ -400,14 +400,6 @@ void CancelAction::run() {
 				return;
 			}
 			break;
-	}
-	if (fbreader().QuitOnCancelOption.value()) {
-		int x;
-		x = open("/dev/fb0", O_NONBLOCK);
-		ioctl(x, FBIO_WAITFORVSYNC);
-		ioctl(x, EINK_APOLLOFB_IOCTL_SET_AUTOREDRAW, 1);
-		close(x);
-		fbreader().quit();
 	}
 }
 
@@ -659,11 +651,11 @@ ShowFootnotes::ShowFootnotes(FBReader &fbreader) : FBAction(fbreader) {
 
 void ShowFootnotes::run() {
 	if(fbreader().pageFootnotes.empty()) {
-		if(fbreader().getMode() == FBReader::FOOTNOTE_MODE)
+		if(fbreader().mode() == FBReader::FOOTNOTE_MODE)
 			fbreader().restorePreviousMode();
 	} else {
 		fbreader().setMode(FBReader::FOOTNOTE_MODE);
-		fbreader().tryShowFootnoteView(fbreader().pageFootnotes.at(0), false);
+		fbreader().tryShowFootnoteView(fbreader().pageFootnotes.at(0), "internal");
 		if(fbreader().pageFootnotes.size() > 1)
 			fbreader().pageFootnotes.erase(fbreader().pageFootnotes.begin(), fbreader().pageFootnotes.begin() + 1);
 		else
@@ -675,7 +667,7 @@ HyperlinkNavStart::HyperlinkNavStart(FBReader &fbreader) : FBAction(fbreader) {
 }
 
 void HyperlinkNavStart::run() {
-	if(fbreader().getMode() == FBReader::HYPERLINK_NAV_MODE)
+	if(fbreader().mode() == FBReader::HYPERLINK_NAV_MODE)
 		fbreader().openHyperlink();
 	else
 		fbreader().startNavigationMode();

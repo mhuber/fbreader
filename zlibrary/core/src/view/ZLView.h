@@ -89,10 +89,9 @@ private:
 	void updateScrollbarParameters();
 	void updateScrollbarParameters(Direction direction, const ScrollBarInfo &info, bool invert);
 
-	virtual void invertRegion(int x0, int y0, int x1, int y1, bool flush) = 0;
 
-protected:
-	virtual void repaint() = 0;
+//protected:
+//	virtual void repaint() = 0;
 
 private:
 	ZLApplication &myApplication;

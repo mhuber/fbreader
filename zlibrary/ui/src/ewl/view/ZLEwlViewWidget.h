@@ -20,7 +20,7 @@
 #ifndef __ZLEWLVIEWWIDGET_H__
 #define __ZLEWLVIEWWIDGET_H__
 
-#include <ZLView.h>
+#include "../../../../core/src/view/ZLViewWidget.h"
 #include <ZLApplication.h>
 
 extern "C" {
@@ -31,13 +31,18 @@ extern "C" {
 class ZLEwlViewWidget : public ZLViewWidget {
 
 public:
-	ZLEwlViewWidget(ZLApplication *application, Angle initialAngle);
+	ZLEwlViewWidget(ZLApplication *application, ZLView::Angle initialAngle);
 	~ZLEwlViewWidget();
 
 	int width() const;
 	int height() const;
 	void doPaint();
 	void invertRegion(int x0, int y0, int x1, int y1, bool flush);
+
+	void setScrollbarEnabled(ZLView::Direction, bool) {} 
+	void setScrollbarPlacement(ZLView::Direction, bool) {}
+	void setScrollbarParameters(ZLView::Direction, size_t, size_t, size_t) {}
+
 
 private:
 	void trackStylus(bool track);

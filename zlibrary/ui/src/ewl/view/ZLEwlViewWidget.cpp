@@ -38,18 +38,18 @@ static void updatePoint(ZLEwlViewWidget *viewWidget, int &x, int &y) {
 	switch (viewWidget->rotation()) {
 		default:
 			break;
-		case ZLViewWidget::DEGREES90:
+		case ZLView::DEGREES90:
 		{
 			int tmp = x;
 			x = viewWidget->height() - y;
 			y = tmp;
 			break;
 		}
-		case ZLViewWidget::DEGREES180:
+		case ZLView::DEGREES180:
 			x = viewWidget->width() - x;
 			y = viewWidget->height() - y;
 			break;
-		case ZLViewWidget::DEGREES270:
+		case ZLView::DEGREES270:
 		{
 			int tmp = x;
 			x = y;
@@ -67,7 +67,7 @@ int ZLEwlViewWidget::height() const {
 	return 800;
 }
 
-ZLEwlViewWidget::ZLEwlViewWidget(ZLApplication *application, Angle initialAngle) : ZLViewWidget(initialAngle) {
+ZLEwlViewWidget::ZLEwlViewWidget(ZLApplication *application, ZLView::Angle initialAngle) : ZLViewWidget(initialAngle) {
 	myApplication = application;
 
 	xcb_screen_iterator_t screen_iter;

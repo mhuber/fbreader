@@ -206,7 +206,7 @@ void ZLEwlPaintContext::setFillColor(ZLColor color, FillStyle style) {
 }
 */
 
-int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
+int ZLEwlPaintContext::stringWidth(const char *str, int len, bool rtl) const {
 	int w = 0;
 	int ch_w;
 	char *p = (char *)str;
@@ -302,7 +302,7 @@ int ZLEwlPaintContext::stringWidth(const char *str, int len) const {
 
 int ZLEwlPaintContext::spaceWidth() const {
 	if (mySpaceWidth == -1) {
-		mySpaceWidth = stringWidth(" ", 1);
+		mySpaceWidth = stringWidth(" ", 1, false);
 	}
 	return mySpaceWidth;
 }
@@ -384,7 +384,7 @@ int ZLEwlPaintContext::descent() const {
 }
 */
 
-void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len) {
+void ZLEwlPaintContext::drawString(int x, int y, const char *str, int len, bool rtl) {
 /*	FT_Face _face = pango_fc_font_lock_face((PangoFcFont*)myAnalysis.font);
 	FT_Face *face = &_face;
 

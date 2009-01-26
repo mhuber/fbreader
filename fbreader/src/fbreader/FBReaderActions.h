@@ -136,6 +136,7 @@ class ShowContentsAction : public SetModeAction {
 public:
 	ShowContentsAction(FBReader &fbreader);
 	bool isVisible() const;
+	void run();
 };
 
 class ShowNetworkLibraryAction : public SetModeAction {

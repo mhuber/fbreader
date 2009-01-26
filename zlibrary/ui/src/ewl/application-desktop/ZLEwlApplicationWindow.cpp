@@ -107,7 +107,7 @@ bool ZLEwlApplicationWindow::isFullscreen() const {
 }
 
 ZLViewWidget *ZLEwlApplicationWindow::createViewWidget() {
-	ZLEwlViewWidget *viewWidget = new ZLEwlViewWidget(&application(), (ZLViewWidget::Angle)application().AngleStateOption.value());
+	ZLEwlViewWidget *viewWidget = new ZLEwlViewWidget(&application(), (ZLView::Angle)application().AngleStateOption.value());
 	return viewWidget;
 }
 

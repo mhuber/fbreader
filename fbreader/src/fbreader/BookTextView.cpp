@@ -162,7 +162,7 @@ void BookTextView::addBookmark() {
 	const ZLTextWordCursor &cursor = startCursor();
 	const ZLTextParagraphCursor &paragraph = cursor.paragraphCursor();
 
-	myBookmarks.push_back(make_pair(Position(cursor.paragraphCursor().index(), cursor.wordNumber()), positionIndicator()->currentPage()));
+	myBookmarks.push_back(make_pair(Position(cursor.paragraphCursor().index(), cursor.elementIndex()), positionIndicator()->currentPage()));
 }
 
 void BookTextView::gotoBookmark(unsigned int idx) {
