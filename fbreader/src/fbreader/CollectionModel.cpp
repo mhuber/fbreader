@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,21 +29,23 @@ const std::string CollectionModel::AuthorInfoImageId = "authorInfo";
 const std::string CollectionModel::SeriesOrderImageId = "seriesOrder";
 const std::string CollectionModel::TagInfoImageId = "tagInfo";
 const std::string CollectionModel::RemoveTagImageId = "removeTag";
+const std::string CollectionModel::StrutImageId = "strut";
 
 CollectionModel::CollectionModel(CollectionView &view, BookCollection &collection) : ZLTextTreeModel(), myView(view), myCollection(collection) {
 	const std::string prefix = ZLibrary::ApplicationImageDirectory() + ZLibrary::FileNameDelimiter;
-	myImageMap[RemoveBookImageId] = new ZLFileImage("image/png", prefix + "tree-remove.png", 0);
+	myImageMap[RemoveBookImageId] = new ZLFileImage("image/png", prefix + "tree-removebook.png", 0);
 	myImageMap[BookInfoImageId] = new ZLFileImage("image/png", prefix + "tree-bookinfo.png", 0);
 	myImageMap[AuthorInfoImageId] = new ZLFileImage("image/png", prefix + "tree-authorinfo.png", 0);
-	myImageMap[SeriesOrderImageId] = new ZLFileImage("image/png", prefix + "tree-order.png", 0);
+	myImageMap[SeriesOrderImageId] = new ZLFileImage("image/png", prefix + "tree-order-series.png", 0);
 	myImageMap[TagInfoImageId] = new ZLFileImage("image/png", prefix + "tree-taginfo.png", 0);
 	myImageMap[RemoveTagImageId] = new ZLFileImage("image/png", prefix + "tree-removetag.png", 0);
+	myImageMap[StrutImageId] = new ZLFileImage("image/png", prefix + "tree-strut.png", 0);
 }
 
 CollectionModel::~CollectionModel() {
 }
 
-BookDescriptionPtr CollectionModel::bookByParagraphNumber(int num) {
+BookDescriptionPtr CollectionModel::bookByParagraphIndex(int num) {
 	if ((num < 0) || ((int)paragraphsNumber() <= num)) {
 		return 0;
 	}
@@ -51,38 +53,39 @@ BookDescriptionPtr CollectionModel::bookByParagraphNumber(int num) {
 	return (it != myParagraphToBook.end()) ? it->second : 0;
 }
 
-const std::string &CollectionModel::tagByParagraphNumber(int num) {
+const std::string &CollectionModel::tagByParagraphIndex(int num) {
 	static const std::string EMPTY;
 	std::map<ZLTextParagraph*,std::string>::iterator it = myParagraphToTag.find((*this)[num]);
 	return (it != myParagraphToTag.end()) ? it->second : EMPTY;
 }
 
-const std::vector<int> &CollectionModel::paragraphNumbersByBook(BookDescriptionPtr book) {
+const std::vector<int> &CollectionModel::paragraphIndicesByBook(BookDescriptionPtr book) {
 	return myBookToParagraph[book];
 }
 
 void CollectionModel::build() {
 	if (myCollection.books().empty()) {
 		createParagraph();
-		insertText(LIBRARY_AUTHOR_ENTRY, ZLResource::resource("library")["noBooks"].value());
+		insertText(LIBRARY_ENTRY, ZLResource::resource("library")["noBooks"].value());
 	} else {
-		if (myView.ShowTagsOption.value()) {
-			buildWithTags();
+		if (myView.organizeByTags()) {
+			buildOrganizedByTags(false);
 		} else {
-			buildWithoutTags();
+			buildOrganizedByAuthors();
 		}
 	}
 }
 
-void CollectionModel::buildWithTags() {
+void CollectionModel::buildOrganizedByTags(bool buildAuthorTree) {
 	const ZLResource &resource = ZLResource::resource("library");
 
 	if (myView.ShowAllBooksTagOption.value()) {
 		ZLTextTreeParagraph *allBooksParagraph = createParagraph();
-		insertText(LIBRARY_AUTHOR_ENTRY, resource["allBooks"].value());
+		insertText(LIBRARY_ENTRY, resource["allBooks"].value());
+		addBidiReset();
 		insertImage(TagInfoImageId);
 		myParagraphToTag[allBooksParagraph] = CollectionView::SpecialTagAllBooks;
-		addBooks(myCollection.books(), allBooksParagraph);
+		addBooks(buildAuthorTree, myCollection.books(), allBooksParagraph);
 	}
 
 	std::map<std::string,Books> tagMap;
@@ -102,10 +105,11 @@ void CollectionModel::buildWithTags() {
 
 	if (!booksWithoutTags.empty()) {
 		ZLTextTreeParagraph *booksWithoutTagsParagraph = createParagraph();
-		insertText(LIBRARY_AUTHOR_ENTRY, resource["booksWithoutTags"].value());
+		insertText(LIBRARY_ENTRY, resource["booksWithoutTags"].value());
+		addBidiReset();
 		insertImage(TagInfoImageId);
 		myParagraphToTag[booksWithoutTagsParagraph] = CollectionView::SpecialTagNoTagsBooks;
-		addBooks(booksWithoutTags, booksWithoutTagsParagraph);
+		addBooks(buildAuthorTree, booksWithoutTags, booksWithoutTagsParagraph);
 	}
 
 	std::vector<std::string> tagStack;
@@ -127,7 +131,7 @@ void CollectionModel::buildWithTags() {
 						std::map<ZLTextTreeParagraph*,std::string>::iterator jt =
 							paragraphToTagMap.find(tagParagraph);
 						if (jt != paragraphToTagMap.end()) {
-							addBooks(tagMap[jt->second], tagParagraph);
+							addBooks(buildAuthorTree, tagMap[jt->second], tagParagraph);
 						}
 						tagParagraph = tagParagraph->parent();
 					}
@@ -139,7 +143,8 @@ void CollectionModel::buildWithTags() {
 				tagStack.push_back(subTag);
 				tagParagraph = createParagraph(tagParagraph);
 				myParagraphToTag[tagParagraph] = fullTagName.substr(0, newIndex);
-				insertText(LIBRARY_AUTHOR_ENTRY, subTag);
+				insertText(LIBRARY_ENTRY, subTag);
+				addBidiReset();
 				insertImage(TagInfoImageId);
 				insertImage(RemoveTagImageId);
 			}
@@ -149,17 +154,63 @@ void CollectionModel::buildWithTags() {
 	while (tagParagraph != 0) {
 		std::map<ZLTextTreeParagraph*,std::string>::iterator jt = paragraphToTagMap.find(tagParagraph);
 		if (jt != paragraphToTagMap.end()) {
-			addBooks(tagMap[jt->second], tagParagraph);
+			addBooks(buildAuthorTree, tagMap[jt->second], tagParagraph);
 		}
 		tagParagraph = tagParagraph->parent();
 	}
 }
 
-void CollectionModel::buildWithoutTags() {
-	addBooks(myCollection.books(), 0);
+void CollectionModel::buildOrganizedByAuthors() {
+	if (myView.ShowAllBooksTagOption.value()) {
+		const ZLResource &resource = ZLResource::resource("library");
+		ZLTextTreeParagraph *allBooksParagraph = createParagraph();
+		insertText(LIBRARY_ENTRY, resource["allBooks"].value());
+		addBidiReset();
+		insertImage(StrutImageId);
+		myParagraphToTag[allBooksParagraph] = CollectionView::SpecialTagAllBooks;
+		addBooks(false, myCollection.books(), allBooksParagraph);
+	}
+
+	addBooksTree(myCollection.books(), 0);
 }
 
-void CollectionModel::addBooks(const Books &books, ZLTextTreeParagraph *root) {
+void CollectionModel::addBooks(bool asTree, const Books &books, ZLTextTreeParagraph *root) {
+	if (asTree) {
+		addBooksTree(books, root);
+	} else {
+		addBooksPlain(books, root);
+	}
+}
+
+void CollectionModel::addBooksPlain(const Books &books, ZLTextTreeParagraph *root) {
+	AuthorPtr author;
+	AuthorComparator comparator;
+
+	for (Books::const_iterator jt = books.begin(); jt != books.end(); ++jt) {
+		BookDescriptionPtr description = *jt;
+
+		if (author.isNull() || comparator(author, description->author())) {
+			author = description->author();
+		}
+
+		ZLTextTreeParagraph *bookParagraph = createParagraph(root);
+		insertText(LIBRARY_ENTRY, author->displayName() + ". ");
+		const std::string &seriesName = description->seriesName();
+		if (!seriesName.empty()) {
+			addText(seriesName + ". ");
+		}
+		addText(description->title());
+		addBidiReset();
+		insertImage(BookInfoImageId);
+		if (myCollection.isBookExternal(description)) {
+			insertImage(RemoveBookImageId);
+		}
+		myParagraphToBook[bookParagraph] = description;
+		myBookToParagraph[description].push_back(paragraphsNumber() - 1);
+	}
+}
+
+void CollectionModel::addBooksTree(const Books &books, ZLTextTreeParagraph *root) {
 	AuthorPtr author;
 	AuthorComparator comparator;
 	ZLTextTreeParagraph *authorParagraph = 0;
@@ -172,7 +223,9 @@ void CollectionModel::addBooks(const Books &books, ZLTextTreeParagraph *root) {
 		if (author.isNull() || comparator(author, description->author())) {
 			author = description->author();
 			authorParagraph = createParagraph(root);
-			insertText(LIBRARY_AUTHOR_ENTRY, author->displayName());
+			insertText(LIBRARY_ENTRY, author->displayName());
+			addBidiReset();
+			insertImage(StrutImageId);
 			//insertImage(AuthorInfoImageId);
 			currentSeriesName.erase();
 			seriesParagraph = 0;
@@ -185,13 +238,16 @@ void CollectionModel::addBooks(const Books &books, ZLTextTreeParagraph *root) {
 		} else if (seriesName != currentSeriesName) {
 			currentSeriesName = seriesName;
 			seriesParagraph = createParagraph(authorParagraph);
-			insertText(LIBRARY_BOOK_ENTRY, seriesName);
+			insertText(LIBRARY_ENTRY, seriesName);
+			addBidiReset();
+			insertImage(StrutImageId);
 			//insertImage(SeriesOrderImageId);
 		}
 		ZLTextTreeParagraph *bookParagraph = createParagraph(
 			(seriesParagraph == 0) ? authorParagraph : seriesParagraph
 		);
-		insertText(LIBRARY_BOOK_ENTRY, description->title());
+		insertText(LIBRARY_ENTRY, description->title());
+		addBidiReset();
 		insertImage(BookInfoImageId);
 		if (myCollection.isBookExternal(description)) {
 			insertImage(RemoveBookImageId);
@@ -253,4 +309,8 @@ void CollectionModel::removeBook(BookDescriptionPtr book) {
 			removeParagraph(index--);
 		}
 	}
+}
+
+bool CollectionModel::empty() const {
+	return myCollection.books().empty();
 }

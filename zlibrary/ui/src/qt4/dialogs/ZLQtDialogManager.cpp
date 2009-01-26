@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@
 #include "ZLQtWaitMessage.h"
 #include "ZLQtUtil.h"
 
+#include "../image/ZLQtImageManager.h"
+
 shared_ptr<ZLOptionsDialog> ZLQtDialogManager::createOptionsDialog(const ZLResourceKey &key, shared_ptr<ZLRunnable> applyAction, bool showApplyButton) const {
 	myStoredWindow = qApp->activeWindow();
 	return new ZLQtOptionsDialog(resource()[key], applyAction, showApplyButton);
@@ -41,12 +43,12 @@ shared_ptr<ZLDialog> ZLQtDialogManager::createDialog(const ZLResourceKey &key) c
 	return new ZLQtDialog(resource()[key]);
 }
 
-void ZLQtDialogManager::informationBox(const ZLResourceKey &key, const std::string &message) const {
+void ZLQtDialogManager::informationBox(const std::string &title, const std::string &message) const {
 	QWidget *parent = qApp->activeWindow();
 	if (parent == 0) {
 		parent = myStoredWindow;
 	}
-	QMessageBox::information(parent, ::qtString(dialogTitle(key)), ::qtString(message), ::qtButtonName(OK_BUTTON));
+	QMessageBox::information(parent, ::qtString(title), ::qtString(message), ::qtButtonName(OK_BUTTON));
 }
 
 void ZLQtDialogManager::errorBox(const ZLResourceKey &key, const std::string &message) const {
@@ -86,4 +88,11 @@ void ZLQtDialogManager::setClipboardText(const std::string &text, ClipboardType 
 			(type == CLIPBOARD_MAIN) ? QClipboard::Clipboard : QClipboard::Selection
 		);
 	}
+}
+
+void ZLQtDialogManager::setClipboardImage(const ZLImageData &imageData, ClipboardType type) const {
+	qApp->clipboard()->setImage(
+		*((ZLQtImageData&)imageData).image(),
+		(type == CLIPBOARD_MAIN) ? QClipboard::Clipboard : QClipboard::Selection
+	);
 }

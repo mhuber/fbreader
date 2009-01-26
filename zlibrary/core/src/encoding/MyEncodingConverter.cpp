@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <ZLUnicodeUtil.h>
 #include <ZLibrary.h>
 #include <ZLFile.h>
+#include <ZLDir.h>
 #include <ZLXMLReader.h>
 
 #include "MyEncodingConverter.h"
@@ -111,8 +112,18 @@ private:
 	char myBuffer[3];
 };
 
+MyEncodingConverterProvider::MyEncodingConverterProvider() {
+	shared_ptr<ZLDir> dir =
+		ZLFile(ZLEncodingCollection::encodingDescriptionPath()).directory();
+	if (!dir.isNull()) {
+		std::vector<std::string> files;
+		dir->collectFiles(files, false);
+		myProvidedEncodings.insert(files.begin(), files.end());
+	}
+}
+
 bool MyEncodingConverterProvider::providesConverter(const std::string &encoding) {
-	return ZLFile(ZLEncodingCollection::encodingDescriptionPath() + ZLibrary::FileNameDelimiter + encoding).exists();
+	return myProvidedEncodings.find(encoding) != myProvidedEncodings.end();
 }
 
 shared_ptr<ZLEncodingConverter> MyEncodingConverterProvider::createConverter(const std::string &encoding) {
@@ -132,7 +143,7 @@ MyOneByteEncodingConverter::MyOneByteEncodingConverter(const std::string &encodi
 	myEncodingMap = new char[1024];
 	memset(myEncodingMap, '\0', 1024);
 	for (int i = 0; i < 256; ++i) {
-		ZLUnicodeUtil::ucs2ToUtf8(myEncodingMap + 4 * i, i);
+		ZLUnicodeUtil::ucs4ToUtf8(myEncodingMap + 4 * i, i);
 	}
 	if (encodingMap != 0) {
 		for (int i = 0; i < 256; ++i) {
@@ -303,7 +314,7 @@ void EncodingCharReader::startElementHandler(const char *tag, const char **attri
 			}
 		}
 		int value = strtol(attributes[3], &ptr, 16);
-		int len = ZLUnicodeUtil::ucs2ToUtf8(myBuffer, value);
+		int len = ZLUnicodeUtil::ucs4ToUtf8(myBuffer, value);
 		myMap[index] = new char[len + 1];
 		memcpy(myMap[index], myBuffer, len);
 		myMap[index][len] = '\0';

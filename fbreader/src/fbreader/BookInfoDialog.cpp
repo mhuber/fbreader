@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ void AuthorDisplayNameEntry::onAccept(const std::string &value) {
 
 void AuthorDisplayNameEntry::onValueSelected(int index) {
 	const std::vector<AuthorPtr> &authors = myInfoDialog.myCollection.authors();
-	myCurrentAuthor = authors[index];
+	myCurrentAuthor = (((size_t)index) < authors.size()) ? authors[index] : 0;
 	myInfoDialog.myAuthorSortKeyEntry->resetView();
 	myInfoDialog.mySeriesTitleEntry->resetView();
 }

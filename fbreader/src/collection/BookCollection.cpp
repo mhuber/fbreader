@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,15 +41,14 @@ public:
 bool DescriptionComparator::operator() (const BookDescriptionPtr d1, const BookDescriptionPtr d2) {
 	AuthorPtr author1 = d1->author();
 	AuthorPtr author2 = d2->author();
-	const std::string sortKey1 = author1->sortKey();
-	const std::string sortKey2 = author2->sortKey();
-	if (sortKey1 != sortKey2) {
-		return sortKey1 < sortKey2;
+
+	int comp = author1->sortKey().compare(author2->sortKey());
+	if (comp != 0) {
+		return comp < 0;
 	}
-	const std::string displayName1 = author1->displayName();
-	const std::string displayName2 = author2->displayName();
-	if (displayName1 != displayName2) {
-		return displayName1 < displayName2;
+	comp = author1->displayName().compare(author2->displayName());
+	if (comp != 0) {
+		return comp < 0;
 	}
 
 	const std::string &seriesName1 = d1->seriesName();
@@ -74,6 +73,7 @@ static const std::string OPTIONS = "Options";
 BookCollection::BookCollection() :
 	PathOption(ZLCategoryKey::CONFIG, OPTIONS, "BookPath", ""),
 	ScanSubdirsOption(ZLCategoryKey::CONFIG, OPTIONS, "ScanSubdirs", false),
+	CollectAllBooksOption(ZLCategoryKey::CONFIG, OPTIONS, "CollectAllBooks", false),
 	myDoStrongRebuild(true),
 	myDoWeakRebuild(false) {
 }
@@ -96,12 +96,13 @@ void BookCollection::collectBookFileNames(std::set<std::string> &bookFileNames) 
 		if (dir.isNull()) {
 			continue;
 		}
-		dir->collectFiles(files, false);
+		dir->collectFiles(files, true);
 		if (!files.empty()) {
+			const bool collectBookWithoutMetaInfo = CollectAllBooksOption.value();
 			for (std::vector<std::string>::const_iterator jt = files.begin(); jt != files.end(); ++jt) {
 				const std::string fileName = dir->itemPath(*jt);
 				ZLFile file(fileName);
-				if (PluginCollection::instance().plugin(file, true) != 0) {
+				if (PluginCollection::instance().plugin(file, !collectBookWithoutMetaInfo) != 0) {
 					bookFileNames.insert(fileName);
 				// TODO: zip -> any archive
 				} else if (file.extension() == "zip") {
@@ -195,18 +196,20 @@ void BookCollection::collectDirNames(std::set<std::string> &nameSet) const {
 	while (!nameQueue.empty()) {
 		std::string name = nameQueue.front();
 		nameQueue.pop();
-		if (nameSet.find(name) == nameSet.end()) {
+		ZLFile f(name);
+		const std::string resolvedName = f.resolvedPath();
+		if (nameSet.find(resolvedName) == nameSet.end()) {
 			if (myScanSubdirs) {
-				shared_ptr<ZLDir> dir = ZLFile(name).directory();
+				shared_ptr<ZLDir> dir = f.directory();
 				if (!dir.isNull()) {
 					std::vector<std::string> subdirs;
-					dir->collectSubDirs(subdirs, false);
+					dir->collectSubDirs(subdirs, true);
 					for (std::vector<std::string>::const_iterator it = subdirs.begin(); it != subdirs.end(); ++it) {
 						nameQueue.push(dir->itemPath(*it));
 					}
 				}
 			}
-			nameSet.insert(name);
+			nameSet.insert(resolvedName);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@
 #include <ZLApplication.h>
 #include <ZLKeyBindings.h>
 
+#include "../collection/BookCollection.h"
 #include "../description/BookDescription.h"
 #include "../external/ProgramCollection.h"
 
@@ -38,16 +39,15 @@ class ZLMessageHandler;
 
 class BookModel;
 class BookTextView;
-class FootnoteView;
-class ContentsView;
 class CollectionView;
-class RecentBooksView;
 
 class FBReader : public ZLApplication {
 
 public:
 	// returns true if description was found or error message was shown
 	static bool createDescription(const std::string &fileName, BookDescriptionPtr &description);
+
+	static const std::string PageIndexParameter;
 
 public:
 	enum ViewMode {
@@ -57,8 +57,9 @@ public:
 		CONTENTS_MODE = 1 << 2,
 		BOOKMARKS_MODE = 1 << 3,
 		BOOK_COLLECTION_MODE = 1 << 4,
-		RECENT_BOOKS_MODE = 1 << 5,
+		NET_LIBRARY_MODE = 1 << 5,
 		HYPERLINK_NAV_MODE = 1 << 6,
+		ALL_MODES = 0x3F
 	};
 
 	struct ScrollingOptions {
@@ -90,7 +91,7 @@ public:
 	~FBReader();
 
 	void setMode(ViewMode mode);
-	ViewMode getMode() const;
+	ViewMode mode() const;
 
 	void clearTextCaches();
 
@@ -106,16 +107,18 @@ private:
 	std::string helpFileName(const std::string &language) const;
 	void openFile(const std::string &fileName);
 
+	bool isViewFinal() const;
+
 public:
-	ZLKeyBindings &keyBindings();
-	ZLKeyBindings &keyBindings(ZLViewWidget::Angle angle);
+	shared_ptr<ZLKeyBindings> keyBindings();
+	shared_ptr<ZLKeyBindings> keyBindings(ZLView::Angle angle);
 
 	bool isDictionarySupported() const;
 	void openInDictionary(const std::string &word);
 
 	shared_ptr<ProgramCollection> webBrowserCollection() const;
 
-	void tryShowFootnoteView(const std::string &id, bool external);
+	void tryShowFootnoteView(const std::string &id, const std::string &type);
 	BookTextView &bookTextView() const;
 	CollectionView &collectionView() const;
 	void showBookTextView();
@@ -139,6 +142,9 @@ public:
 	void highlightPrevLink();
 	void openHyperlink();
 
+	RecentBooks &recentBooks();
+	const RecentBooks &recentBooks() const;
+
 private:
 	shared_ptr<ProgramCollection> dictionaryCollection() const;
 
@@ -156,17 +162,18 @@ private:
 	shared_ptr<ZLView> myBookTextView;	
 	shared_ptr<ZLView> myContentsView;	
 	shared_ptr<ZLView> myCollectionView;	
-	shared_ptr<ZLView> myRecentBooksView;	
+	shared_ptr<ZLView> myNetLibraryView;	
+	shared_ptr<ZLPopupData> myRecentBooksPopupData;	
 
 	ZLTime myLastScrollingTime;
 
 public:
 	BookModel *myModel;
-private:
-	ZLKeyBindings myBindings0;
-	ZLKeyBindings myBindings90;
-	ZLKeyBindings myBindings180;
-	ZLKeyBindings myBindings270;
+
+	shared_ptr<ZLKeyBindings> myBindings0;
+	shared_ptr<ZLKeyBindings> myBindings90;
+	shared_ptr<ZLKeyBindings> myBindings180;
+	shared_ptr<ZLKeyBindings> myBindings270;
 
 	std::string myBookToOpen;
 	bool myBookAlreadyOpen;
@@ -175,14 +182,21 @@ private:
 
 	shared_ptr<ZLMessageHandler> myOpenFileHandler;
 
+	RecentBooks myRecentBooks;
+
+	enum {
+		RETURN_TO_TEXT_MODE,
+		UNFULLSCREEN
+	} myActionOnCancel;
+
 friend class OpenFileHandler;
 
 friend class OptionsDialog;
 friend class FBView;
+friend class NetLibraryView;
 
 //friend class ShowCollectionAction;
 friend class ShowHelpAction;
-//friend class ShowRecentBooksListAction;
 //friend class ShowOptionsDialogAction;
 friend class ShowContentsAction;
 friend class AddBookAction;
@@ -193,6 +207,7 @@ friend class ShowBookInfoAction;
 friend class UndoAction;
 //friend class RedoAction;
 friend class SearchAction;
+friend class SearchPatternAction;
 friend class FindNextAction;
 friend class FindPreviousAction;
 friend class ScrollingAction;
@@ -207,6 +222,9 @@ friend class GotoPreviousTOCSectionAction;
 friend class SelectionAction;
 friend class ShowFootnotes;
 friend class HyperlinkNavStart;
+friend class SearchOnNetworkAction;
+friend class AdvancedSearchOnNetworkAction;
+friend class FBFullscreenAction;
 };
 
 #endif /* __FBREADER_H__ */

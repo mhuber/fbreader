@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,9 +37,11 @@
 #include "FootnoteView.h"
 #include "ContentsView.h"
 #include "CollectionView.h"
-#include "RecentBooksView.h"
+#include "NetLibraryView.h"
+#include "RecentBooksPopupData.h"
 #include "BookInfoDialog.h"
 #include "TimeUpdater.h"
+#include "NetworkOperationRunnable.h"
 
 #include "../migration/migrate.h"
 
@@ -63,6 +65,8 @@ const std::string MODE = "Mode";
 const std::string LINES_TO_KEEP = "LinesToKeep";
 const std::string LINES_TO_SCROLL = "LinesToScroll";
 const std::string PERCENT_TO_SCROLL = "PercentToScroll";
+
+const std::string FBReader::PageIndexParameter = "pageIndex";
 
 FBReader::ScrollingOptions::ScrollingOptions(const std::string &groupName, long delayValue, long modeValue, long linesToKeepValue, long linesToScrollValue, long percentToScrollValue) :
 	DelayOption(ZLCategoryKey::CONFIG, groupName, DELAY, 0, 5000, delayValue),
@@ -99,32 +103,38 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	TapScrollingOnFingerOnlyOption(ZLCategoryKey::CONFIG, TAP_SCROLLING, "FingerOnly", true),
 	UseSeparateBindingsOption(ZLCategoryKey::CONFIG, "KeysOptions", "UseSeparateBindings", false),
 	EnableSingleClickDictionaryOption(ZLCategoryKey::CONFIG, "Dictionary", "SingleClick", false),
-	myBindings0("Keys"),
-	myBindings90("Keys90"),
-	myBindings180("Keys180"),
-	myBindings270("Keys270"),
+	myBindings0(new ZLKeyBindings("Keys")),
+	myBindings90(new ZLKeyBindings("Keys90")),
+	myBindings180(new ZLKeyBindings("Keys180")),
+	myBindings270(new ZLKeyBindings("Keys270")),
 	myBookToOpen(bookToOpen),
-	myBookAlreadyOpen(false) {
+	myBookAlreadyOpen(false),
+	myActionOnCancel(UNFULLSCREEN) {
 
 	myModel = 0;
 	myBookTextView = new BookTextView(*this, context());
 	myFootnoteView = new FootnoteView(*this, context());
 	myContentsView = new ContentsView(*this, context());
 	myCollectionView = new CollectionView(*this, context());
-	myRecentBooksView = new RecentBooksView(*this, context());
+	myNetLibraryView = new NetLibraryView(*this, context());
+	myRecentBooksPopupData = new RecentBooksPopupData(*this);
 	myMode = UNDEFINED_MODE;
 	myPreviousMode = BOOK_TEXT_MODE;
 	setMode(BOOK_TEXT_MODE);
 
-	addAction(ActionCode::SHOW_COLLECTION, new SetModeAction(*this, FBReader::BOOK_COLLECTION_MODE, FBReader::BOOK_TEXT_MODE | FBReader::CONTENTS_MODE | FBReader::RECENT_BOOKS_MODE));
-	addAction(ActionCode::SHOW_LAST_BOOKS, new SetModeAction(*this, FBReader::RECENT_BOOKS_MODE, FBReader::BOOK_TEXT_MODE | FBReader::CONTENTS_MODE));
+	addAction(ActionCode::SHOW_READING, new UndoAction(*this, FBReader::ALL_MODES & ~FBReader::BOOK_TEXT_MODE));
+	addAction(ActionCode::SHOW_COLLECTION, new SetModeAction(*this, FBReader::BOOK_COLLECTION_MODE, FBReader::BOOK_TEXT_MODE | FBReader::CONTENTS_MODE));
+	addAction(ActionCode::SHOW_NET_LIBRARY, new ShowNetworkLibraryAction(*this));
+	addAction(ActionCode::SEARCH_ON_NETWORK, new SearchOnNetworkAction(*this));
+	addAction(ActionCode::ADVANCED_SEARCH_ON_NETWORK, new AdvancedSearchOnNetworkAction(*this));
+	registerPopupData(ActionCode::SHOW_COLLECTION, myRecentBooksPopupData);
 	addAction(ActionCode::SHOW_OPTIONS, new ShowOptionsDialogAction(*this));
 	addAction(ActionCode::SHOW_CONTENTS, new ShowContentsAction(*this));
 	addAction(ActionCode::SHOW_BOOK_INFO, new ShowBookInfoAction(*this));
-	addAction(ActionCode::ADD_BOOK, new AddBookAction(*this));
-	addAction(ActionCode::UNDO, new UndoAction(*this));
+	addAction(ActionCode::ADD_BOOK, new AddBookAction(*this, FBReader::BOOK_TEXT_MODE | FBReader::BOOK_COLLECTION_MODE | FBReader::CONTENTS_MODE));
+	addAction(ActionCode::UNDO, new UndoAction(*this, FBReader::BOOK_TEXT_MODE));
 	addAction(ActionCode::REDO, new RedoAction(*this));
-	addAction(ActionCode::SEARCH, new SearchAction(*this));
+	addAction(ActionCode::SEARCH, new SearchPatternAction(*this));
 	addAction(ActionCode::FIND_NEXT, new FindNextAction(*this));
 	addAction(ActionCode::FIND_PREVIOUS, new FindPreviousAction(*this));
 	addAction(ActionCode::SCROLL_TO_HOME, new ScrollToHomeAction(*this));
@@ -141,8 +151,8 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	addAction(ActionCode::INCREASE_FONT, new ChangeFontSizeAction(*this, 2));
 	addAction(ActionCode::DECREASE_FONT, new ChangeFontSizeAction(*this, -2));
 	addAction(ActionCode::ROTATE_SCREEN, new RotationAction(*this));
-	addAction(ActionCode::TOGGLE_FULLSCREEN, new FullscreenAction(*this, true));
-	addAction(ActionCode::FULLSCREEN_ON, new FullscreenAction(*this, false));
+	addAction(ActionCode::TOGGLE_FULLSCREEN, new FBFullscreenAction(*this));
+	addAction(ActionCode::FULLSCREEN_ON, new FBFullscreenAction(*this));
 	addAction(ActionCode::CANCEL, new CancelAction(*this));
 	addAction(ActionCode::SHOW_HIDE_POSITION_INDICATOR, new ToggleIndicatorAction(*this));
 	addAction(ActionCode::QUIT, new QuitAction(*this));
@@ -153,7 +163,11 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	addAction(ActionCode::COPY_SELECTED_TEXT_TO_CLIPBOARD, new CopySelectedTextAction(*this));
 	addAction(ActionCode::OPEN_SELECTED_TEXT_IN_DICTIONARY, new OpenSelectedTextInDictionaryAction(*this));
 	addAction(ActionCode::CLEAR_SELECTION, new ClearSelectionAction(*this));
-	addAction(ActionCode::GOTO_PAGE_NUMBER, new GotoPageNumber(*this));
+	addAction(ActionCode::GOTO_PAGE_NUMBER, new GotoPageNumber(*this, std::string()));
+	addAction(ActionCode::GOTO_PAGE_NUMBER_WITH_PARAMETER, new GotoPageNumber(*this, PageIndexParameter));
+	shared_ptr<Action> booksOrderAction = new BooksOrderAction(*this);
+	addAction(ActionCode::ORGANIZE_BOOKS_BY_AUTHOR, booksOrderAction);
+	addAction(ActionCode::ORGANIZE_BOOKS_BY_TAG, booksOrderAction);
 
 	addAction(ActionCode::SHOW_FOOTNOTES, new ShowFootnotes(*this));
 	addAction(ActionCode::HYPERLINK_NAV_START, new HyperlinkNavStart(*this));
@@ -207,11 +221,8 @@ void FBReader::initWindow() {
 bool FBReader::createDescription(const std::string& fileName, BookDescriptionPtr &description) {
 	ZLFile bookFile = ZLFile(fileName);
 
-	if (!bookFile.isArchive()) {
-		FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
-		if (plugin == 0) {
-			return false;
-		}
+	FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
+	if (plugin != 0) {
 		std::string error = plugin->tryOpen(fileName);
 		if (!error.empty()) {
 			ZLResourceKey boxKey("openBookErrorBox");
@@ -224,6 +235,10 @@ bool FBReader::createDescription(const std::string& fileName, BookDescriptionPtr
 			description = BookDescription::getDescription(bookFile.path());
 		}
 		return true;
+	}
+
+	if (!bookFile.isArchive()) {
+		return false;
 	}
 
 	std::queue<std::string> archiveNames;
@@ -275,32 +290,33 @@ void FBReader::openBookInternal(BookDescriptionPtr description) {
 		BookTextView &bookTextView = (BookTextView&)*myBookTextView;
 		ContentsView &contentsView = (ContentsView&)*myContentsView;
 		FootnoteView &footnoteView = (FootnoteView&)*myFootnoteView;
-		RecentBooksView &recentBooksView = (RecentBooksView&)*myRecentBooksView;
 
 		bookTextView.saveState();
-		bookTextView.setModel(0, "");
+		bookTextView.setModel(0, "", "");
 		bookTextView.setContentsModel(0);
-		contentsView.setModel(0);
+		contentsView.setModel(0, "");
 		if (myModel != 0) {
 			delete myModel;
 		}
 		myModel = new BookModel(description);
 		ZLStringOption(ZLCategoryKey::STATE, STATE, BOOK, std::string()).setValue(myModel->fileName());
-		ZLTextHyphenator::instance().load(description->language());
-		bookTextView.setModel(myModel->bookTextModel(), description->fileName());
+		const std::string &lang = description->language();
+		ZLTextHyphenator::instance().load(lang);
+		bookTextView.setModel(myModel->bookTextModel(), lang, description->fileName());
 		bookTextView.setCaption(description->title());
 		bookTextView.setContentsModel(myModel->contentsModel());
-		footnoteView.setModel(0);
+		footnoteView.setModel(0, lang);
 		footnoteView.setCaption(description->title());
-		contentsView.setModel(myModel->contentsModel());
+		contentsView.setModel(myModel->contentsModel(), lang);
 		contentsView.setCaption(description->title());
 
-		recentBooksView.lastBooks().addBook(description->fileName());
+		myRecentBooks.addBook(description->fileName());
+		((RecentBooksPopupData&)*myRecentBooksPopupData).updateId();
 	}
 }
 
-void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
-	if (external) {
+void FBReader::tryShowFootnoteView(const std::string &id, const std::string &type) {
+	if (type == "external") {
 		shared_ptr<ProgramCollection> collection = webBrowserCollection();
 		if (!collection.isNull()) {
 			shared_ptr<Program> program = collection->currentProgram();
@@ -308,7 +324,7 @@ void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
 				program->run("openLink", id);
 			}
 		}
-	} else {
+	} else if (type == "internal") {
 		if (((myMode == BOOK_TEXT_MODE) || (myMode == FOOTNOTE_MODE) || (myMode == HYPERLINK_NAV_MODE)) && (myModel != 0)) {
 			BookModel::Label label = myModel->label(id);
 			if (!label.Model.isNull()) {
@@ -316,13 +332,21 @@ void FBReader::tryShowFootnoteView(const std::string &id, bool external) {
 					bookTextView().gotoParagraph(label.ParagraphNumber);
 				} else {
 					FootnoteView &view = ((FootnoteView&)*myFootnoteView);
-					view.setModel(label.Model);
+					view.setModel(label.Model, myModel->description()->language());
 					setMode(FOOTNOTE_MODE);
 					view.gotoParagraph(label.ParagraphNumber);
 				}
 				setHyperlinkCursor(false);
 				refreshWindow();
 			}
+		}
+	} else if (type == "book") {
+		DownloadBookRunnable downloader(id);
+		downloader.executeWithUI();
+		if (downloader.hasErrors()) {
+			downloader.showErrorMessage();
+		} else {
+			openFile(downloader.fileName());
 		}
 	}
 }
@@ -410,24 +434,12 @@ void FBReader::highlightPrevLink()
 	}
 }
 
-class RebuildCollectionRunnable : public ZLRunnable {
-
-public:
-	RebuildCollectionRunnable(FBReader &reader) : myReader(reader) {}
-	void run() { myReader.rebuildCollectionInternal(); }
-
-private:
-	FBReader &myReader;
-};
-
-void FBReader::rebuildCollectionInternal() {
-	CollectionView &collectionView = (CollectionView&)*myCollectionView;
-	collectionView.updateModel();
-	collectionView.collection().authors();
+FBReader::ViewMode FBReader::mode() const {
+	return myMode;
 }
 
-FBReader::ViewMode FBReader::getMode() const {
-	return myMode;
+bool FBReader::isViewFinal() const {
+	return myMode == BOOK_TEXT_MODE;
 }
 
 void FBReader::setMode(ViewMode mode) {
@@ -435,14 +447,18 @@ void FBReader::setMode(ViewMode mode) {
 		return;
 	}
 
+	if (mode != BOOK_TEXT_MODE) {
+		myActionOnCancel = RETURN_TO_TEXT_MODE;
+	}
+
 	myPreviousMode = myMode;
 	myMode = mode;
-
-	setViewFinal(myMode == BOOK_TEXT_MODE);
 
 	switch (myMode) {
 		case HYPERLINK_NAV_MODE:
 		case BOOK_TEXT_MODE:
+			setHyperlinkCursor(false);
+			((ZLTextView&)*myBookTextView).forceScrollbarUpdate();
 			setView(myBookTextView);
 			break;
 		case CONTENTS_MODE:
@@ -453,22 +469,16 @@ void FBReader::setMode(ViewMode mode) {
 			setView(myFootnoteView);
 			break;
 		case BOOK_COLLECTION_MODE:
-			{
-				RebuildCollectionRunnable runnable(*this);
-				ZLDialogManager::instance().wait(ZLResourceKey("loadingBookList"), runnable);
-			}
-			if (myModel != 0) {
-				((CollectionView&)*myCollectionView).selectBook(myModel->description());
-			}
+			collectionView().openWithBook((myModel != 0) ? myModel->description() : 0);
 			setView(myCollectionView);
-			break;
-		case RECENT_BOOKS_MODE:
-			((RecentBooksView&)*myRecentBooksView).rebuild();
-			setView(myRecentBooksView);
 			break;
 		case BOOKMARKS_MODE:
 			break;
+		case NET_LIBRARY_MODE:
+			setView(myNetLibraryView);
+			break;
 		case UNDEFINED_MODE:
+		case ALL_MODES:
 			break;
 	}
 }
@@ -531,26 +541,26 @@ void FBReader::clearTextCaches() {
 	((ZLTextView&)*myFootnoteView).clearCaches();
 	((ZLTextView&)*myContentsView).clearCaches();
 	((ZLTextView&)*myCollectionView).clearCaches();
-	((ZLTextView&)*myRecentBooksView).clearCaches();
+	((ZLTextView&)*myNetLibraryView).clearCaches();
 }
 
-ZLKeyBindings &FBReader::keyBindings() {
+shared_ptr<ZLKeyBindings> FBReader::keyBindings() {
 	return UseSeparateBindingsOption.value() ?
-		keyBindings(myViewWidget->rotation()) : myBindings0;
+		keyBindings(rotation()) : myBindings0;
 }
 
-ZLKeyBindings &FBReader::keyBindings(ZLViewWidget::Angle angle) {
+shared_ptr<ZLKeyBindings> FBReader::keyBindings(ZLView::Angle angle) {
 	switch (angle) {
-		case ZLViewWidget::DEGREES0:
-		default:
+		case ZLView::DEGREES0:
 			return myBindings0;
-		case ZLViewWidget::DEGREES90:
+		case ZLView::DEGREES90:
 			return myBindings90;
-		case ZLViewWidget::DEGREES180:
+		case ZLView::DEGREES180:
 			return myBindings180;
-		case ZLViewWidget::DEGREES270:
+		case ZLView::DEGREES270:
 			return myBindings270;
 	}
+	return 0;
 }
 
 shared_ptr<ProgramCollection> FBReader::dictionaryCollection() const {
@@ -570,4 +580,12 @@ void FBReader::openInDictionary(const std::string &word) {
 
 shared_ptr<ProgramCollection> FBReader::webBrowserCollection() const {
 	return myProgramCollectionMap.collection("Web Browser");
+}
+
+RecentBooks &FBReader::recentBooks() {
+	return myRecentBooks;
+}
+
+const RecentBooks &FBReader::recentBooks() const {
+	return myRecentBooks;
 }

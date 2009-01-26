@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 #include <cctype>
 
+#include <ZLFile.h>
 #include <ZLFileImage.h>
 #include <ZLStringUtil.h>
 
@@ -27,7 +28,7 @@
 #include "../txt/PlainTextFormat.h"
 #include "../util/MiscUtil.h"
 #include "../../bookmodel/BookModel.h"
-#include "StyleSheetParser.h"
+#include "../css/StyleSheetParser.h"
 
 HtmlTagAction::HtmlTagAction(HtmlBookReader &reader) : myReader(reader) {
 }
@@ -106,9 +107,15 @@ HtmlIgnoreTagAction::HtmlIgnoreTagAction(HtmlBookReader &reader) : HtmlTagAction
 
 void HtmlIgnoreTagAction::run(const HtmlReader::HtmlTag &tag) {
 	if (tag.Start) {
-		++myReader.myIgnoreDataCounter;
+		if (myTagNames.find(tag.Name) == myTagNames.end()) {
+			++myReader.myIgnoreDataCounter;
+			myTagNames.insert(tag.Name);
+		}
 	} else {
-		--myReader.myIgnoreDataCounter;
+		if (myTagNames.find(tag.Name) != myTagNames.end()) {
+			--myReader.myIgnoreDataCounter;
+			myTagNames.erase(tag.Name);
+		}
 	}
 }
 
@@ -131,9 +138,12 @@ void HtmlHrefTagAction::run(const HtmlReader::HtmlTag &tag) {
 					if (value[0] == '#') {
 						setHyperlinkType(INTERNAL_HYPERLINK);
 						bookReader().addHyperlinkControl(INTERNAL_HYPERLINK, value.substr(1));
-					} else if (MiscUtil::isReference(value)) {
-						setHyperlinkType(EXTERNAL_HYPERLINK);
-						bookReader().addHyperlinkControl(EXTERNAL_HYPERLINK, value);
+					} else {
+						FBTextKind hyperlinkType = MiscUtil::referenceType(value);
+						if (hyperlinkType != INTERNAL_HYPERLINK) {
+							setHyperlinkType(hyperlinkType);
+							bookReader().addHyperlinkControl(hyperlinkType, value);
+						}
 					}
 				}
 			}
@@ -164,11 +174,14 @@ void HtmlImageTagAction::run(const HtmlReader::HtmlTag &tag) {
 		bookReader().endParagraph();
 		for (unsigned int i = 0; i < tag.Attributes.size(); ++i) {
 			if (tag.Attributes[i].Name == "SRC") {
-				std::string fileName = MiscUtil::decodeHtmlURL(tag.Attributes[i].Value);
-				bookReader().addImageReference(fileName);
-				bookReader().addImage(fileName,
-					new ZLFileImage("image/auto", myReader.myBaseDirPath + fileName, 0)
-				);
+				const std::string fileName = MiscUtil::decodeHtmlURL(tag.Attributes[i].Value);
+				const std::string filePath = myReader.myBaseDirPath + fileName;
+				if (ZLFile(filePath).exists()) {
+					bookReader().addImageReference(fileName);
+					bookReader().addImage(fileName,
+						new ZLFileImage("image/auto", filePath, 0)
+					);
+				}
 				break;
 			}
 		}
@@ -264,7 +277,7 @@ HtmlStyleTagAction::HtmlStyleTagAction(HtmlBookReader &reader) : HtmlTagAction(r
 }
 
 void HtmlStyleTagAction::run(const HtmlReader::HtmlTag &tag) {
-	myReader.myStyleSheetParser = tag.Start ? new StyleSheetParser(myReader.myStyleSheetTable) : 0;
+	myReader.myStyleSheetParser = tag.Start ? new StyleSheetTableParser(myReader.myStyleSheetTable) : 0;
 	/*
 	if (!tag.Start) {
 		myReader.myStyleSheetTable.dump();
@@ -315,6 +328,8 @@ shared_ptr<HtmlTagAction> HtmlBookReader::createAction(const std::string &tag) {
 		return new HtmlIgnoreTagAction(*this);
 	} else if (tag == "A") {
 		return new HtmlHrefTagAction(*this);
+	} else if (tag == "TD") {
+		return new HtmlBreakTagAction(*this, HtmlBreakTagAction::BREAK_AT_END);
 	} else if (tag == "TR") {
 		return new HtmlBreakTagAction(*this, HtmlBreakTagAction::BREAK_AT_END);
 	} else if (tag == "DIV") {
@@ -389,7 +404,7 @@ HtmlBookReader::HtmlBookReader(const std::string &baseDirectoryPath, BookModel &
 HtmlBookReader::~HtmlBookReader() {
 }
 
-void HtmlBookReader::addConvertedDataToBuffer(const char *text, int len, bool convert) {
+void HtmlBookReader::addConvertedDataToBuffer(const char *text, size_t len, bool convert) {
 	if (len > 0) {
 		if (myDontBreakParagraph) {
 			while ((len > 0) && isspace(*text)) {
@@ -417,6 +432,12 @@ void HtmlBookReader::addConvertedDataToBuffer(const char *text, int len, bool co
 bool HtmlBookReader::tagHandler(const HtmlTag &tag) {
 	myConverter->reset();
 
+	for (unsigned int i = 0; i < tag.Attributes.size(); ++i) {
+		if (tag.Attributes[i].Name == "ID") {
+			myBookReader.addHyperlinkLabel(tag.Attributes[i].Value);
+			break;
+		}	
+	}
 	shared_ptr<HtmlTagAction> action = myActionMap[tag.Name];
 	if (action.isNull()) {
 		action = createAction(tag.Name);
@@ -427,7 +448,7 @@ bool HtmlBookReader::tagHandler(const HtmlTag &tag) {
 	return true;
 }
 
-void HtmlBookReader::preformattedCharacterDataHandler(const char *text, int len, bool convert) {
+void HtmlBookReader::preformattedCharacterDataHandler(const char *text, size_t len, bool convert) {
 	const char *start = text;
 	const char *end = text + len;
 
@@ -499,7 +520,7 @@ void HtmlBookReader::preformattedCharacterDataHandler(const char *text, int len,
 	}
 }
 
-bool HtmlBookReader::characterDataHandler(const char *text, int len, bool convert) {
+bool HtmlBookReader::characterDataHandler(const char *text, size_t len, bool convert) {
 	if (!myStyleSheetParser.isNull()) {
 		myStyleSheetParser->parse(text, len);
 		return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ DummyDescriptionReader::DummyDescriptionReader(BookDescription &description) : m
 }
 
 /*
-void DummyDescriptionReader::characterDataHandler(const char *text, int len) {
+void DummyDescriptionReader::characterDataHandler(const char *text, size_t len) {
 }
 
 void DummyDescriptionReader::startElementHandler(int tag, const char **) {
@@ -36,4 +36,5 @@ void DummyDescriptionReader::endElementHandler(int tag) {
 */
 
 bool DummyDescriptionReader::readDescription(shared_ptr<ZLInputStream> stream) {
+	return false;
 }

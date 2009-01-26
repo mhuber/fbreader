@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "../txt/PlainTextFormat.h"
 
 bool TcrPlugin::acceptsFile(const ZLFile &file) const {
-	return (file.extension() == "tcr") || (file.extension() == "TCR");
+	return file.extension() == "tcr";
 }
 
 bool TcrPlugin::readDescription(const std::string &path, BookDescription &description) const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ public:
 	static const ZLCategoryKey STATE;
 	static const ZLCategoryKey BOOKMARKS;
 	static const ZLCategoryKey SYSTEM;
+	static const ZLCategoryKey NETWORK;
 
 protected:
 	explicit ZLCategoryKey(const std::string &name);

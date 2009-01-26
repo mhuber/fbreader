@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,12 @@
 #include <ZLDialogManager.h>
 #include <ZLDialog.h>
 #include <ZLStringUtil.h>
+#include <ZLOptionEntry.h>
 
 #include <ZLTextView.h>
 
 #include "FBReader.h"
+#include "FBView.h"
 #include "FBReaderActions.h"
 #include "../options/FBOptions.h"
 
@@ -37,18 +39,18 @@ static const std::string PATTERN = "Pattern";
 class SearchPatternEntry : public ZLComboOptionEntry {
 
 public:
-	SearchPatternEntry(SearchAction &action);
+	SearchPatternEntry(SearchPatternAction &action);
 
 	const std::string &initialValue() const;
 	const std::vector<std::string> &values() const;
 	void onAccept(const std::string &value);
 
 private:
-	SearchAction &myAction;
+	SearchPatternAction &myAction;
 	mutable std::vector<std::string> myValues;
 };
 
-SearchPatternEntry::SearchPatternEntry(SearchAction &action) : ZLComboOptionEntry(true), myAction(action) {
+SearchPatternEntry::SearchPatternEntry(SearchPatternAction &action) : ZLComboOptionEntry(true), myAction(action) {
 }
 
 const std::string &SearchPatternEntry::initialValue() const {
@@ -74,7 +76,7 @@ const std::vector<std::string> &SearchPatternEntry::values() const {
 void SearchPatternEntry::onAccept(const std::string &value) {
 	std::string v = value;
 	ZLStringUtil::stripWhiteSpaces(v);
-	if (!v.empty() && (v != values()[0])) {
+	if (v != values()[0]) {
 		myAction.SearchPatternOption.setValue(v);
 		int index = 1;
 		for (std::vector<std::string>::const_iterator it = myValues.begin(); (index < 6) && (it != myValues.end()); ++it) {
@@ -87,7 +89,15 @@ void SearchPatternEntry::onAccept(const std::string &value) {
 	}
 }
 
-SearchAction::SearchAction(FBReader &fbreader) : FBAction(fbreader),
+SearchAction::SearchAction(FBReader &fbreader) : FBAction(fbreader) {
+}
+
+bool SearchAction::isVisible() const {
+	shared_ptr<ZLView> view = fbreader().currentView();
+	return !view.isNull() && ((FBView&)*view).hasContents();
+}
+
+SearchPatternAction::SearchPatternAction(FBReader &fbreader) : SearchAction(fbreader),
 	SearchBackwardOption(FBCategoryKey::SEARCH, SEARCH, "Backward", false),
 	SearchIgnoreCaseOption(FBCategoryKey::SEARCH, SEARCH, "IgnoreCase", true),
 	SearchInWholeTextOption(FBCategoryKey::SEARCH, SEARCH, "WholeText", false),
@@ -95,11 +105,7 @@ SearchAction::SearchAction(FBReader &fbreader) : FBAction(fbreader),
 	SearchPatternOption(FBCategoryKey::SEARCH, SEARCH, PATTERN, "") {
 }
 
-bool SearchAction::isVisible() {
-	return !fbreader().currentView().isNull();
-}
-
-void SearchAction::run() {
+void SearchPatternAction::run() {
 	FBReader &f = fbreader();
 	ZLEwlSearchDialog(f);
 /*	ZLTextView &textView = (ZLTextView&)*fbreader().currentView();
@@ -129,10 +135,10 @@ void SearchAction::run() {
 */	
 }
 
-FindNextAction::FindNextAction(FBReader &fbreader) : FBAction(fbreader) {
+FindNextAction::FindNextAction(FBReader &fbreader) : SearchAction(fbreader) {
 }
 
-bool FindNextAction::isEnabled() {
+bool FindNextAction::isEnabled() const {
 	shared_ptr<ZLView> view = fbreader().currentView();
 	return (!view.isNull()) && ((ZLTextView&)*view).canFindNext();
 }
@@ -141,10 +147,10 @@ void FindNextAction::run() {
 	((ZLTextView&)*fbreader().currentView()).findNext();
 }
 
-FindPreviousAction::FindPreviousAction(FBReader &fbreader) : FBAction(fbreader) {
+FindPreviousAction::FindPreviousAction(FBReader &fbreader) : SearchAction(fbreader) {
 }
 
-bool FindPreviousAction::isEnabled() {
+bool FindPreviousAction::isEnabled() const {
 	shared_ptr<ZLView> view = fbreader().currentView();
 	return (!view.isNull()) && ((ZLTextView&)*view).canFindPrevious();
 }

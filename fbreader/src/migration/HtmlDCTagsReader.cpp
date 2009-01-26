@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ void HtmlDCTagsReader::endDocumentHandler() {
 	myInfo.TagsOption.setValue(myTagList);
 }
 
-bool HtmlDCTagsReader::characterDataHandler(const char *text, int len, bool convert) {
+bool HtmlDCTagsReader::characterDataHandler(const char *text, size_t len, bool convert) {
 	if (myReadTag) {
 		if (convert) {
 			myConverter->convert(myBuffer, text, text + len);

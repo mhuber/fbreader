@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,16 +36,22 @@ public:
 
 protected:
 	ZLXMLReader(const char *encoding = 0);
-	virtual ~ZLXMLReader();
 	const std::map<std::string,std::string> &namespaces() const;
 
 public:
+	virtual ~ZLXMLReader();
+
 	bool readDocument(shared_ptr<ZLInputStream> stream);
 	bool readDocument(const std::string &fileName);
 
+	void initialize(const char *encoding = 0);
+	void shutdown();
+	bool readFromBuffer(const char *data, int len);
+
+protected:
 	virtual void startElementHandler(const char *tag, const char **attributes);
 	virtual void endElementHandler(const char *tag);
-	virtual void characterDataHandler(const char *text, int len);
+	virtual void characterDataHandler(const char *text, size_t len);
 	virtual bool processNamespaces() const;
 	virtual void namespaceListChangedHandler();
 	virtual const std::vector<std::string> &externalDTDs() const;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,11 @@
 #include "ZLibrary.h"
 #include "../filesystem/ZLFSManager.h"
 #include "../options/ZLConfig.h"
+#include "../network/ZLNetworkManager.h"
 
+bool ZLibrary::ourLocaleIsInitialized = false;
 std::string ZLibrary::ourLanguage;
+std::string ZLibrary::ourCountry;
 std::string ZLibrary::ourZLibraryDirectory;
 
 std::string ZLibrary::ourApplicationName;
@@ -42,7 +45,15 @@ void ZLibrary::parseArguments(int &argc, char **&argv) {
 	while ((argc > 2) && (argv[1] != 0) && (argv[2] != 0)) {
 		static const std::string LANGUAGE_OPTION = "-lang";
 		if (LANGUAGE_OPTION == argv[1]) {
-			ourLanguage = argv[2];
+			ourLocaleIsInitialized = true;
+			std::string locale = argv[2];
+			int index = locale.find('_');
+			if (index >= 0) {
+				ourLanguage = locale.substr(0, index);
+				ourCountry = locale.substr(index + 1);
+			} else {
+				ourLanguage = locale;
+			}
 		} else {
 			break;
 		}
@@ -53,6 +64,7 @@ void ZLibrary::parseArguments(int &argc, char **&argv) {
 }
 
 void ZLibrary::shutdown() {
+	ZLNetworkManager::deleteInstance();
 	ZLImageManager::deleteInstance();
 	ZLCommunicationManager::deleteInstance();
 	ZLDialogManager::deleteInstance();
@@ -83,4 +95,25 @@ void ZLibrary::initApplication(const std::string &name) {
 	ourApplicationImageDirectory = replaceRegExps(APPIMAGEDIR);
 	ourApplicationDirectory = BaseDirectory + FileNameDelimiter + ourApplicationName;
 	ourDefaultFilesPathPrefix = ourApplicationDirectory + FileNameDelimiter + "default" + FileNameDelimiter;
+}
+
+std::string ZLibrary::Language() {
+	if (ourLanguage.empty()) {
+		if (!ourLocaleIsInitialized) {
+			initLocale();
+			ourLocaleIsInitialized = true;
+		}
+	}
+	if (ourLanguage.empty()) {
+		ourLanguage = "en";
+	}
+	return ourLanguage;
+}
+
+std::string ZLibrary::Country() {
+	if (ourCountry.empty() && !ourLocaleIsInitialized) {
+		initLocale();
+		ourLocaleIsInitialized = true;
+	}
+	return ourCountry;
 }

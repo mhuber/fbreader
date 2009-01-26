@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #include "../../gtk/util/ZLGtkKeyUtil.h"
 
 static GtkLabel *gtkLabel(const std::string &name) {
-	GtkLabel *label = GTK_LABEL(gtk_label_new((gtkString(name) + ":").c_str()));
+	GtkLabel *label = GTK_LABEL(gtk_label_new(gtkString(name).c_str()));
 	gtk_label_set_justify(label, GTK_JUSTIFY_RIGHT);
 	return label;
 }

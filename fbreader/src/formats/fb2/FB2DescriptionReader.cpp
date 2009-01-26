@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ FB2DescriptionReader::FB2DescriptionReader(BookDescription &description) : myDes
 	myDescription.removeAllTags();
 }
 
-void FB2DescriptionReader::characterDataHandler(const char *text, int len) {
+void FB2DescriptionReader::characterDataHandler(const char *text, size_t len) {
 	switch (myReadState) {
 		case READ_TITLE:
 			myDescription.title().append(text, len);

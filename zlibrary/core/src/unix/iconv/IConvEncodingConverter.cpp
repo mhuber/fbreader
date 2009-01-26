@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,7 +86,11 @@ void IConvEncodingConverter::convert(std::string &dst, const char *srcStart, con
 	char *out = (char*)dst.data() + oldLength;
 
 iconvlabel:
+#ifdef DO_ICONV_CAST
+	iconv(myIConverter, (const char**)&in, &inSize, &out, &outSize);
+#else // DO_ICONV_CAST
 	iconv(myIConverter, &in, &inSize, &out, &outSize);
+#endif // DO_ICONV_CAST
 	if (inSize != 0) {
 		if (myBuffer.empty()) {
 			myBuffer.append(in, inSize);
@@ -125,9 +129,13 @@ bool IConvEncodingConverter::fillTable(int *map) {
 		inSize = 1;
 		outSize = 3;
 		inBuffer[0] = i;
+#ifdef DO_ICONV_CAST
+		iconv(myIConverter, (const char**)&in, &inSize, &out, &outSize);
+#else // DO_ICONV_CAST
 		iconv(myIConverter, &in, &inSize, &out, &outSize);
+#endif // DO_ICONV_CAST
 		if (inSize == 0) {
-			ZLUnicodeUtil::Ucs2Char ch;
+			ZLUnicodeUtil::Ucs4Char ch;
 			ZLUnicodeUtil::firstChar(ch, outBuffer);
 			map[i] = ch;
 		} else {

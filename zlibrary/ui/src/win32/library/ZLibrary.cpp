@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #include <ZLApplication.h>
 #include <ZLibrary.h>
+#include <ZUnicodeUtil.h>
 
 #include "../../../../core/src/win32/filesystem/ZLWin32FSManager.h"
 #include "../time/ZLWin32Time.h"
@@ -36,6 +37,25 @@ const std::string ZLibrary::PathDelimiter(";");
 const std::string ZLibrary::EndOfLine("\r\n");
 
 bool ZLibrary::init(int &argc, char **&argv) {
+	WCHAR **wArgv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	static std::string arguments;
+	std::vector<int> offsets;
+	offsets.push_back(0);
+	for (int i = 0; i < argc; ++i) {
+		ZLUnicodeUtil::Ucs2String wArg;
+		for (int j = 0; wArgv[i][j] != 0; ++j) {
+			wArg.push_back(wArgv[i][j]);
+		}
+		std::string arg;
+		ZLUnicodeUtil::ucs2ToUtf8(arg, wArg);
+		arguments += arg + '\0';
+		offsets.push_back(arguments.length());
+	}
+	argv = new char*[argc];
+	for (int i = 0; i < argc; ++i) {
+		argv[i] = (char*)arguments.data() + offsets[i];
+	}
+
 	parseArguments(argc, argv);
 
 	ZLWin32ConfigManager::createInstance();
@@ -65,172 +85,261 @@ void ZLibrary::run(ZLApplication *application) {
 	delete application;
 }
 
-std::string ZLibrary::Language() {
-	if (!ourLanguage.empty()) {
-		return ourLanguage;
-	}
-
+void ZLibrary::initLocale() {
 	LANGID id = GetUserDefaultUILanguage();
-	switch (id & 0xFF) {
+	LCID lcid = GetUserDefaultLCID();
+	switch (PRIMARYLANGID(id)) {
 		case LANG_ARABIC:
-			return "ar";
+			ourLanguage = "ar";
+			break;
 		case LANG_BULGARIAN:
-			return "bg";
+			ourLanguage = "bg";
+			break;
 		case LANG_CATALAN:
-			return "ca";
+			ourLanguage = "ca";
+			break;
 		case LANG_CHINESE:
-			return "zh";
+			ourLanguage = "zh";
+			break;
 		case LANG_CZECH:
-			return "cs";
+			ourLanguage = "cs";
+			break;
 		case LANG_DANISH:
-			return "da";
+			ourLanguage = "da";
+			break;
 		case LANG_GERMAN:
-			return "de";
+			ourLanguage = "de";
+			break;
 		case LANG_GREEK:
-			return "el";
+			ourLanguage = "el";
+			break;
 		case LANG_ENGLISH:
-			return "en";
+			ourLanguage = "en";
+			break;
 		case LANG_SPANISH:
-			return "es";
+			ourLanguage = "es";
+			switch (lcid) {
+				case 0x040A:
+				case 0x0C0A:
+					ourCountry = "ES";
+					break;
+				default:
+					ourCountry = "LA";
+					break;
+			}
+			break;
 		case LANG_FINNISH:
-			return "fi";
+			ourLanguage = "fi";
+			break;
 		case LANG_FRENCH:
-			return "fr";
+			ourLanguage = "fr";
+			break;
 		case LANG_HEBREW:
-			return "he";
+			ourLanguage = "he";
+			break;
 		case LANG_HUNGARIAN:
-			return "hu";
+			ourLanguage = "hu";
+			break;
 		case LANG_ICELANDIC:
-			return "is";
+			ourLanguage = "is";
+			break;
 		case LANG_ITALIAN:
-			return "it";
+			ourLanguage = "it";
+			break;
 		case LANG_JAPANESE:
-			return "ja";
+			ourLanguage = "ja";
+			break;
 		case LANG_KOREAN:
-			return "ko";
+			ourLanguage = "ko";
+			break;
 		case LANG_DUTCH:
-			return "nl";
+			ourLanguage = "nl";
+			break;
 		case LANG_NORWEGIAN:
-			return "no";
+			ourLanguage = "no";
+			break;
 		case LANG_POLISH:
-			return "pl";
+			ourLanguage = "pl";
+			break;
 		case LANG_PORTUGUESE:
-			return "pt";
+			ourLanguage = "pt";
+			switch (SUBLANGID(id)) {
+				case SUBLANG_PORTUGUESE_BRAZILIAN:
+					ourCountry = "BR";
+					break;
+				default:
+					ourCountry = "PT";
+					break;
+			}
+			break;
 		case LANG_ROMANIAN:
-			return "ro";
+			ourLanguage = "ro";
+			break;
 		case LANG_RUSSIAN:
-			return "ru";
+			ourLanguage = "ru";
+			break;
 		case LANG_SERBIAN:
-			switch ((id >> 16) & 0xFF) {
+			switch (SUBLANGID(id)) {
 				case 0x04:
 				case 0x10:
-					return "hr";
+					ourLanguage = "hr";
+					break;
 				case 0x14:
 				case 0x20:
 				case 0x78:
-					return "bs";
+					ourLanguage = "bs";
+					break;
 				default:
-					return "sr";
+					ourLanguage = "sr";
+					break;
 			}
+			break;
 		case LANG_SLOVAK:
-			return "sk";
+			ourLanguage = "sk";
+			break;
 		case LANG_ALBANIAN:
-			return "sq";
+			ourLanguage = "sq";
+			break;
 		case LANG_SWEDISH:
-			return "sv";
+			ourLanguage = "sv";
+			break;
 		case LANG_THAI:
-			return "th";
+			ourLanguage = "th";
+			break;
 		case LANG_TURKISH:
-			return "tr";
+			ourLanguage = "tr";
+			break;
 		case LANG_URDU:
-			return "ur";
+			ourLanguage = "ur";
+			break;
 		case LANG_INDONESIAN:
-			return "id";
+			ourLanguage = "id";
+			break;
 		case LANG_UKRAINIAN:
-			return "uk";
+			ourLanguage = "uk";
+			break;
 		case LANG_BELARUSIAN:
-			return "be";
+			ourLanguage = "be";
+			break;
 		case LANG_SLOVENIAN:
-			return "sl";
+			ourLanguage = "sl";
+			break;
 		case LANG_ESTONIAN:
-			return "et";
+			ourLanguage = "et";
+			break;
 		case LANG_LATVIAN:
-			return "lv";
+			ourLanguage = "lv";
+			break;
 		case LANG_LITHUANIAN:
-			return "lt";
+			ourLanguage = "lt";
+			break;
 		case LANG_FARSI:
-			return "fa";
+			ourLanguage = "fa";
+			break;
 		case LANG_VIETNAMESE:
-			return "vi";
+			ourLanguage = "vi";
+			break;
 		case LANG_ARMENIAN:
-			return "hy";
+			ourLanguage = "hy";
+			break;
 		case LANG_AZERI:
-			return "az";
+			ourLanguage = "az";
+			break;
 		case LANG_BASQUE:
-			return "eu";
+			ourLanguage = "eu";
+			break;
 		case LANG_MACEDONIAN:
-			return "mk";
+			ourLanguage = "mk";
+			break;
 		case LANG_AFRIKAANS:
-			return "af";
+			ourLanguage = "af";
+			break;
 		case LANG_GEORGIAN:
-			return "ka";
+			ourLanguage = "ka";
+			break;
 		case LANG_FAEROESE:
-			return "fo";
+			ourLanguage = "fo";
+			break;
 		case LANG_HINDI:
-			return "hi";
+			ourLanguage = "hi";
+			break;
 		case LANG_MALAY:
-			return "ms";
+			ourLanguage = "ms";
+			break;
 		case LANG_KAZAK:
-			return "kk";
+			ourLanguage = "kk";
+			break;
 		case LANG_KYRGYZ:
-			return "ky";
+			ourLanguage = "ky";
+			break;
 		case LANG_SWAHILI:
-			return "sw";
+			ourLanguage = "sw";
+			break;
 		case LANG_UZBEK:
-			return "uz";
+			ourLanguage = "uz";
+			break;
 		case LANG_TATAR:
-			return "tt";
+			ourLanguage = "tt";
+			break;
 		case LANG_BENGALI:
-			return "bn";
+			ourLanguage = "bn";
+			break;
 		case LANG_PUNJABI:
-			return "pa";
+			ourLanguage = "pa";
+			break;
 		case LANG_GUJARATI:
-			return "gu";
+			ourLanguage = "gu";
+			break;
 		case LANG_ORIYA:
-			return "or";
+			ourLanguage = "or";
+			break;
 		case LANG_TAMIL:
-			return "ta";
+			ourLanguage = "ta";
+			break;
 		case LANG_TELUGU:
-			return "te";
+			ourLanguage = "te";
+			break;
 		case LANG_KANNADA:
-			return "kn";
+			ourLanguage = "kn";
+			break;
 		case LANG_MALAYALAM:
-			return "ml";
+			ourLanguage = "ml";
+			break;
 		case LANG_ASSAMESE:
-			return "as";
+			ourLanguage = "as";
+			break;
 		case LANG_MARATHI:
-			return "mr";
+			ourLanguage = "mr";
+			break;
 		case LANG_SANSKRIT:
-			return "sa";
+			ourLanguage = "sa";
+			break;
 		case LANG_MONGOLIAN:
-			return "mn";
+			ourLanguage = "mn";
+			break;
 		case LANG_GALICIAN:
-			return "gl";
+			ourLanguage = "gl";
+			break;
 		case LANG_KONKANI:
-			return "kok";
+			ourLanguage = "kok";
+			break;
 		//case LANG_MANIPURI:
-			//return "";
+			//ourLanguage = "";
 		//case LANG_SINDHI:
-			//return "";
+			//ourLanguage = "";
 		case LANG_SYRIAC:
-			return "syr";
+			ourLanguage = "syr";
+			break;
 		//case LANG_KASHMIRI:
-			//return "";
+			//ourLanguage = "";
 		case LANG_NEPALI:
-			return "ne";
+			ourLanguage = "ne";
+			break;
 		case LANG_DIVEHI:
-			return "dv";
+			ourLanguage = "dv";
+			break;
 		default:
-			return "en";
+			ourLanguage = "en";
+			break;
 	}
 }

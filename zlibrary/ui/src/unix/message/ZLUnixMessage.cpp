@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,10 +59,30 @@ ZLUnixExecMessageSender::ZLUnixExecMessageSender(const std::string &command) : m
 
 void ZLUnixExecMessageSender::sendStringMessage(const std::string &message) {
 	if (fork() == 0) {
+		std::string escapedMessage = message;
+		int index = 0;
+		while (true) {
+			index = escapedMessage.find('&', index);
+			if (index == -1) {
+				break;
+			}
+			escapedMessage.insert(index, "\\");
+			index += 2;
+		}
+		index = 0;
+		while (true) {
+			index = escapedMessage.find(' ', index);
+			if (index == -1) {
+				break;
+			}
+			escapedMessage.insert(index, "\\");
+			index += 2;
+		}
+
 		std::string command = myCommand;
-		int index = command.find("%1");
+		index = command.find("%1");
 		if (index >= 0) {
-			command = command.substr(0, index) + message + command.substr(index + 2);
+			command = command.substr(0, index) + escapedMessage + command.substr(index + 2);
 		}
 		system(command.c_str());
 		exit(0);

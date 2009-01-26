@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ static const std::string TITLE = "dc:title";
 static const std::string AUTHOR_TAG = "dc:creator";
 static const std::string AUTHOR_ROLE = "aut";
 
-void ORDescriptionReader::characterDataHandler(const char *text, int len) {
+void ORDescriptionReader::characterDataHandler(const char *text, size_t len) {
 	switch (myReadState) {
 		case READ_NONE:
 			break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ public:
 
 protected:
 	static void detectEncodingAndLanguage(BookDescription &description, ZLInputStream &stream);
+	static void detectLanguage(BookDescription &description, ZLInputStream &stream);
 };
 
 class PluginCollection {

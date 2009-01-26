@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,16 @@
 #ifndef __ZLWIN32VIEWWIDGET_H__
 #define __ZLWIN32VIEWWIDGET_H__
 
-#include <ZLView.h>
+#include "../../../../core/src/view/ZLViewWidget.h"
 #include <ZLApplication.h>
 
 #include "../application/ZLWin32ApplicationWindow.h"
 
 class ZLWin32ViewWidget : public ZLViewWidget {
+
+private:
+	typedef LRESULT(CALLBACK *WndProc)(HWND, UINT, WPARAM, LPARAM);
+	static LRESULT CALLBACK ViewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 public:
 	ZLWin32ViewWidget(ZLWin32ApplicationWindow &window);
@@ -35,14 +39,25 @@ public:
 	void onMouseMove(int x, int y);
 	void onMouseMovePressed(int x, int y);
 
+	HWND handle() const;
+
 private:
 	void repaint();
 	void trackStylus(bool track);
 
+	void setScrollbarEnabled(ZLView::Direction direction, bool enabled);
+	void setScrollbarPlacement(ZLView::Direction direction, bool standard);
+	void setScrollbarParameters(ZLView::Direction direction, size_t full, size_t from, size_t to);
+
 	void doPaint();
+
+	void rotateXY(int &x, int &y) const;
+
+	LRESULT Callback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	ZLWin32ApplicationWindow &myWindow;
+	HWND myHandle;
 	bool myMouseCaptured;
 
 	class Rotator {
@@ -55,7 +70,7 @@ private:
 		void setRotation(bool counterClockWise);
 		void retrieve(HDC dc, HBITMAP bitmap);
 		void rotate();
-		void draw(HDC dc, int topOffset);
+		void draw(HDC dc);
 
 	private:
 		int myWidth;
@@ -66,8 +81,14 @@ private:
 	};
 
 	Rotator *myRotator;
+		
+	int myHScrollBarExtra;
+	int myVScrollBarExtra;
 
-friend class ZLWin32ApplicationWindow;
+	bool myHScrollBarIsEnabled;
+	bool myVScrollBarIsEnabled;
+
+	WndProc myOriginalCallback;
 };
 
 #endif /* __ZLWIN32VIEWWIDGET_H__ */

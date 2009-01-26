@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -180,17 +180,7 @@ void ComboOptionView::onEvent(const std::string &event, W32EventSender&) {
 			o.onValueEdited(myComboBox->text());
 		}
 	} else if (event == W32ComboBox::SELECTION_CHANGED_EVENT) {
-		const std::string text = myComboBox->text();
-		size_t index;
-		const std::vector<std::string> &values = o.values();
-		for (index = 0; index < values.size(); ++index) {
-			if (values[index] == text) {
-				break;
-			}
-		}
-		if (index < values.size()) {
-  		o.onValueSelected(index);
-		}
+		o.onStringValueSelected(myComboBox->text());
 	}
 }
 
@@ -302,8 +292,8 @@ void ColorOptionView::onEvent(const std::string &event, W32EventSender&) {
 			refs[i] = RGB(color.Red, color.Green, color.Blue);
 		}
 		chooser.lStructSize = sizeof(chooser);
-		chooser.hwndOwner = 0; // TODO: !!!
-		//chooser.hInstance = 0;
+		chooser.hwndOwner = GetActiveWindow();
+		chooser.hInstance = 0;
 		ZLColor currentColor = myStandardColorComboBox->selectedColor();
 		chooser.rgbResult = RGB(currentColor.Red, currentColor.Green, currentColor.Blue);
 		chooser.lpCustColors = refs;

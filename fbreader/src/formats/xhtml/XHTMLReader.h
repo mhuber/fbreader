@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,12 @@
 
 #include <string>
 #include <map>
-#include <stack>
+#include <vector>
 
 #include <ZLXMLReader.h>
+
+#include "../css/StyleSheetTable.h"
+#include "../css/StyleSheetParser.h"
 
 class BookReader;
 class XHTMLReader;
@@ -39,7 +42,9 @@ public:
 
 protected:
 	static BookReader &bookReader(XHTMLReader &reader);	
-	const std::string &pathPrefix(XHTMLReader &reader);	
+	static const std::string &pathPrefix(XHTMLReader &reader);	
+	static void beginParagraph(XHTMLReader &reader);
+	static void endParagraph(XHTMLReader &reader);
 };
 
 class XHTMLReader : public ZLXMLReader {
@@ -56,21 +61,37 @@ public:
 	bool readFile(const std::string &pathPrefix, const std::string &fileName, const std::string &referenceName);
 	bool readFile(const std::string &pathPrefix, shared_ptr<ZLInputStream> stream, const std::string &referenceName);
 
+private:
 	void startElementHandler(const char *tag, const char **attributes);
 	void endElementHandler(const char *tag);
-	void characterDataHandler(const char *text, int len);
+	void characterDataHandler(const char *text, size_t len);
 
 	const std::vector<std::string> &externalDTDs() const;
+
+	void beginParagraph();
+	void endParagraph();
+	void addStyleEntry(const std::string tag, const std::string aClass);
 
 private:
 	BookReader &myModelReader;
 	std::string myPathPrefix;
 	std::string myReferenceName;
 	bool myPreformatted;
+	bool myNewParagraphInProgress;
+	StyleSheetTable myStyleSheetTable;
+	std::vector<int> myCSSStack;
+	std::vector<shared_ptr<ZLTextStyleEntry> > myStyleEntryStack;
+	int myStylesToRemove;
+	std::vector<bool> myDoPageBreakAfterStack;
+	bool myCurrentParagraphIsEmpty;
+	StyleSheetSingleStyleParser myStyleParser;
 
 	friend class XHTMLTagAction;
+	friend class XHTMLTagLinkAction;
 	friend class XHTMLTagHyperlinkAction;
 	friend class XHTMLTagPreAction;
+	friend class XHTMLTagParagraphAction;
+	friend class XHTMLTagRestartParagraphAction;
 };
 
 #endif /* __XHTMLREADER_H__ */

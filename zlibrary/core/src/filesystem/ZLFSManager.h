@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,8 @@ protected:
 	virtual ~ZLFSManager();
 	
 public:
-	virtual void normalize(std::string &path) const;
+	virtual void normalize(std::string &path) const = 0;
+	virtual std::string resolveSymlink(const std::string &path) const = 0;
 
 protected:
 	virtual ZLInputStream *createPlainInputStream(const std::string &path) const = 0;
@@ -57,7 +58,7 @@ protected:
 	virtual std::string convertFilenameToUtf8(const std::string &name) const = 0;
 
 	virtual int findArchiveFileNameDelimiter(const std::string &path) const = 0;
-	virtual int findLastFileNameDelimiter(const std::string &path) const = 0;
+	int findLastFileNameDelimiter(const std::string &path) const;
 	virtual shared_ptr<ZLDir> rootDirectory() const = 0;
 	virtual const std::string &rootDirectoryPath() const = 0;
 	virtual std::string parentPath(const std::string &path) const = 0;
@@ -72,6 +73,5 @@ friend class ZLDir;
 inline ZLFSManager &ZLFSManager::instance() { return *ourInstance; }
 inline ZLFSManager::ZLFSManager() {}
 inline ZLFSManager::~ZLFSManager() {}
-inline void ZLFSManager::normalize(std::string&) const {}
 
 #endif /* __ZLFSMANAGER_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <stdlib.h>
 
 #include <ZLApplication.h>
 #include <ZLibrary.h>
@@ -34,6 +35,7 @@
 #include "../message/ZLMaemoMessage.h"
 #include "../../../../core/src/unix/xmlconfig/XMLConfig.h"
 #include "../../../../core/src/unix/iconv/IConvEncodingConverter.h"
+#include "../network/ZLMaemoNetworkManager.h"
 
 class ZLGtkLibraryImplementation : public ZLibraryImplementation {
 
@@ -58,6 +60,7 @@ void ZLGtkLibraryImplementation::init(int &argc, char **&argv) {
 	ZLGtkDialogManager::createInstance();
 	ZLMaemoCommunicationManager::createInstance();
 	ZLGtkImageManager::createInstance();
+	ZLMaemoNetworkManager::createInstance();
 
 	if (!ZLFile("/usr/lib/more-gconv").directory(false).isNull()) {
 		setenv("GCONV_PATH", "/usr/lib/more-gconv", 1);

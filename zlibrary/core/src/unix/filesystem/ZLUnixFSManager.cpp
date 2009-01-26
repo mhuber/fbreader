@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <set>
+
 #include <ZLStringUtil.h>
 
 #include "ZLUnixFSManager.h"
-#include "../../filesystem/ZLFSDir.h"
+#include "ZLUnixFSDir.h"
+#include "ZLUnixFileInputStream.h"
+#include "ZLUnixFileOutputStream.h"
 
 static std::string getPwdDir() {
 	char *pwd = getcwd(NULL, 0);
@@ -35,6 +39,42 @@ static std::string getPwdDir() {
 static std::string getHomeDir() {
 	char *home = getenv("HOME");
 	return (home != 0) ? home : "";
+}
+
+ZLFileInfo ZLUnixFSManager::fileInfo(const std::string &path) const {
+	ZLFileInfo info;
+	struct stat fileStat;
+	info.Exists = stat(path.c_str(), &fileStat) == 0;
+	if (info.Exists) {
+		info.Size = fileStat.st_size;
+		info.IsDirectory = S_ISDIR(fileStat.st_mode);
+	}
+	return info;
+}
+
+std::string ZLUnixFSManager::resolveSymlink(const std::string &path) const {
+	struct stat fileStat;
+	std::set<std::string> names;
+	std::string current = path;
+	for (int i = 0; i < 256; ++i) {
+		names.insert(current);
+
+		std::string buffer(2048, '\0');
+		int len = readlink(current.c_str(), (char*)buffer.data(), 2048);
+		if ((len == 2048) || (len <= 0)) {
+			return current;
+		}
+		buffer.erase(len);
+		if (buffer[0] != '/') {
+			buffer = parentPath(current) + '/' + buffer;
+		}
+		normalize(buffer);
+		if (names.find(buffer) != names.end()) {
+			return buffer;
+		}
+		current = buffer;
+	}
+	return "";
 }
 
 void ZLUnixFSManager::normalize(std::string &path) const {
@@ -63,13 +103,17 @@ void ZLUnixFSManager::normalize(std::string &path) const {
 		int prevIndex = std::max((int)path.rfind('/', index - 1), 0);
 		path.erase(prevIndex, index + 3 - prevIndex);
 	}
-	const int len = path.length();
+	int len = path.length();
 	if ((len >= 3) && (path.substr(len - 3) == "/..")) {
 		int prevIndex = std::max((int)path.rfind('/', len - 4), 0);
-		path.erase(prevIndex, len - prevIndex);
+		path.erase(prevIndex);
 	}
 	while ((index = path.find("/./")) != -1) {
 		path.erase(index, 2);
+	}
+	len = path.length();
+	if ((len >= 2) && (path.substr(len - 2) == "/.")) {
+		path.erase(len - 2);
 	}
 	while ((index = path.find("//")) != -1) {
 		path.erase(index, 1);
@@ -77,7 +121,48 @@ void ZLUnixFSManager::normalize(std::string &path) const {
 }
 
 ZLFSDir *ZLUnixFSManager::createNewDirectory(const std::string &path) const {
-	return (mkdir(path.c_str(), 0x1FF) == 0) ? createPlainDirectory(path) : 0;
+	std::vector<std::string> subpaths;
+	std::string current = path;
+
+	while (current.length() > 1) {
+		struct stat fileStat;
+		if (stat(current.c_str(), &fileStat) == 0) {
+			if (!S_ISDIR(fileStat.st_mode)) {
+				return 0;
+			}
+			break;
+		} else {
+			subpaths.push_back(current);
+			int index = current.rfind('/');
+			if (index == -1) {
+				return 0;
+			}
+			current.erase(index);
+		}
+	}
+
+	for (int i = subpaths.size() - 1; i >= 0; --i) {
+		if (mkdir(subpaths[i].c_str(), 0x1FF) != 0) {
+			return 0;
+		}
+	}
+	return createPlainDirectory(path);
+}
+
+ZLFSDir *ZLUnixFSManager::createPlainDirectory(const std::string &path) const {
+	return new ZLUnixFSDir(path);
+}
+
+ZLInputStream *ZLUnixFSManager::createPlainInputStream(const std::string &path) const {
+	return new ZLUnixFileInputStream(path);
+}
+
+ZLOutputStream *ZLUnixFSManager::createOutputStream(const std::string &path) const {
+	return new ZLUnixFileOutputStream(path);
+}
+
+bool ZLUnixFSManager::removeFile(const std::string &path) const {
+	return unlink(path.c_str()) == 0;
 }
 
 int ZLUnixFSManager::findArchiveFileNameDelimiter(const std::string &path) const {
@@ -100,16 +185,4 @@ std::string ZLUnixFSManager::parentPath(const std::string &path) const {
 	}
 	int index = findLastFileNameDelimiter(path);
 	return (index <= 0) ? RootPath : path.substr(0, index);
-}
-
-void ZLUnixFSManager::moveFile(const std::string &oldName, const std::string &newName) {
-	rename(oldName.c_str(), newName.c_str());
-}
-
-void ZLUnixFSManager::getStat(const std::string &path, bool includeSymlinks, struct stat &fileInfo) const {
-	if (includeSymlinks) {
-		stat(path.c_str(), &fileInfo);
-	} else {
-		lstat(path.c_str(), &fileInfo);
-	}
 }

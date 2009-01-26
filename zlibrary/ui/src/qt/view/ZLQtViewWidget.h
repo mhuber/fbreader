@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,13 @@
 
 #include <qwidget.h>
 
-#include <ZLView.h>
+#include "../../../../core/src/view/ZLViewWidget.h"
 #include <ZLApplication.h>
 
 class ZLQtApplicationWindow;
+class QFrame;
+class QScrollBar;
+class QGridLayout;
 
 class ZLQtViewWidgetPositionInfo {
 
@@ -41,7 +44,8 @@ private:
 	const ZLQtApplicationWindow &myWindow;
 };
 
-class ZLQtViewWidget : public ZLViewWidget {
+class ZLQtViewWidget : public QObject, public ZLViewWidget {
+	Q_OBJECT
 
 private:
 	class ZLQtViewWidgetInternal : public QWidget {
@@ -65,19 +69,47 @@ private:
 	
 public:
 	ZLQtViewWidget(QWidget *parent, ZLApplication *application, const ZLQtViewWidgetPositionInfo &positionInfo);
-	QWidget *widget();
+	QWidget *widget() const;
 	const ZLQtViewWidgetPositionInfo &positionInfo() const;
 
 private:
 	void repaint();
 	void trackStylus(bool track);
 
+	void setScrollbarEnabled(ZLView::Direction direction, bool enabled);
+	void setScrollbarPlacement(ZLView::Direction direction, bool standard);
+	void setScrollbarParameters(ZLView::Direction direction, size_t full, size_t from, size_t to);
+
+	QScrollBar *addScrollBar(QGridLayout *layout, Qt::Orientation orientation, int x, int y);
+	QScrollBar *verticalScrollBar();
+	QScrollBar *horizontalScrollBar();
+
+private slots:
+	void onVerticalSliderMoved(int value);
+	void onVerticalSliderStepNext();
+	void onVerticalSliderPageNext();
+	void onVerticalSliderStepPrevious();
+	void onVerticalSliderPagePrevious();
+	void onHorizontalSliderMoved(int value);
+	void onHorizontalSliderStepNext();
+	void onHorizontalSliderPageNext();
+	void onHorizontalSliderStepPrevious();
+	void onHorizontalSliderPagePrevious();
+
 private:
 	ZLQtViewWidgetInternal *myQWidget;
+	QFrame *myFrame;
+
+	QScrollBar *myRightScrollBar;
+	QScrollBar *myLeftScrollBar;
+	bool myShowScrollBarAtRight;
+
+	QScrollBar *myBottomScrollBar;
+	QScrollBar *myTopScrollBar;
+	bool myShowScrollBarAtBottom;
+
 	ZLApplication *myApplication;
 	const ZLQtViewWidgetPositionInfo myPositionInfo;
 };
-
-inline QWidget *ZLQtViewWidget::widget() { return myQWidget; }
 
 #endif /* __ZLQTVIEWWIDGET_H__ */

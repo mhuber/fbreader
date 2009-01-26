@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +77,7 @@ void BookReader::beginParagraph(ZLTextParagraph::Kind kind) {
 			myCurrentTextModel->addControl(*it, true);
 		}
 		if (!myHyperlinkReference.empty()) {
-			myCurrentTextModel->addHyperlinkControl(myHyperlinkKind, myHyperlinkReference);
+			myCurrentTextModel->addHyperlinkControl(myHyperlinkKind, myHyperlinkReference, myHyperlinkType);
 		}
 		myTextParagraphExists = true;
 	}
@@ -106,7 +106,7 @@ void BookReader::addFixedHSpace(unsigned char length) {
 	}
 }
 
-void BookReader::addControl(const ZLTextForcedControlEntry &entry) {
+void BookReader::addControl(const ZLTextStyleEntry &entry) {
 	if (myTextParagraphExists) {
 		flushTextBufferToParagraph();
 		myCurrentTextModel->addControl(entry);
@@ -114,11 +114,26 @@ void BookReader::addControl(const ZLTextForcedControlEntry &entry) {
 }
 
 void BookReader::addHyperlinkControl(FBTextKind kind, const std::string &label) {
+	myHyperlinkKind = kind;
+	switch (myHyperlinkKind) {
+		case INTERNAL_HYPERLINK:
+		case FOOTNOTE:
+			myHyperlinkType = "internal";
+			break;
+		case EXTERNAL_HYPERLINK:
+			myHyperlinkType = "external";
+			break;
+		case BOOK_HYPERLINK:
+			myHyperlinkType = "book";
+			break;
+		default:
+			myHyperlinkType.erase();
+			break;
+	}
 	if (myTextParagraphExists) {
 		flushTextBufferToParagraph();
-		myCurrentTextModel->addHyperlinkControl(kind, label);
+		myCurrentTextModel->addHyperlinkControl(kind, label, myHyperlinkType);
 	}
-	myHyperlinkKind = kind;
 	myHyperlinkReference = label;
 }
 

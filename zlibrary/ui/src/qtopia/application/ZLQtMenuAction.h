@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,15 @@
 
 #include <ZLApplication.h>
 
+#include "../../../../core/src/application/ZLMenu.h"
+
 class ZLQtApplicationWindow;
 
 class ZLQtMenuAction : public QAction {
 	Q_OBJECT
 
 public:
-	ZLQtMenuAction(ZLQtApplicationWindow &window, const ZLApplication::Menubar::PlainItem &item);
+	ZLQtMenuAction(ZLQtApplicationWindow &window, const ZLMenubar::PlainItem &item);
 
 private slots:
 	void doSlot();

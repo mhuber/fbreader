@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +60,14 @@ ZLGtkWaitMessage::ZLGtkWaitMessage(GtkWindow *parent, const std::string& message
 	x -= w / 2;
 	y -= h / 2;
 	gtk_window_move(myWindow, x, y);
+
+	while (gtk_events_pending()) {
+		gtk_main_iteration();
+	}
+
+	if (myParent != 0) {
+		gtk_widget_queue_draw(GTK_WIDGET(myParent));
+	}
 
 	while (gtk_events_pending()) {
 		gtk_main_iteration();

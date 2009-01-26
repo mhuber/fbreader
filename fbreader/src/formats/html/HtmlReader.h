@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,8 +71,10 @@ protected:
 	virtual void startDocumentHandler() = 0;
 	virtual void endDocumentHandler() = 0;
 
+	// returns false iff processing must be stopped
 	virtual bool tagHandler(const HtmlTag &tag) = 0;
-	virtual bool characterDataHandler(const char *text, int len, bool convert) = 0;
+	// returns false iff processing must be stopped
+	virtual bool characterDataHandler(const char *text, size_t len, bool convert) = 0;
 
 private:
 	void appendString(std::string &to, std::string &from);

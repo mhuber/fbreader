@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -285,7 +285,7 @@ MobipocketHtmlBookReader::MobipocketHtmlBookReader(const std::string &fileName, 
 	setProcessPreTag(false);
 }
 
-bool MobipocketHtmlBookReader::characterDataHandler(const char *text, int len, bool convert) {
+bool MobipocketHtmlBookReader::characterDataHandler(const char *text, size_t len, bool convert) {
 	myTocReader.appendText(text, len);
 	return HtmlBookReader::characterDataHandler(text, len, convert);
 }
@@ -301,11 +301,12 @@ void MobipocketHtmlBookReader::readDocument(ZLInputStream &stream) {
 		std::pair<int,int> firstImageLocation = ((MobipocketStream&)stream).imageLocation(0);
 		fileStream->seek(firstImageLocation.first, false);
 		while ((firstImageLocation.first > 0) && (firstImageLocation.second > 0)) {
-			if (firstImageLocation.second > 10) {
-				fileStream->read(bu, 10);
+			if (firstImageLocation.second > 4) {
+				fileStream->read(bu, 4);
+				static const char jpegStart[2] = { (char)0xFF, (char)0xd8 };
 				if ((strncmp(bu, "BM", 2) == 0) ||
 						(strncmp(bu, "GIF8", 4) == 0) ||
-						(strncmp(bu + 6, "JFIF", 4) == 0)) {
+						(strncmp(bu, jpegStart, 2) == 0)) {
 					found = true;
 					break;
 				}

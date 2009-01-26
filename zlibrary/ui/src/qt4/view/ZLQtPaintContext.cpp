@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ void ZLQtPaintContext::setFillColor(ZLColor color, FillStyle style) {
 	));
 }
 
-int ZLQtPaintContext::stringWidth(const char *str, int len) const {
+int ZLQtPaintContext::stringWidth(const char *str, int len, bool) const {
 	return myPainter->fontMetrics().width(QString::fromUtf8(str, len));
 }
 
@@ -162,8 +162,9 @@ int ZLQtPaintContext::stringHeight() const {
 	return myPainter->font().pointSize() + 2;
 }
 
-void ZLQtPaintContext::drawString(int x, int y, const char *str, int len) {
+void ZLQtPaintContext::drawString(int x, int y, const char *str, int len, bool rtl) {
 	QString qStr = QString::fromUtf8(str, len);
+	myPainter->setLayoutDirection(rtl ? Qt::RightToLeft : Qt::LeftToRight);
 	myPainter->drawText(x, y, qStr);
 }
 

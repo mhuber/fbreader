@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ private:
 	void endDocumentHandler();
 
 	bool tagHandler(const HtmlTag &tag);
-	bool characterDataHandler(const char*, int, bool);
+	bool characterDataHandler(const char*, size_t, bool);
 
 private:
 	CHMReferenceCollection &myReferenceCollection;

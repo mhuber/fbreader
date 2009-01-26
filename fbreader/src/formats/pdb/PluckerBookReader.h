@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ private:
 	std::string myConvertedTextBuffer;
 	bool myParagraphStarted;
 	bool myBufferIsEmpty;
-	ZLTextForcedControlEntry *myForcedEntry;
+	ZLTextStyleEntry *myForcedEntry;
 	std::vector<std::pair<FBTextKind,bool> > myDelayedControls;
 	std::vector<std::string> myDelayedHyperlinks;
 	unsigned short myCompressionVersion;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,12 +25,25 @@
 
 #include "MiscUtil.h"
 
-bool MiscUtil::isReference(const std::string &text) {
-	return
-		ZLStringUtil::stringStartsWith(text, "http://") ||
-		ZLStringUtil::stringStartsWith(text, "https://") ||
-		ZLStringUtil::stringStartsWith(text, "mailto:") ||
-		ZLStringUtil::stringStartsWith(text, "ftp://");
+FBTextKind MiscUtil::referenceType(const std::string &link) {
+	std::string lowerCasedLink = link;
+	bool isFileReference =
+		ZLStringUtil::stringStartsWith(lowerCasedLink, "http://") ||
+		ZLStringUtil::stringStartsWith(lowerCasedLink, "https://") ||
+		ZLStringUtil::stringStartsWith(lowerCasedLink, "ftp://");
+	if (!isFileReference) {
+		return ZLStringUtil::stringStartsWith(lowerCasedLink, "mailto:") ? EXTERNAL_HYPERLINK : INTERNAL_HYPERLINK;
+	}
+	static const std::string FeedBooksPrefix0 = "http://feedbooks.com/book/stanza/";
+	static const std::string FeedBooksPrefix1 = "http://www.feedbooks.com/book/stanza/";
+	bool isBookHyperlink =
+		ZLStringUtil::stringStartsWith(lowerCasedLink, FeedBooksPrefix0) ||
+		ZLStringUtil::stringStartsWith(lowerCasedLink, FeedBooksPrefix1) ||
+		ZLStringUtil::stringEndsWith(lowerCasedLink, ".epub") ||
+		ZLStringUtil::stringEndsWith(lowerCasedLink, ".mobi") ||
+		ZLStringUtil::stringEndsWith(lowerCasedLink, ".chm") ||
+		ZLStringUtil::stringEndsWith(lowerCasedLink, ".fb2");
+	return isBookHyperlink ? BOOK_HYPERLINK : EXTERNAL_HYPERLINK;
 }
 
 std::string MiscUtil::htmlDirectoryPrefix(const std::string &fileName) {

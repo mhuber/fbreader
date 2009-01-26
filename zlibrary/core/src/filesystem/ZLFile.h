@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #define __ZLFILE_H__
 
 #include <string>
+#include <map>
 
 #include <shared_ptr.h>
 #include <ZLFileInfo.h>
@@ -30,6 +31,9 @@ class ZLInputStream;
 class ZLOutputStream;
 
 class ZLFile {
+
+private:
+	static std::map<std::string,weak_ptr<ZLInputStream> > ourPlainStreamCache;
 
 public:
 	static std::string fileNameToUtf8(const std::string &fileName);
@@ -50,10 +54,10 @@ public:
 	~ZLFile();
 
 	bool exists() const;
-	unsigned long mTime() const;
 	size_t size() const;	
 
 	void forceArchiveType(ArchiveType type);
+
 	bool isCompressed() const;
 	bool isDirectory() const;
 	bool isArchive() const;
@@ -65,6 +69,7 @@ public:
 	const std::string &extension() const;
 
 	std::string physicalFilePath() const;
+	std::string resolvedPath() const;
 
 	shared_ptr<ZLInputStream> inputStream() const;
 	shared_ptr<ZLOutputStream> outputStream() const;
@@ -85,12 +90,7 @@ private:
 
 inline ZLFile::~ZLFile() {}
 
-inline bool ZLFile::exists() const { if (!myInfoIsFilled) fillInfo(); return myInfo.Exists; }
-inline unsigned long ZLFile::mTime() const { if (!myInfoIsFilled) fillInfo(); return myInfo.MTime; }
-inline size_t ZLFile::size() const { if (!myInfoIsFilled) fillInfo(); return myInfo.Size; }
-	
 inline bool ZLFile::isCompressed() const { return myArchiveType & COMPRESSED; }
-inline bool ZLFile::isDirectory() const { if (!myInfoIsFilled) fillInfo(); return myInfo.IsDirectory; }
 inline bool ZLFile::isArchive() const { return myArchiveType & ARCHIVE; }
 
 inline const std::string &ZLFile::path() const { return myPath; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,6 +96,9 @@ const std::string ZLWin32PaintContext::realFontFamilyName(std::string &fontFamil
 }
 
 void ZLWin32PaintContext::setFont(const std::string &family, int size, bool bold, bool italic) {
+	if (size < 4) {
+		size = 4;
+	}
 	if (myDisplayContext == 0) {
 		return;
 	}
@@ -146,10 +149,11 @@ void ZLWin32PaintContext::setFillColor(ZLColor color, FillStyle style) {
 			CreateHatchBrush(HS_DIAGCROSS, colorref);
 }
 
-int ZLWin32PaintContext::stringWidth(const char *str, int len) const {
+int ZLWin32PaintContext::stringWidth(const char *str, int len, bool rtl) const {
 	if (myDisplayContext == 0) {
 		return 0;
 	}
+	SetTextAlign(myDisplayContext, rtl ? TA_RTLREADING : 0);
 	SIZE size;
 	int utf8len = ZLUnicodeUtil::utf8Length(str, len);
 	if (utf8len == len) {
@@ -178,13 +182,17 @@ int ZLWin32PaintContext::descent() const {
 	return myTextMetric.tmDescent;
 }
 
-void ZLWin32PaintContext::drawString(int x, int y, const char *str, int len) {
+void ZLWin32PaintContext::drawString(int x, int y, const char *str, int len, bool rtl) {
 	if (myDisplayContext == 0) {
 		return;
 	}
 	y -= stringHeight();
 	y += myTextMetric.tmDescent;
+	if (rtl) {
+		x -= 1;
+	}
 	int utf8len = ZLUnicodeUtil::utf8Length(str, len);
+	SetTextAlign(myDisplayContext, rtl ? TA_RTLREADING : 0);
 	if (utf8len == len) {
 		TextOutA(myDisplayContext, x, y, str, len);
 	} else {

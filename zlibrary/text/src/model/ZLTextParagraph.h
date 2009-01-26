@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,8 +40,9 @@ public:
 		IMAGE_ENTRY = 2,
 		CONTROL_ENTRY = 3,
 		HYPERLINK_CONTROL_ENTRY = 4,
-		FORCED_CONTROL_ENTRY = 5,
+		STYLE_ENTRY = 5,
 		FIXED_HSPACE_ENTRY = 6,
+		RESET_BIDI_ENTRY = 7,
 	};
 
 protected:
@@ -55,37 +56,87 @@ private: // disable copying
 	const ZLTextParagraphEntry &operator = (const ZLTextParagraphEntry &entry);
 };
 
-class ZLTextForcedControlEntry : public ZLTextParagraphEntry {
+class ZLTextStyleEntry : public ZLTextParagraphEntry {
 
 public:
-	ZLTextForcedControlEntry();
-	ZLTextForcedControlEntry(char *address);
-	~ZLTextForcedControlEntry();
+	enum SizeUnit {
+		SIZE_UNIT_PIXEL,
+		SIZE_UNIT_EM_100,
+		SIZE_UNIT_EX_100,
+		SIZE_UNIT_PERCENT
+	};
 
-	bool leftIndentSupported() const;
-	short leftIndent() const;
-	void setLeftIndent(short leftIndent);
+	struct Metrics {
+		Metrics(int fontSize, int fontXHeight, int fullWidth, int fullHeight);
 
-	bool rightIndentSupported() const;
-	short rightIndent() const;
-	void setRightIndent(short rightIndent);
+		int FontSize;
+		int FontXHeight;
+		int FullWidth;
+		int FullHeight;
+	};
+
+	enum Length {
+		LENGTH_LEFT_INDENT = 0,
+		LENGTH_RIGHT_INDENT = 1,
+		LENGTH_FIRST_LINE_INDENT_DELTA = 2,
+		LENGTH_SPACE_BEFORE = 3,
+		LENGTH_SPACE_AFTER = 4,
+		NUMBER_OF_LENGTHS = 5,
+	};
+
+private:
+	struct LengthType {
+		SizeUnit Unit;
+		short Size;
+	};
+
+public:
+	ZLTextStyleEntry();
+	ZLTextStyleEntry(char *address);
+	~ZLTextStyleEntry();
+
+	bool isEmpty() const;
+
+	bool lengthSupported(Length name) const;
+	short length(Length name, const Metrics &metrics) const;
+	void setLength(Length name, short length, SizeUnit unit);
 
 	bool alignmentTypeSupported() const;
 	ZLTextAlignmentType alignmentType() const;
 	void setAlignmentType(ZLTextAlignmentType alignmentType);
 
-	enum {
-		SUPPORT_LEFT_INDENT = 1 << 0,
-		SUPPORT_RIGHT_INDENT = 1 << 1,
-		SUPPORT_ALIGNMENT_TYPE = 1 << 2,
-	};
+	bool boldSupported() const;
+	bool bold() const;
+	void setBold(bool bold);
+
+	bool italicSupported() const;
+	bool italic() const;
+	void setItalic(bool italic);
+
+	bool fontSizeSupported() const;
+	signed char fontSizeMag() const;
+	void setFontSizeMag(signed char fontSizeMag);
+
+	bool fontFamilySupported() const;
+	const std::string &fontFamily() const;
+	void setFontFamily(const std::string &fontFamily);
+
+	static const int SUPPORT_BOLD = 1 << NUMBER_OF_LENGTHS;
+	static const int SUPPORT_ITALIC = 1 << (NUMBER_OF_LENGTHS + 1);
+	static const int SUPPORT_ALIGNMENT_TYPE = 1 << (NUMBER_OF_LENGTHS + 2);
+	static const int SUPPORT_FONT_SIZE = 1 << (NUMBER_OF_LENGTHS + 3);
+	static const int SUPPORT_FONT_FAMILY = 1 << (NUMBER_OF_LENGTHS + 4);
 
 private:
 	int myMask;
 
-	short myLeftIndent;
-	short myRightIndent;
+	LengthType myLengths[NUMBER_OF_LENGTHS];
+
 	ZLTextAlignmentType myAlignmentType;
+	bool myBold;
+	bool myItalic;
+	signed char myFontSizeMag;
+	std::string myFontFamily;
 
 friend class ZLTextModel;
 };
@@ -139,10 +190,12 @@ public:
 	ZLTextHyperlinkControlEntry(const char *address);
 	~ZLTextHyperlinkControlEntry();
 	const std::string &label() const;
+	const std::string &hyperlinkType() const;
 	bool isHyperlink() const;
 
 private:
-	std::string myLabel;
+	const std::string myLabel;
+	const std::string myHyperlinkType;
 };
 
 class ZLTextEntry : public ZLTextParagraphEntry {
@@ -171,6 +224,15 @@ private:
 	const std::string myId;
 	const ZLImageMap *myMap;
 	const short myVOffset;
+};
+
+class ResetBidiEntry : public ZLTextParagraphEntry {
+
+public:
+	static const shared_ptr<ZLTextParagraphEntry> Instance;
+
+private:
+	ResetBidiEntry();
 };
 
 class ZLTextParagraph {
@@ -213,7 +275,8 @@ public:
 
 	size_t entryNumber() const;
 
-	size_t textLength() const;
+	size_t textDataLength() const;
+	size_t characterNumber() const;
 
 private:
 	void addEntry(char *address);
@@ -274,17 +337,39 @@ private:
 inline ZLTextParagraphEntry::ZLTextParagraphEntry() {}
 inline ZLTextParagraphEntry::~ZLTextParagraphEntry() {}
 
-inline ZLTextForcedControlEntry::ZLTextForcedControlEntry() : myMask(0) {}
-inline ZLTextForcedControlEntry::~ZLTextForcedControlEntry() {}
-inline bool ZLTextForcedControlEntry::leftIndentSupported() const { return myMask & SUPPORT_LEFT_INDENT; }
-inline short ZLTextForcedControlEntry::leftIndent() const { return myLeftIndent; }
-inline void ZLTextForcedControlEntry::setLeftIndent(short leftIndent) { myLeftIndent = leftIndent; myMask |= SUPPORT_LEFT_INDENT; }
-inline bool ZLTextForcedControlEntry::rightIndentSupported() const { return myMask & SUPPORT_RIGHT_INDENT; }
-inline short ZLTextForcedControlEntry::rightIndent() const { return myRightIndent; }
-inline void ZLTextForcedControlEntry::setRightIndent(short rightIndent) { myRightIndent = rightIndent; myMask |= SUPPORT_RIGHT_INDENT; }
-inline bool ZLTextForcedControlEntry::alignmentTypeSupported() const { return myMask & SUPPORT_ALIGNMENT_TYPE; }
-inline ZLTextAlignmentType ZLTextForcedControlEntry::alignmentType() const { return myAlignmentType; }
-inline void ZLTextForcedControlEntry::setAlignmentType(ZLTextAlignmentType alignmentType) { myAlignmentType = alignmentType; myMask |= SUPPORT_ALIGNMENT_TYPE; }
+inline ZLTextStyleEntry::ZLTextStyleEntry() : myMask(0) {}
+inline ZLTextStyleEntry::~ZLTextStyleEntry() {}
+
+inline ZLTextStyleEntry::Metrics::Metrics(int fontSize, int fontXHeight, int fullWidth, int fullHeight) : FontSize(fontSize), FontXHeight(fontXHeight), FullWidth(fullWidth), FullHeight(fullHeight) {}
+
+inline bool ZLTextStyleEntry::isEmpty() const { return myMask == 0; }
+
+inline bool ZLTextStyleEntry::lengthSupported(Length name) const { return myMask & (1 << name); }
+inline void ZLTextStyleEntry::setLength(Length name, short length, SizeUnit unit) {
+	myLengths[name].Size = length;
+	myLengths[name].Unit = unit;
+	myMask |= 1 << name;
+}
+
+inline bool ZLTextStyleEntry::alignmentTypeSupported() const { return myMask & SUPPORT_ALIGNMENT_TYPE; }
+inline ZLTextAlignmentType ZLTextStyleEntry::alignmentType() const { return myAlignmentType; }
+inline void ZLTextStyleEntry::setAlignmentType(ZLTextAlignmentType alignmentType) { myAlignmentType = alignmentType; myMask |= SUPPORT_ALIGNMENT_TYPE; }
+
+inline bool ZLTextStyleEntry::boldSupported() const { return myMask & SUPPORT_BOLD; }
+inline bool ZLTextStyleEntry::bold() const { return myBold; }
+inline void ZLTextStyleEntry::setBold(bool bold) { myBold = bold; myMask |= SUPPORT_BOLD; }
+
+inline bool ZLTextStyleEntry::italicSupported() const { return myMask & SUPPORT_ITALIC; }
+inline bool ZLTextStyleEntry::italic() const { return myItalic; }
+inline void ZLTextStyleEntry::setItalic(bool italic) { myItalic = italic; myMask |= SUPPORT_ITALIC; }
+
+inline bool ZLTextStyleEntry::fontSizeSupported() const { return myMask & SUPPORT_FONT_SIZE; }
+inline signed char ZLTextStyleEntry::fontSizeMag() const { return myFontSizeMag; }
+inline void ZLTextStyleEntry::setFontSizeMag(signed char fontSizeMag) { myFontSizeMag = fontSizeMag; myMask |= SUPPORT_FONT_SIZE; }
+
+inline bool ZLTextStyleEntry::fontFamilySupported() const { return myMask & SUPPORT_FONT_FAMILY; }
+inline const std::string &ZLTextStyleEntry::fontFamily() const { return myFontFamily; }
+inline void ZLTextStyleEntry::setFontFamily(const std::string &fontFamily) { myFontFamily = fontFamily; myMask |= SUPPORT_FONT_FAMILY; }
 
 inline ZLTextControlEntry::ZLTextControlEntry(ZLTextKind kind, bool isStart) : myKind(kind), myStart(isStart) {}
 inline ZLTextControlEntry::~ZLTextControlEntry() {}
@@ -298,9 +383,10 @@ inline unsigned char ZLTextFixedHSpaceEntry::length() const { return myLength; }
 inline ZLTextControlEntryPool::ZLTextControlEntryPool() {}
 inline ZLTextControlEntryPool::~ZLTextControlEntryPool() {}
 
-inline ZLTextHyperlinkControlEntry::ZLTextHyperlinkControlEntry(const char *address) : ZLTextControlEntry((ZLTextKind)*address, true), myLabel(address + 1) {}
+inline ZLTextHyperlinkControlEntry::ZLTextHyperlinkControlEntry(const char *address) : ZLTextControlEntry((ZLTextKind)*address, true), myLabel(address + 1), myHyperlinkType(address + myLabel.length() + 2) {}
 inline ZLTextHyperlinkControlEntry::~ZLTextHyperlinkControlEntry() {}
 inline const std::string &ZLTextHyperlinkControlEntry::label() const { return myLabel; }
+inline const std::string &ZLTextHyperlinkControlEntry::hyperlinkType() const { return myHyperlinkType; }
 inline bool ZLTextHyperlinkControlEntry::isHyperlink() const { return true; }
 
 inline ZLTextEntry::ZLTextEntry(const char *address) : myAddress(address) {}

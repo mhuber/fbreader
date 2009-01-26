@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 #include <gtk/gtk.h>
 
-#include <ZLView.h>
+#include "../../../../core/src/view/ZLViewWidget.h"
 #include <ZLApplication.h>
 
 class ZLMaemoSpecificOptions;
@@ -34,21 +34,30 @@ public:
 	ZLIntegerRangeOption MaxPressureOption;
 
 public:
-	ZLGtkViewWidget(ZLApplication *application, Angle initialAngle);
+	ZLGtkViewWidget(ZLApplication *application, ZLView::Angle initialAngle);
 	~ZLGtkViewWidget();
 
 	int width() const;
 	int height() const;
 
-	GtkWidget *area() { return myArea; }
+	void doPaint();
+
+	GtkWidget *area();
+	GtkWidget *areaWithScrollbars();
 	void onMousePressed(GdkEventButton *event);
 	void onMouseReleased(GdkEventButton *event);
 	void onMouseMoved(GdkEventMotion *event);
-	void doPaint();
 
 private:
 	void trackStylus(bool track);
 	void repaint();
+
+	GtkWidget *createVScrollbar(int pos);
+	GtkWidget *createHScrollbar(int pos);
+
+	void setScrollbarEnabled(ZLView::Direction direction, bool enabled);
+	void setScrollbarPlacement(ZLView::Direction direction, bool standard);
+	void setScrollbarParameters(ZLView::Direction direction, size_t full, size_t from, size_t to);
 
 	void cleanOriginalPixbuf();
 	void cleanRotatedPixbuf();
@@ -58,9 +67,22 @@ private:
 private:
 	ZLApplication *myApplication;
 	GtkWidget *myArea;
+	GtkTable *myTable;
 	GdkPixbuf *myOriginalPixbuf;
 	GdkPixbuf *myRotatedPixbuf;
 	GdkImage *myImage;
+
+	GtkAdjustment *myVerticalAdjustment;
+	GtkWidget *myRightScrollBar;
+	GtkWidget *myLeftScrollBar;
+	bool myShowScrollBarAtRight;
+	bool myVerticalScrollbarIsVisible;
+
+	GtkAdjustment *myHorizontalAdjustment;
+	GtkWidget *myBottomScrollBar;
+	GtkWidget *myTopScrollBar;
+	bool myShowScrollBarAtBottom;
+	bool myHorizontalScrollbarIsVisible;
 
 	ZLMaemoSpecificOptions *mySpecificOptions;
 };

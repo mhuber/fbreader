@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,11 +38,11 @@ public:
 	int width() const;
 	int height() const;
 	
-	int stringWidth(const char *str, int len) const;
+	int stringWidth(const char *str, int len, bool rtl) const;
 	int spaceWidth() const;
 	int stringHeight() const;
 	int descent() const;
-	void drawString(int x, int y, const char *str, int len);
+	void drawString(int x, int y, const char *str, int len, bool rtl);
 
 	void drawImage(int x, int y, const ZLImageData &image);
 

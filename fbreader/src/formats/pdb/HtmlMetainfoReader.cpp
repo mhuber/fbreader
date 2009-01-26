@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ void HtmlMetainfoReader::startDocumentHandler() {
 void HtmlMetainfoReader::endDocumentHandler() {
 }
 
-bool HtmlMetainfoReader::characterDataHandler(const char *text, int len, bool convert) {
+bool HtmlMetainfoReader::characterDataHandler(const char *text, size_t len, bool convert) {
 	if (myReadTitle || myReadAuthor || myReadTags) {
 		if (convert) {
 			myConverter->convert(myBuffer, text, text + len);

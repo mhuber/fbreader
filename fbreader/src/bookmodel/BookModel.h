@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 
 #include <ZLTextModel.h>
 #include <ZLTextParagraph.h>
+#include <ZLUserData.h>
 #include "../description/BookDescription.h"
 
 class ZLImage;
@@ -39,7 +40,7 @@ private:
 	std::map<const ZLTextTreeParagraph*,int> myReferenceByParagraph;
 };
 
-class BookModel {
+class BookModel : public ZLUserDataHolder {
 
 public:
 	struct Label {

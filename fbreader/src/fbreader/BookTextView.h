@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,12 +35,12 @@ public:
 	BookTextView(FBReader &reader, shared_ptr<ZLPaintContext> context);
 	~BookTextView();
 
-	void setModel(shared_ptr<ZLTextModel> model, const std::string &fileName);
+	void setModel(shared_ptr<ZLTextModel> model, const std::string &language, const std::string &fileName);
 	void setContentsModel(shared_ptr<ZLTextModel> contentsModel);
 	void saveState();
 	void saveBookmarks();
 
-	void gotoParagraph(int num, bool last = false);
+	void gotoParagraph(int num, bool end = false);
 	bool canUndoPageMove();
 	void undoPageMove();
 	bool canRedoPageMove();
@@ -50,6 +50,7 @@ public:
 
 	bool _onStylusPress(int x, int y);
 	bool onStylusMove(int x, int y);
+	bool onStylusRelease(int x, int y);
 
 private:
 	typedef std::pair<int,int> Position;
@@ -59,9 +60,11 @@ private:
 
 	void preparePaintInfo();
 
-	bool getHyperlinkId(const ZLTextElementArea &area, std::string &id, bool &isExternal) const;
+	bool getHyperlinkInfo(const ZLTextElementArea &area, std::string &id, std::string &type) const;
 
 	shared_ptr<PositionIndicator> createPositionIndicator(const ZLTextPositionIndicatorInfo &info);
+
+	void paint();
 
 private:
 	class PositionIndicatorWithLabels : public PositionIndicator {
@@ -86,6 +89,9 @@ private:
 	unsigned int myMaxStackSize;
 
 	bool myLockUndoStackChanges;
+
+	int myPressedX;
+	int myPressedY;
 
 	typedef std::vector<std::pair<Position, int> > BookmarkVector;
 	typedef std::vector<std::pair<Position, std::pair<int, std::string> > > BookmarkTextVector;

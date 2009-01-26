@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ public:
 	void endParagraph();
 	bool paragraphIsOpen() const;
 	void addControl(FBTextKind kind, bool start);
-	void addControl(const ZLTextForcedControlEntry &entry);
+	void addControl(const ZLTextStyleEntry &entry);
 	void addHyperlinkControl(FBTextKind kind, const std::string &label);
 	void addHyperlinkLabel(const std::string &label);
 	void addHyperlinkLabel(const std::string &label, int paragraphNumber);
@@ -99,6 +99,7 @@ private:
 	std::vector<std::string> myContentsBuffer;
 
 	std::string myHyperlinkReference;
+	std::string myHyperlinkType;
 	FBTextKind myHyperlinkKind;
 };
 

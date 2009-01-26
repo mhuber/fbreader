@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ private:
 	bool addTag(const std::string &tag, bool check = true);
 	void saveTags() const;
 	void saveTags(ZLStringOption &tagsOption) const;
+	void saveInfo();
 
 private:
 	AuthorPtr myAuthor;
@@ -113,6 +114,8 @@ public:
 	void renameTag(const std::string &from, const std::string &to, bool includeSubTags);
 	void cloneTag(const std::string &from, const std::string &to, bool includeSubTags);
 	void removeAllTags();
+
+	void saveInfo();
 
 private:
 	BookDescription &myDescription;

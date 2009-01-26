@@ -39,9 +39,14 @@ Section "FBReader"
 	ReadRegStr $0 HKCU "Software\FBReader\options\Options" "BookPath"
 	StrCmp $0 "" 0 +2
 	WriteRegStr HKCU "Software\FBReader\options\Options" "BookPath" "C:\Books;$PROFILE\Books" 
+	ReadRegStr $0 HKCU "Software\FBReader\options\Options" "DownloadDirectory"
+	StrCmp $0 "" 0 +2
+	WriteRegStr HKCU "Software\FBReader\options\Options" "DownloadDirectory" "$PROFILE\Books" 
 	WriteRegStr HKCU "Software\FBReader\options\PlatformOptions" "TouchScreenPresented" "true" 
 	WriteRegStr HKCU "Software\FBReader\options\PlatformOptions" "MousePresented" "true" 
 	WriteRegStr HKCU "Software\FBReader\options\PlatformOptions" "KeyboardPresented" "true" 
+	WriteRegStr HKCU "Software\FBReader\options\Options" "LeftMargin" "50" 
+	WriteRegStr HKCU "Software\FBReader\options\Options" "RightMargin" "50" 
 	WriteRegStr HKCU "Software\FBReader\options\Options" "KeyDelay" "0" 
 	WriteRegStr HKCU "Software\FBReader\options\SmallScrolling" "ScrollingDelay" "true" 
 	WriteRegStr HKCU "Software\FBReader\options\LargeScrolling" "ScrollingDelay" "true" 
@@ -53,8 +58,13 @@ Section "Create Shortcut on Desktop"
 SectionEnd
 
 Section "Uninstall"
-	RMDir /r "$INSTDIR\share"
+	ClearErrors
 	Delete "$INSTDIR\FBReader.exe"
+	IfErrors 0 ContinueUninstallation
+		MessageBox MB_OK "Cannot uninstall FBReader while the program is running.$\nPlease quit FBReader and try again."
+		Quit
+	ContinueUninstallation:
+	RMDir /r "$INSTDIR\share"
 	Delete "$INSTDIR\*.dll"
 	Delete "$INSTDIR\*.license"
 	Delete "$INSTDIR\uninstall.exe"

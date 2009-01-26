@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 
 #ifndef __HTMLTAGACTIONS_H__
 #define __HTMLTAGACTIONS_H__
+
+#include <set>
 
 #include "HtmlBookReader.h"
 
@@ -71,6 +73,9 @@ class HtmlIgnoreTagAction : public HtmlTagAction {
 public:
 	HtmlIgnoreTagAction(HtmlBookReader &reader);
 	void run(const HtmlReader::HtmlTag &tag);
+
+private:
+	std::set<std::string> myTagNames;
 };
 
 class HtmlHrefTagAction : public HtmlTagAction {

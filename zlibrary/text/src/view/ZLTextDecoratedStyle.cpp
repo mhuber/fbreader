@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,11 +32,10 @@ ZLTextStyleDecoration::ZLTextStyleDecoration(const std::string &name, int fontSi
 	ItalicOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":italic", italic),
 	VerticalShiftOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":vShift", verticalShift),
 	AllowHyphenationsOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":allowHyphenations", allowHyphenations),
-	myName(name),
-	myHyperlinkStyle(NONE) {
+	myName(name) {
 }
 
-ZLTextFullStyleDecoration::ZLTextFullStyleDecoration(const std::string &name, int fontSizeDelta, ZLBoolean3 bold, ZLBoolean3 italic, int spaceBefore, int spaceAfter, int leftIndent, int rightIndent, int firstLineIndentDelta, int verticalShift, ZLTextAlignmentType alignment, double lineSpace, ZLBoolean3 allowHyphenations) : ZLTextStyleDecoration(name, fontSizeDelta, bold, italic, verticalShift, allowHyphenations),
+ZLTextFullStyleDecoration::ZLTextFullStyleDecoration(const std::string &name, int fontSizeDelta, ZLBoolean3 bold, ZLBoolean3 italic, short spaceBefore, short spaceAfter, short leftIndent, short rightIndent, short firstLineIndentDelta, int verticalShift, ZLTextAlignmentType alignment, double lineSpace, ZLBoolean3 allowHyphenations) : ZLTextStyleDecoration(name, fontSizeDelta, bold, italic, verticalShift, allowHyphenations),
 	SpaceBeforeOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":spaceBefore", -10, 100, spaceBefore),
 	SpaceAfterOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":spaceAfter", -10, 100, spaceAfter),
 	LeftIndentOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":leftIndent", -300, 300, leftIndent),
@@ -80,8 +79,8 @@ bool ZLTextPartialDecoratedStyle::allowHyphenations() const {
 	return true;
 }
 
-int ZLTextFullDecoratedStyle::firstLineIndentDelta() const {
-	return (alignment() == ALIGN_CENTER) ? 0 : base()->firstLineIndentDelta() + myDecoration.FirstLineIndentDeltaOption.value();
+short ZLTextFullDecoratedStyle::firstLineIndentDelta(const ZLTextStyleEntry::Metrics &metrics) const {
+	return (alignment() == ALIGN_CENTER) ? 0 : base()->firstLineIndentDelta(metrics) + myDecoration.FirstLineIndentDeltaOption.value();
 }
 
 const std::string &ZLTextFullDecoratedStyle::fontFamily() const {
@@ -115,39 +114,109 @@ bool ZLTextFullDecoratedStyle::allowHyphenations() const {
 }
 
 ZLColor ZLTextPartialDecoratedStyle::color() const {
-	ZLTextStyleDecoration::HyperlinkStyle hyperlinkStyle = myDecoration.hyperlinkStyle();
-	if (hyperlinkStyle == ZLTextStyleDecoration::NONE) {
-		return base()->color();
+	const std::string &hyperlinkStyle = myDecoration.hyperlinkStyle();
+	if (!hyperlinkStyle.empty()) {
+		ZLTextBaseStyle &baseStyle = ZLTextStyleCollection::instance().baseStyle();
+		if (baseStyle.hasHyperlinkColorOption(hyperlinkStyle)) {
+			return baseStyle.hyperlinkColorOption(hyperlinkStyle).value();
+		}
 	}
-	ZLTextBaseStyle &baseStyle = ZLTextStyleCollection::instance().baseStyle();
-	if (hyperlinkStyle == ZLTextStyleDecoration::INTERNAL) {
-		return baseStyle.InternalHyperlinkTextColorOption.value();
-	} else {
-		return baseStyle.ExternalHyperlinkTextColorOption.value();
-	}
+	return base()->color();
 }
 
 ZLColor ZLTextFullDecoratedStyle::color() const {
-	ZLTextStyleDecoration::HyperlinkStyle hyperlinkStyle = myDecoration.hyperlinkStyle();
-	if (hyperlinkStyle == ZLTextStyleDecoration::NONE) {
-		return base()->color();
+	const std::string &hyperlinkStyle = myDecoration.hyperlinkStyle();
+	if (!hyperlinkStyle.empty()) {
+		ZLTextBaseStyle &baseStyle = ZLTextStyleCollection::instance().baseStyle();
+		if (baseStyle.hasHyperlinkColorOption(hyperlinkStyle)) {
+			return baseStyle.hyperlinkColorOption(hyperlinkStyle).value();
+		}
 	}
-	ZLTextBaseStyle &baseStyle = ZLTextStyleCollection::instance().baseStyle();
-	if (hyperlinkStyle == ZLTextStyleDecoration::INTERNAL) {
-		return baseStyle.InternalHyperlinkTextColorOption.value();
-	} else {
-		return baseStyle.ExternalHyperlinkTextColorOption.value();
-	}
+	return base()->color();
 }
 
-int ZLTextForcedStyle::leftIndent() const {
-	return myEntry.leftIndentSupported() ? myEntry.leftIndent() : base()->leftIndent();
+short ZLTextForcedStyle::leftIndent(const ZLTextStyleEntry::Metrics &metrics) const {
+	return
+		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_LEFT_INDENT) ?
+			myEntry.length(ZLTextStyleEntry::LENGTH_LEFT_INDENT, metrics) :
+			base()->leftIndent(metrics);
 }
 
-int ZLTextForcedStyle::rightIndent() const {
-	return myEntry.rightIndentSupported() ? myEntry.rightIndent() : base()->rightIndent();
+short ZLTextForcedStyle::rightIndent(const ZLTextStyleEntry::Metrics &metrics) const {
+	return
+		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_RIGHT_INDENT) ?
+			myEntry.length(ZLTextStyleEntry::LENGTH_RIGHT_INDENT, metrics) :
+			base()->rightIndent(metrics);
+}
+
+short ZLTextForcedStyle::spaceBefore(const ZLTextStyleEntry::Metrics &metrics) const {
+	return
+		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_SPACE_BEFORE) ?
+			myEntry.length(ZLTextStyleEntry::LENGTH_SPACE_BEFORE, metrics) :
+			base()->spaceBefore(metrics);
+}
+
+short ZLTextForcedStyle::spaceAfter(const ZLTextStyleEntry::Metrics &metrics) const {
+	return
+		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_SPACE_AFTER) ?
+			myEntry.length(ZLTextStyleEntry::LENGTH_SPACE_AFTER, metrics) :
+			base()->spaceAfter(metrics);
+}
+
+short ZLTextForcedStyle::firstLineIndentDelta(const ZLTextStyleEntry::Metrics &metrics) const {
+	return
+		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_FIRST_LINE_INDENT_DELTA) ?
+			myEntry.length(ZLTextStyleEntry::LENGTH_FIRST_LINE_INDENT_DELTA, metrics) :
+			base()->firstLineIndentDelta(metrics);
 }
 
 ZLTextAlignmentType ZLTextForcedStyle::alignment() const {
 	return myEntry.alignmentTypeSupported() ? myEntry.alignmentType() : base()->alignment();
+}
+
+bool ZLTextForcedStyle::bold() const {
+	return myEntry.boldSupported() ? myEntry.bold() : base()->bold();
+}
+
+bool ZLTextForcedStyle::italic() const {
+	return myEntry.italicSupported() ? myEntry.italic() : base()->italic();
+}
+
+int ZLTextForcedStyle::fontSize() const {
+	if (myEntry.fontSizeSupported()) {
+		int size = ZLTextStyleCollection::instance().baseStyle().fontSize();
+		const int mag = myEntry.fontSizeMag();
+		if (mag >= 0) {
+			for (int i = 0; i < mag; ++i) {
+				size *= 6;
+			}
+			for (int i = 0; i < mag; ++i) {
+				size /= 5;
+			}
+		} else {
+			for (int i = 0; i > mag; --i) {
+				size *= 5;
+			}
+			for (int i = 0; i > mag; --i) {
+				size /= 6;
+			}
+		}
+		return size;
+	} else {
+		return base()->fontSize();
+	}
+}
+
+const std::string &ZLTextForcedStyle::fontFamily() const {
+	return (!ZLTextStyleCollection::instance().OverrideSpecifiedFontsOption.value() &&
+					myEntry.fontFamilySupported()) ?
+						myEntry.fontFamily() : base()->fontFamily();
+}
+
+const std::string &ZLTextStyleDecoration::hyperlinkStyle() const {
+	return myHyperlinkStyle;
+}
+
+void ZLTextStyleDecoration::setHyperlinkStyle(const std::string &hyperlinkStyle) {
+	myHyperlinkStyle = hyperlinkStyle;
 }

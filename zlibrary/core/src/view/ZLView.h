@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,11 +24,24 @@
 
 #include <shared_ptr.h>
 
-#include <ZLPaintContext.h>
-
 class ZLApplication;
+class ZLViewWidget;
+class ZLPaintContext;
 
 class ZLView {
+
+public:
+	enum Angle {
+		DEGREES0 = 0,
+		DEGREES90 = 90,
+		DEGREES180 = 180,
+		DEGREES270 = 270
+	};
+
+	enum Direction {
+		VERTICAL,
+		HORIZONTAL
+	};
 
 public:
 	ZLView(ZLApplication &application, shared_ptr<ZLPaintContext> context = 0);
@@ -54,37 +67,27 @@ protected:
 
 	bool hasContext() const;
 
-private:
-	ZLApplication &myApplication;
-	shared_ptr<ZLPaintContext> myContext;
+	void setScrollbarEnabled(Direction direction, bool enabled);
+	void setScrollbarParameters(Direction direction, size_t full, size_t from, size_t to);
+	virtual void onScrollbarMoved(Direction direction, size_t full, size_t from, size_t to);
+	virtual void onScrollbarStep(Direction direction, int steps);
+	virtual void onScrollbarPageStep(Direction direction, int steps);
 
 private:
-	ZLView(const ZLView&);
-	const ZLView &operator=(const ZLView&);
-};
+	struct ScrollBarInfo {
+		ScrollBarInfo();
 
-class ZLViewWidget {
-
-public:
-	enum Angle {
-		DEGREES0 = 0,
-		DEGREES90 = 90,
-		DEGREES180 = 180,
-		DEGREES270 = 270
+		bool Enabled;
+		bool StandardLocation;
+		size_t Full;
+		size_t From;
+		size_t To;
 	};
 
-protected:
-	ZLViewWidget(Angle initialAngle);
-
-public:
-	virtual ~ZLViewWidget();
-	void setView(shared_ptr<ZLView> view);
-	shared_ptr<ZLView> view() const;
-
-	virtual void trackStylus(bool track) = 0;
-
-	void rotate(Angle rotation);
-	Angle rotation() const;
+	void updateScrollbarState();
+	void updateScrollbarPlacement();
+	void updateScrollbarParameters();
+	void updateScrollbarParameters(Direction direction, const ScrollBarInfo &info, bool invert);
 
 	virtual void invertRegion(int x0, int y0, int x1, int y1, bool flush) = 0;
 
@@ -92,17 +95,18 @@ protected:
 	virtual void repaint() = 0;
 
 private:
-	shared_ptr<ZLView> myView;
-	Angle myRotation;
+	ZLApplication &myApplication;
+	ZLViewWidget *myViewWidget;
+	shared_ptr<ZLPaintContext> myContext;
+	ScrollBarInfo myVerticalScrollbarInfo;
+	ScrollBarInfo myHorizontalScrollbarInfo;
 
-friend class ZLApplication;
+private:
+	ZLView(const ZLView&);
+	const ZLView &operator=(const ZLView&);
+
+friend class ZLViewWidget;
 };
-
-inline ZLViewWidget::ZLViewWidget(Angle initialAngle) : myView(0), myRotation(initialAngle) {}
-inline ZLViewWidget::~ZLViewWidget() {}
-inline shared_ptr<ZLView> ZLViewWidget::view() const { return myView; }
-inline void ZLViewWidget::rotate(Angle rotation) { myRotation = rotation; }
-inline ZLViewWidget::Angle ZLViewWidget::rotation() const { return myRotation; }
 
 inline bool ZLView::hasContext() const { return !myContext.isNull(); }
 inline ZLPaintContext &ZLView::context() const { return *myContext; }

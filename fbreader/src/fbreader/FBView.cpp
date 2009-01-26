@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,8 @@ FBMargins::FBMargins() :
 static const std::string INDICATOR = "Indicator";
 
 FBIndicatorStyle::FBIndicatorStyle() :
-	ShowOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Show", true),
+	//ShowOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Show", true),
+	TypeOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Type", 0, 2, ZLTextPositionIndicatorInfo::FB_INDICATOR),
 	IsSensitiveOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "TouchSensitive", false),
 	ShowTextPositionOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "PositionText", true),
 	ShowTimeOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Time", true),
@@ -45,8 +46,8 @@ FBIndicatorStyle::FBIndicatorStyle() :
 	FontSizeOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "FontSize", 4, 72, 6) {
 }
 
-bool FBIndicatorStyle::isVisible() const {
-	return ShowOption.value();
+ZLTextPositionIndicatorInfo::Type FBIndicatorStyle::type() const {
+	return (ZLTextPositionIndicatorInfo::Type)TypeOption.value();
 }
 
 bool FBIndicatorStyle::isSensitive() const {
@@ -148,24 +149,24 @@ std::string FBView::word(const ZLTextElementArea &area) const {
 
 	if (area.Kind == ZLTextElement::WORD_ELEMENT) {
 		ZLTextWordCursor cursor = startCursor();
-		cursor.moveToParagraph(area.ParagraphNumber);
-		cursor.moveTo(area.TextElementNumber, 0);
+		cursor.moveToParagraph(area.ParagraphIndex);
+		cursor.moveTo(area.ElementIndex, 0);
 		const ZLTextWord &word = (ZLTextWord&)cursor.element();
-		ZLUnicodeUtil::Ucs2String ucs2;
-		ZLUnicodeUtil::utf8ToUcs2(ucs2, word.Data, word.Size);
-		ZLUnicodeUtil::Ucs2String::iterator it = ucs2.begin();
-		while ((it != ucs2.end()) && !ZLUnicodeUtil::isLetter(*it)) {
+		ZLUnicodeUtil::Ucs4String ucs4;
+		ZLUnicodeUtil::utf8ToUcs4(ucs4, word.Data, word.Size);
+		ZLUnicodeUtil::Ucs4String::iterator it = ucs4.begin();
+		while ((it != ucs4.end()) && !ZLUnicodeUtil::isLetter(*it)) {
 			++it;
 		}
-		if (it != ucs2.end()) {
-			ucs2.erase(ucs2.begin(), it);
-			it = ucs2.end() - 1;
+		if (it != ucs4.end()) {
+			ucs4.erase(ucs4.begin(), it);
+			it = ucs4.end() - 1;
 			while (!ZLUnicodeUtil::isLetter(*it)) {
 				--it;
 			}
-			ucs2.erase(it + 1, ucs2.end());
+			ucs4.erase(it + 1, ucs4.end());
     
-			ZLUnicodeUtil::ucs2ToUtf8(txt, ucs2);
+			ZLUnicodeUtil::ucs4ToUtf8(txt, ucs4);
 		}
 	}
 	return txt;
@@ -196,4 +197,14 @@ ZLBooleanOption &FBView::selectionOption() {
 
 bool FBView::isSelectionEnabled() const {
 	return selectionOption().value();
+}
+
+void FBView::scrollAndUpdatePage(bool forward, ScrollingMode mode, unsigned int value) {
+	scrollPage(forward, mode, value);
+	preparePaintInfo();
+	fbreader().refreshWindow();
+}
+
+bool FBView::hasContents() const {
+	return true;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -184,7 +184,7 @@ void HtmlReader::readDocument(ZLInputStream &stream) {
 								}
 							} else if (number != 0) {
 								char buffer[4];
-								int len = ZLUnicodeUtil::ucs2ToUtf8(buffer, number);
+								int len = ZLUnicodeUtil::ucs4ToUtf8(buffer, number);
 								if (state == PS_SPECIAL) {
 									characterDataHandler(buffer, len, false);
 								} else {
@@ -278,10 +278,10 @@ void HtmlReader::readDocument(ZLInputStream &stream) {
 					} else if ((quotationCounter != 1) && ((*ptr == '>') || isspace((unsigned char)*ptr))) {
 						if ((ptr != start) || !currentString.empty()) {
 							currentString.append(start, ptr - start);
-							if (currentString[0] == '"') {
-								currentString = currentString.substr(1, currentString.length() - 2);
-							}
 							appendString(attributeValueString, currentString);
+							if (attributeValueString[0] == '"') {
+								attributeValueString = attributeValueString.substr(1, attributeValueString.length() - 2);
+							}
 							currentTag.setLastAttributeValue(attributeValueString);
 							attributeValueString.erase();
 							quotationCounter = 0;

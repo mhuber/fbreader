@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,20 +42,20 @@ struct ZLTextRectangularArea {
 };
 
 struct ZLTextElementArea : public ZLTextRectangularArea {
-	int ParagraphNumber;
-	int TextElementNumber;
-	int StartCharNumber;
+	int ParagraphIndex;
+	int ElementIndex;
+	int StartCharIndex;
 	int Length;
 	bool AddHyphenationSign;
-	bool ChangeStyle;
 	ZLTextStylePtr Style;
 	ZLTextElement::Kind Kind;
-	ZLTextElementArea(int paragraphNumber, int textElementNumber, int startCharNumber, int length, bool addHyphenationSign, bool changeStyle, ZLTextStylePtr style, ZLTextElement::Kind kind, int xStart, int xEnd, int yStart, int yEnd);
+	unsigned char BidiLevel;
+	ZLTextElementArea(int paragraphIndex, int elementIndex, int startCharIndex, int length, bool addHyphenationSign, ZLTextStylePtr style, ZLTextElement::Kind kind, int xStart, int xEnd, int yStart, int yEnd, unsigned char bidiLevel);
 };
 
 struct ZLTextTreeNodeArea : public ZLTextRectangularArea {
-	int ParagraphNumber;
-	ZLTextTreeNodeArea(int paragraphNumber, int xStart, int xEnd, int yStart, int yEnd);
+	int ParagraphIndex;
+	ZLTextTreeNodeArea(int paragraphIndex, int xStart, int xEnd, int yStart, int yEnd);
 };
 
 typedef std::vector<ZLTextTreeNodeArea> ZLTextTreeNodeMap;
@@ -64,8 +64,8 @@ typedef ZLTextElementMap::const_iterator ZLTextElementIterator;
 
 inline ZLTextRectangularArea::ZLTextRectangularArea(int xStart, int xEnd, int yStart, int yEnd) : XStart(xStart), XEnd(xEnd), YStart(yStart), YEnd(yEnd) {}
 
-inline ZLTextElementArea::ZLTextElementArea(int paragraphNumber, int textElementNumber, int startCharNumber, int length, bool addHyphenationSign, bool changeStyle, ZLTextStylePtr style, ZLTextElement::Kind kind, int xStart, int xEnd, int yStart, int yEnd) : ZLTextRectangularArea(xStart, xEnd, yStart, yEnd), ParagraphNumber(paragraphNumber), TextElementNumber(textElementNumber), StartCharNumber(startCharNumber), Length(length), AddHyphenationSign(addHyphenationSign), ChangeStyle(changeStyle), Style(style), Kind(kind) {}
+inline ZLTextElementArea::ZLTextElementArea(int paragraphIndex, int elementIndex, int startCharIndex, int length, bool addHyphenationSign, ZLTextStylePtr style, ZLTextElement::Kind kind, int xStart, int xEnd, int yStart, int yEnd, unsigned char bidiLevel) : ZLTextRectangularArea(xStart, xEnd, yStart, yEnd), ParagraphIndex(paragraphIndex), ElementIndex(elementIndex), StartCharIndex(startCharIndex), Length(length), AddHyphenationSign(addHyphenationSign), Style(style), Kind(kind), BidiLevel(bidiLevel) {}
 
-inline ZLTextTreeNodeArea::ZLTextTreeNodeArea(int paragraphNumber, int xStart, int xEnd, int yStart, int yEnd) : ZLTextRectangularArea(xStart, xEnd, yStart, yEnd), ParagraphNumber(paragraphNumber) {}
+inline ZLTextTreeNodeArea::ZLTextTreeNodeArea(int paragraphIndex, int xStart, int xEnd, int yStart, int yEnd) : ZLTextRectangularArea(xStart, xEnd, yStart, yEnd), ParagraphIndex(paragraphIndex) {}
 
 #endif /* __ZLTEXTAREA_H__ */

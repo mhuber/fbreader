@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,18 +53,19 @@ void XMLConfig::load() {
 		myDelta = new XMLConfigDelta();
 	}
 	shared_ptr<ZLDir> configDir = ZLFile(configDirName()).directory(false);
-	if (configDir.isNull()) {
-		return;
-	}
-	std::vector<std::string> fileNames;
-	configDir->collectFiles(fileNames, true);
-	for (std::vector<std::string>::const_iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
-		ZLFile configFile(configDir->itemPath(*it));
-		if (configFile.extension() == "xml") {
-			XMLConfigReader(*this, configFile.name(true)).readDocument(configFile.inputStream());
+	if (!configDir.isNull()) {
+		std::vector<std::string> fileNames;
+		configDir->collectFiles(fileNames, true);
+		for (std::vector<std::string>::const_iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
+			ZLFile configFile(configDir->itemPath(*it));
+			if (configFile.extension() == "xml") {
+				XMLConfigReader(*this, configFile.name(true)).readDocument(configFile.inputStream());
+			}
 		}
 	}
-	XMLConfigReader(*this, UNKNOWN_CATEGORY).readDocument(configDir->itemPath(CHANGES_FILE));
+	if (!configDir.isNull()) {
+		XMLConfigReader(*this, UNKNOWN_CATEGORY).readDocument(configDir->itemPath(CHANGES_FILE));
+	}
 }
 
 void XMLConfig::saveAll() {

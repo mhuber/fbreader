@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2007-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,15 +30,15 @@
 #include "../../../../core/src/desktop/application/ZLDesktopApplicationWindow.h"
 
 class ZLWin32ViewWidget;
+class ZLWin32PopupMenu;
 
 class ZLWin32ApplicationWindow : public ZLDesktopApplicationWindow { 
 
 private:
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static ZLWin32ApplicationWindow *ourApplicationWindow;
+	static const int IconSize;
 
-	static int x(WPARAM lParam);
-	static int y(WPARAM lParam);
+	static LRESULT CALLBACK Callback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static ZLWin32ApplicationWindow *ourApplicationWindow;
 
 public:
 	ZLWin32ApplicationWindow(ZLApplication *application);
@@ -46,7 +46,6 @@ public:
 
 private:
 	ZLViewWidget *createViewWidget();
-	void addToolbarItem(ZLApplication::Toolbar::ItemPtr item);
 	void close();
 
 	void grabAllKeys(bool grab);
@@ -59,37 +58,96 @@ private:
 	void setFullscreen(bool fullscreen);
 
 	void init();
+	void refresh();
+	void processAllEvents();
 
-	void setToggleButtonState(const ZLApplication::Toolbar::ButtonItem &button);
-	void setToolbarItemState(ZLApplication::Toolbar::ItemPtr item, bool visible, bool enabled);
+	void createWindowToolbar();
+	void createFloatingToolbar();
+	void destroyFloatingToolbar();
+	void registerFloatingToolbarClass();
+
+	void addToolbarItem(ZLToolbar::ItemPtr item);
+	void setToggleButtonState(const ZLToolbar::ToggleButtonItem &button);
+	void setToolbarItemState(ZLToolbar::ItemPtr item, bool visible, bool enabled);
+
+	void updateParameters();
+	void updateWindowToolbarInfo();
+	void updateFullscreenToolbarSize();
+	void setTooltip(TOOLTIPTEXT &tooltip);
+	void runPopup(const NMTOOLBAR &nmToolbar);
+	void processChevron(const NMREBARCHEVRON &chevron);
 
 public:
 	HWND mainWindow() const;
-	int topOffset() const;
 	void blockMouseEvents(bool block);
+	bool mouseEventsAreBlocked() const;
 	void setWait(bool wait);
+	void resetFocus();
+	void updateCursor() const;
 
 private:
 	LRESULT mainLoopCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 public:
-	void onToolbarButtonPress(int index);
-/*
-	void handleKeyEventSlot(GdkEventKey *event);
-	void handleScrollEventSlot(GdkEventScroll *event);
-*/
+	void onToolbarButtonRelease(int index);
+
+private:
+	class TextEditParameter : public VisualParameter {
+
+	private:
+		typedef LRESULT(CALLBACK *WndProc)(HWND, UINT, WPARAM, LPARAM);
+		static LRESULT CALLBACK ComboBoxCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static LRESULT CALLBACK TextEditCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+	public:
+		TextEditParameter(ZLApplication &application, HWND mainWindow, HWND toolbar, int idCommand, const ZLToolbar::ParameterItem &item);
+		HWND handle() const;
+
+	private:
+		std::string internalValue() const;
+		void internalSetValue(const std::string &value);
+		void setValueList(const std::vector<std::string> &values);
+
+	private:
+		ZLApplication &myApplication;
+		HWND myMainWindow;
+		HWND myComboBox;
+		WndProc myOriginalComboBoxCallback;
+		WndProc myOriginalTextEditCallback;
+		const ZLToolbar::ParameterItem &myParameterItem;
+	};
 
 private:
 	ZLUnicodeUtil::Ucs2String myClassName;
 
+	struct Toolbar {
+		Toolbar() : hwnd(0) {
+		}
+		void clear();
+
+		HWND hwnd;
+		std::map<ZLToolbar::ItemPtr,int> SeparatorNumbers;
+		std::map<std::string,int> ActionCodeById;
+		std::map<std::string,int> ParameterCodeById;
+		std::map<int,ZLToolbar::ItemPtr> TBItemByActionCode;
+		std::map<HICON,HBITMAP> BitmapByIcon;
+	};
+
 	HWND myMainWindow;
-	HWND myToolbar;
+	HWND myRebar;
+	Toolbar myWindowToolbar;
+	HWND myDockWindow;
+	Toolbar myFullscreenToolbar;
+	bool myFloatingToolbarClassRegistered;
+	Toolbar &toolbar(ToolbarType type) {
+		return (type == WINDOW_TOOLBAR) ? myWindowToolbar : myFullscreenToolbar;
+	}
+	REBARBANDINFO myToolbarInfo;
+	std::vector<ZLToolbar::ItemPtr> myFloatingToolbarItems;
+
+	std::map<int,HWND> myParameters;
 
 	ZLWin32ViewWidget *myWin32ViewWidget;
-
-	std::map<int,ZLApplication::Toolbar::ItemPtr> myButtonByActionCode;
-	std::map<ZLApplication::Toolbar::ItemPtr,int> mySeparatorNumbers;
-	std::map<std::string,int> myActionCodeById;
 
 	bool myBlockMouseEvents;
 	int myKeyboardModifierMask;
@@ -98,6 +156,8 @@ private:
 	bool myWait;
 
 	HCURSOR myCursor;
+
+	shared_ptr<ZLWin32PopupMenu> myPopupMenu;
 
 friend class ZLWin32TimeManager;
 };

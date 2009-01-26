@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ public:
 	void onValueChanged(const std::string &key, int index);
 	void onKeySelected(const std::string &key);
 
-	void setOrientation(ZLViewWidget::Angle);
+	void setOrientation(ZLView::Angle);
 	void setExitOnCancelEntry(ZLOptionEntry *exitOnCancelEntry);
 
 private:
@@ -98,17 +98,17 @@ void MultiKeyOptionEntry::addAction(const std::string &actionId) {
 MultiKeyOptionEntry::MultiKeyOptionEntry(const ZLResource &resource, FBReader &fbreader) :
 	ZLKeyOptionEntry(),
 	myResource(resource),
-	myEntry0(myBimap, fbreader.keyBindings(ZLViewWidget::DEGREES0)),
-	myEntry90(myBimap, fbreader.keyBindings(ZLViewWidget::DEGREES90)),
-	myEntry180(myBimap, fbreader.keyBindings(ZLViewWidget::DEGREES180)),
-	myEntry270(myBimap, fbreader.keyBindings(ZLViewWidget::DEGREES270)),
+	myEntry0(myBimap, *fbreader.keyBindings(ZLView::DEGREES0)),
+	myEntry90(myBimap, *fbreader.keyBindings(ZLView::DEGREES90)),
+	myEntry180(myBimap, *fbreader.keyBindings(ZLView::DEGREES180)),
+	myEntry270(myBimap, *fbreader.keyBindings(ZLView::DEGREES270)),
 	myCurrentEntry(&myEntry0),
 	myExitOnCancelEntry(0) {
 	addAction(ZLApplication::NoAction);
 
 	// switch view
 	addAction(ActionCode::SHOW_COLLECTION);
-	addAction(ActionCode::SHOW_LAST_BOOKS);
+	addAction(ActionCode::SHOW_NET_LIBRARY);
 	addAction(ActionCode::OPEN_PREVIOUS_BOOK);
 	addAction(ActionCode::SHOW_CONTENTS);
 
@@ -140,7 +140,6 @@ MultiKeyOptionEntry::MultiKeyOptionEntry(const ZLResource &resource, FBReader &f
 	addAction(ActionCode::DECREASE_FONT);
 	addAction(ActionCode::SHOW_HIDE_POSITION_INDICATOR);
 	addAction(ActionCode::TOGGLE_FULLSCREEN);
-	addAction(ActionCode::FULLSCREEN_ON);
 	addAction(ActionCode::ROTATE_SCREEN);
 
 	// dialogs
@@ -153,18 +152,18 @@ MultiKeyOptionEntry::MultiKeyOptionEntry(const ZLResource &resource, FBReader &f
 	addAction(ActionCode::QUIT);
 }
 
-void MultiKeyOptionEntry::setOrientation(ZLViewWidget::Angle angle) {
+void MultiKeyOptionEntry::setOrientation(ZLView::Angle angle) {
 	switch (angle) {
-		case ZLViewWidget::DEGREES0:
+		case ZLView::DEGREES0:
 			myCurrentEntry = &myEntry0;
 			break;
-		case ZLViewWidget::DEGREES90:
+		case ZLView::DEGREES90:
 			myCurrentEntry = &myEntry90;
 			break;
-		case ZLViewWidget::DEGREES180:
+		case ZLView::DEGREES180:
 			myCurrentEntry = &myEntry180;
 			break;
-		case ZLViewWidget::DEGREES270:
+		case ZLView::DEGREES270:
 			myCurrentEntry = &myEntry270;
 			break;
 	}
@@ -231,11 +230,11 @@ const std::vector<std::string> &OrientationEntry::values() const {
 }
 
 void OrientationEntry::onValueSelected(int index) {
-	static ZLViewWidget::Angle angles[] = {
-		ZLViewWidget::DEGREES0,
-		ZLViewWidget::DEGREES90,
-		ZLViewWidget::DEGREES180,
-		ZLViewWidget::DEGREES270
+	static ZLView::Angle angles[] = {
+		ZLView::DEGREES0,
+		ZLView::DEGREES90,
+		ZLView::DEGREES180,
+		ZLView::DEGREES270
 	};
 	myKeyEntry.setOrientation(angles[index]);
 }

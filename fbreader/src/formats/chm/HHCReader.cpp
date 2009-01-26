@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ bool HHCReader::tagHandler(const HtmlTag &tag) {
 	return true;
 }
 
-bool HHCReader::characterDataHandler(const char*, int, bool) {
+bool HHCReader::characterDataHandler(const char*, size_t, bool) {
 	return true;
 }
 

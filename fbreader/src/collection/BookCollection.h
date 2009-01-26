@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ class BookCollection {
 public:
 	ZLStringOption PathOption;
 	ZLBooleanOption ScanSubdirsOption;
+	ZLBooleanOption CollectAllBooksOption;
 
 public:
 	BookCollection();
@@ -74,14 +75,14 @@ private:
 	mutable bool myDoWeakRebuild;
 };
 
-class LastOpenedBooks {
+class RecentBooks {
 
 public:
-	ZLIntegerRangeOption MaxListSizeOption;
+	static const size_t MaxListSize;
 
 public:
-	LastOpenedBooks();
-	~LastOpenedBooks();
+	RecentBooks();
+	~RecentBooks();
 	void addBook(const std::string &fileName);
 	const Books &books() const;
 
@@ -99,6 +100,6 @@ inline bool BookCollection::isBookExternal(BookDescriptionPtr description) const
 	return myExternalBooks.find(description) != myExternalBooks.end();
 }
 
-inline const Books &LastOpenedBooks::books() const { return myBooks; }
+inline const Books &RecentBooks::books() const { return myBooks; }
 
 #endif /* __BOOKCOLLECTION_H__ */

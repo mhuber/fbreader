@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 
 #include "HtmlReader.h"
 #include "../../bookmodel/BookReader.h"
-#include "StyleSheetTable.h"
+#include "../css/StyleSheetTable.h"
 
 class BookModel;
 class PlainTextFormat;
@@ -50,11 +50,11 @@ protected:
 	void startDocumentHandler();
 	void endDocumentHandler();
 	bool tagHandler(const HtmlTag &tag);
-	bool characterDataHandler(const char *text, int len, bool convert);
+	bool characterDataHandler(const char *text, size_t len, bool convert);
 
 private:
-	void preformattedCharacterDataHandler(const char *text, int len, bool convert);
-	void addConvertedDataToBuffer(const char *text, int len, bool convert);
+	void preformattedCharacterDataHandler(const char *text, size_t len, bool convert);
+	void addConvertedDataToBuffer(const char *text, size_t len, bool convert);
 
 protected:
 	BookReader myBookReader;

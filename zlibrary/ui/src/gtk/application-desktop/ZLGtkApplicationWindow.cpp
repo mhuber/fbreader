@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,6 @@
  * 02110-1301, USA.
  */
 
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-
 #include <ZLibrary.h>
 
 #include "ZLGtkApplicationWindow.h"
@@ -28,60 +25,37 @@
 #include "../util/ZLGtkSignalUtil.h"
 #include "../dialogs/ZLGtkDialogManager.h"
 #include "../view/ZLGtkViewWidget.h"
-#include "../../../../core/src/dialogs/ZLOptionView.h"
 
 void ZLGtkDialogManager::createApplicationWindow(ZLApplication *application) const {
 	myWindow = (new ZLGtkApplicationWindow(application))->getMainWindow();
 }
 
-static bool applicationQuit(GtkWidget*, GdkEvent*, gpointer data) {
-	((ZLGtkApplicationWindow*)data)->application().closeView();
+static bool applicationQuit(GtkWidget*, GdkEvent*, ZLGtkApplicationWindow *data) {
+	data->application().closeView();
 	return true;
 }
 
-static void onButtonClicked(GtkWidget *button, gpointer data) {
-	((ZLGtkApplicationWindow*)data)->onGtkButtonPress(button);
+static bool presentHandler(GtkWidget*, GdkEvent*, GtkWindow *data) {
+	gtk_window_present(data);
+	return false;
 }
 
-static bool handleKeyEvent(GtkWidget*, GdkEventKey *event, gpointer data) {
-	return ((ZLGtkApplicationWindow*)data)->handleKeyEventSlot(event);
+static bool handleKeyEvent(GtkWidget*, GdkEventKey *event, ZLGtkApplicationWindow *data) {
+	return data->handleKeyEventSlot(event);
 }
 
-static void handleScrollEvent(GtkWidget*, GdkEventScroll *event, gpointer data) {
-	((ZLGtkApplicationWindow*)data)->handleScrollEventSlot(event);
-}
-
-static const std::string OPTIONS = "Options";
-
-ZLGtkApplicationWindow::Toolbar::Toolbar(ZLGtkApplicationWindow *window) : myWindow(window), myWidgetCounter(0) {
-	myGtkToolbar = GTK_TOOLBAR(gtk_toolbar_new());
-	gtk_toolbar_set_style(myGtkToolbar, GTK_TOOLBAR_ICONS);
-}
-
-GtkWidget *ZLGtkApplicationWindow::Toolbar::toolbarWidget() const {
-	return GTK_WIDGET(myGtkToolbar);
-}
-
-ZLApplication::Toolbar::ButtonItem &ZLGtkApplicationWindow::Toolbar::buttonItemByWidget(GtkWidget *gtkButton) {
-	return (ZLApplication::Toolbar::ButtonItem&)*myWidgetToButton[gtkButton];
-}
-
-void ZLGtkApplicationWindow::Toolbar::attachWidget(ZLOptionView&, GtkWidget *widget) {
-	gtk_toolbar_append_widget(myGtkToolbar, widget, 0, 0);
-	++myWidgetCounter;
-}
-
-void ZLGtkApplicationWindow::Toolbar::attachWidgets(ZLOptionView &view, GtkWidget *widget0, GtkWidget *widget1) {
-	attachWidget(view, widget0);
-	attachWidget(view, widget1);
+static void handleScrollEvent(GtkWidget*, GdkEventScroll *event, ZLGtkApplicationWindow *data) {
+	data->handleScrollEventSlot(event);
 }
 
 ZLGtkApplicationWindow::ZLGtkApplicationWindow(ZLApplication *application) :
 	ZLDesktopApplicationWindow(application),
+	myViewWidget(0),
 	myHyperlinkCursor(0),
 	myHyperlinkCursorIsUsed(false),
-	myToolbar(this) {
-
+	myWindowToolbar(this),
+	myFullscreenToolbar(this),
+	myHandleBox(0) {
 	myMainWindow = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
 	const std::string iconFileName = ZLibrary::ImageDirectory() + ZLibrary::FileNameDelimiter + ZLibrary::ApplicationName() + ".png";
 	gtk_window_set_icon(myMainWindow, gdk_pixbuf_new_from_file(iconFileName.c_str(), 0));
@@ -90,7 +64,15 @@ ZLGtkApplicationWindow::ZLGtkApplicationWindow(ZLApplication *application) :
 	myVBox = gtk_vbox_new(false, 0);
 	gtk_container_add(GTK_CONTAINER(myMainWindow), myVBox);
 
-	gtk_box_pack_start(GTK_BOX(myVBox), myToolbar.toolbarWidget(), false, false, 0);
+	if (hasFullscreenToolbar()) {
+		myHandleBox = GTK_HANDLE_BOX(gtk_handle_box_new());
+		gtk_toolbar_set_show_arrow(GTK_TOOLBAR(myFullscreenToolbar.toolbarWidget()), false);
+		gtk_container_add(GTK_CONTAINER(myHandleBox), myFullscreenToolbar.toolbarWidget());
+		gtk_box_pack_start(GTK_BOX(myVBox), GTK_WIDGET(myHandleBox), false, false, 0);
+		ZLGtkSignalUtil::connectSignal(GTK_OBJECT(myHandleBox), "event", GTK_SIGNAL_FUNC(presentHandler), myMainWindow);
+	}
+
+	gtk_box_pack_start(GTK_BOX(myVBox), myWindowToolbar.toolbarWidget(), false, false, 0);
 
 	gtk_window_resize(myMainWindow, myWidthOption.value(), myHeightOption.value());
 	gtk_window_move(myMainWindow, myXOption.value(), myYOption.value());
@@ -134,6 +116,19 @@ ZLGtkApplicationWindow::~ZLGtkApplicationWindow() {
 	}
 }
 
+void ZLGtkApplicationWindow::refresh() {
+	ZLDesktopApplicationWindow::refresh();
+	ToolbarType type =
+		isFullscreen() ? FULLSCREEN_TOOLBAR : WINDOW_TOOLBAR;
+	gtk_widget_queue_resize(toolbar(type).toolbarWidget());
+}
+
+void ZLGtkApplicationWindow::processAllEvents() {
+	while (gtk_events_pending()) {
+		gtk_main_iteration();
+	}
+}
+
 bool ZLGtkApplicationWindow::handleKeyEventSlot(GdkEventKey *event) {
 	GtkWidget *widget = gtk_window_get_focus(myMainWindow);
 	if ((widget == 0) || !GTK_WIDGET_CAN_FOCUS(widget) || GTK_IS_DRAWING_AREA(widget)) {
@@ -156,20 +151,17 @@ void ZLGtkApplicationWindow::handleScrollEventSlot(GdkEventScroll *event) {
 	}
 }
 
-void ZLGtkApplicationWindow::setToggleButtonState(const ZLApplication::Toolbar::ButtonItem &button) {
-	myToolbar.setToggleButtonState(button);
+void ZLGtkApplicationWindow::setToggleButtonState(const ZLToolbar::ToggleButtonItem &button) {
+	toolbar(type(button)).setToggleButtonState(button);
 }
 
-void ZLGtkApplicationWindow::Toolbar::setToggleButtonState(const ZLApplication::Toolbar::ButtonItem &button) {
-	GtkToggleButton *gtkButton = GTK_TOGGLE_BUTTON(myButtonToWidget[&(ZLApplication::Toolbar::Item&)button]);
-	const bool isPressed = button.isPressed();
-	if (gtk_toggle_button_get_active(gtkButton) != isPressed) {
-		gtk_toggle_button_set_active(gtkButton, isPressed);
+void ZLGtkApplicationWindow::onGtkButtonPress(GtkToolItem *gtkButton) {
+	ToolbarType type =
+		isFullscreen() ? FULLSCREEN_TOOLBAR : WINDOW_TOOLBAR;
+	onButtonPress(toolbar(type).buttonItemByWidget(gtkButton));
+	if (isFullscreen()) {
+		gtk_window_present(myMainWindow);
 	}
-}
-
-void ZLGtkApplicationWindow::onGtkButtonPress(GtkWidget *gtkButton) {
-	onButtonPress(myToolbar.buttonItemByWidget(gtkButton));
 }
 
 void ZLGtkApplicationWindow::setFullscreen(bool fullscreen) {
@@ -177,12 +169,32 @@ void ZLGtkApplicationWindow::setFullscreen(bool fullscreen) {
 		return;
 	}
 
+	GdkWindowState state = gdk_window_get_state(GTK_WIDGET(myMainWindow)->window);
 	if (fullscreen) {
+		if ((state & GDK_WINDOW_STATE_MAXIMIZED) == 0) {
+			int x, y, width, height;
+			gtk_window_get_position(myMainWindow, &x, &y);
+			gtk_window_get_size(myMainWindow, &width, &height);
+			myXOption.setValue(x);
+			myYOption.setValue(y);
+			myWidthOption.setValue(width);
+			myHeightOption.setValue(height);
+		}
 		gtk_window_fullscreen(myMainWindow);
-		gtk_widget_hide(myToolbar.toolbarWidget());
+		gtk_widget_hide(myWindowToolbar.toolbarWidget());
+		if (myHandleBox != 0) {
+			gtk_widget_show_all(GTK_WIDGET(myHandleBox));
+		}
 	} else {
 		gtk_window_unfullscreen(myMainWindow);
-		gtk_widget_show(myToolbar.toolbarWidget());
+		if (myHandleBox != 0) {
+			gtk_widget_hide(GTK_WIDGET(myHandleBox));
+		}
+		gtk_widget_show(myWindowToolbar.toolbarWidget());
+		if ((state & GDK_WINDOW_STATE_MAXIMIZED) == 0) {
+			gtk_window_resize(myMainWindow, myWidthOption.value(), myHeightOption.value());
+			gtk_window_move(myMainWindow, myXOption.value(), myYOption.value());
+		}
 	}
 
 	gtk_widget_queue_resize(GTK_WIDGET(myMainWindow));
@@ -194,109 +206,23 @@ bool ZLGtkApplicationWindow::isFullscreen() const {
 		GDK_WINDOW_STATE_FULLSCREEN;
 }
 
-void ZLGtkApplicationWindow::addToolbarItem(ZLApplication::Toolbar::ItemPtr item) {
-	myToolbar.addToolbarItem(item);
+void ZLGtkApplicationWindow::addToolbarItem(ZLToolbar::ItemPtr item) {
+	toolbar(type(*item)).addToolbarItem(item);
 }
 
-void ZLGtkApplicationWindow::Toolbar::addToolbarItem(ZLApplication::Toolbar::ItemPtr item) {
-	switch (item->type()) {
-		case ZLApplication::Toolbar::Item::OPTION_ENTRY:
-			{
-				shared_ptr<ZLOptionEntry> entry = ((const ZLApplication::Toolbar::OptionEntryItem&)*item).entry();
-				ZLOptionView *view = createViewByEntry("", "", entry);
-				if (view != 0) {
-					myViews.push_back(view);
-					entry->setVisible(true);
-				}
-			}
-			break;
-		case ZLApplication::Toolbar::Item::BUTTON:
-			{
-				const ZLApplication::Toolbar::ButtonItem &buttonItem = (const ZLApplication::Toolbar::ButtonItem&)*item;
-				static std::string imagePrefix = ZLibrary::ApplicationImageDirectory() + ZLibrary::FileNameDelimiter;
-				GtkWidget *image = gtk_image_new_from_file((imagePrefix + buttonItem.iconName() + ".png").c_str());
-				GtkWidget *button = buttonItem.isToggleButton() ? gtk_toggle_button_new() : gtk_button_new();
-				gtk_button_set_relief((GtkButton*)button, GTK_RELIEF_NONE);
-				GTK_WIDGET_UNSET_FLAGS(button, GTK_CAN_FOCUS);
-				gtk_container_add(GTK_CONTAINER(button), image);
-				gtk_toolbar_append_widget(myGtkToolbar, button, buttonItem.tooltip().c_str(), 0);
-				ZLGtkSignalUtil::connectSignal(GTK_OBJECT(button), "clicked", GTK_SIGNAL_FUNC(onButtonClicked), myWindow);
-				myButtonToWidget[&*item] = button;
-				myWidgetToButton[button] = item;
-				gtk_widget_show_all(button);
-			}
-			break;
-		case ZLApplication::Toolbar::Item::SEPARATOR:
-			mySeparatorMap[item] = myButtonToWidget.size() + myWidgetCounter;
-			mySeparatorVisibilityMap.push_back(std::pair<ZLApplication::Toolbar::ItemPtr,bool>(item, false));
-			break;
-	}
-}
-
-void ZLGtkApplicationWindow::setToolbarItemState(ZLApplication::Toolbar::ItemPtr item, bool visible, bool enabled) {
-	myToolbar.setToolbarItemState(item, visible, enabled);
-}
-
-void ZLGtkApplicationWindow::Toolbar::setToolbarItemState(ZLApplication::Toolbar::ItemPtr item, bool visible, bool enabled) {
-	switch (item->type()) {
-		case ZLApplication::Toolbar::Item::OPTION_ENTRY:
-			break;
-		case ZLApplication::Toolbar::Item::BUTTON:
-			{
-				std::map<const ZLApplication::Toolbar::Item*,GtkWidget*>::const_iterator it = myButtonToWidget.find(&*item);
-				if (it != myButtonToWidget.end()) {
-					GtkWidget *gtkButton = it->second;
-					if (visible) {
-						gtk_widget_show(gtkButton);
-					} else {
-						gtk_widget_hide(gtkButton);
-					}
-					/*
-					 * Not sure, but looks like gtk_widget_set_sensitive(WIDGET, false)
-					 * does something strange if WIDGET is already insensitive.
-					 */
-					bool alreadyEnabled = GTK_WIDGET_STATE(gtkButton) != GTK_STATE_INSENSITIVE;
-					if (enabled != alreadyEnabled) {
-						gtk_widget_set_sensitive(gtkButton, enabled);
-					}
-				}
-			}
-			break;
-		case ZLApplication::Toolbar::Item::SEPARATOR:
-			{
-				std::map<const shared_ptr<ZLApplication::Toolbar::Item>,int>::iterator it = mySeparatorMap.find(item);
-				if (it != mySeparatorMap.end()) {
-					int index = it->second;
-					std::vector<std::pair<ZLApplication::Toolbar::ItemPtr,bool> >::iterator jt;
-					for (jt = mySeparatorVisibilityMap.begin(); jt != mySeparatorVisibilityMap.end(); ++jt) {
-						if (jt->first == it->first) {
-							break;
-						}
-						if (jt->second) {
-							++index;
-						}
-					}
-					if (visible) {
-						if (!jt->second) {
-							gtk_toolbar_insert_space(myGtkToolbar, index);
-						}
-					} else {
-						if (jt->second) {
-							gtk_toolbar_remove_space(myGtkToolbar, index);
-						}
-					}
-					jt->second = visible;
-				}
-			}
-			break;
-	}
+void ZLGtkApplicationWindow::setToolbarItemState(ZLToolbar::ItemPtr item, bool visible, bool enabled) {
+	toolbar(type(*item)).setToolbarItemState(item, visible, enabled);
 }
 
 ZLViewWidget *ZLGtkApplicationWindow::createViewWidget() {
-	ZLGtkViewWidget *viewWidget = new ZLGtkViewWidget(&application(), (ZLViewWidget::Angle)application().AngleStateOption.value());
-	gtk_container_add(GTK_CONTAINER(myVBox), viewWidget->area());
-	gtk_widget_show_all(myVBox);
-	return viewWidget;
+	myViewWidget = new ZLGtkViewWidget(&application(), (ZLView::Angle)application().AngleStateOption.value());
+	gtk_container_add(GTK_CONTAINER(myVBox), myViewWidget->areaWithScrollbars());
+	gtk_widget_show(myVBox);
+	gtk_widget_show(myWindowToolbar.toolbarWidget());
+	if (myHandleBox != 0) {
+		gtk_widget_hide(GTK_WIDGET(myHandleBox));
+	}
+	return myViewWidget;
 }
 
 void ZLGtkApplicationWindow::close() {
@@ -317,8 +243,12 @@ void ZLGtkApplicationWindow::setHyperlinkCursor(bool hyperlink) {
 		if (myHyperlinkCursor == 0) {
 			myHyperlinkCursor = gdk_cursor_new(GDK_HAND1);
 		}
-		gdk_window_set_cursor(GTK_WIDGET(myMainWindow)->window, myHyperlinkCursor);
+		gdk_window_set_cursor(myViewWidget->area()->window, myHyperlinkCursor);
 	} else {
-		gdk_window_set_cursor(GTK_WIDGET(myMainWindow)->window, 0);
+		gdk_window_set_cursor(myViewWidget->area()->window, 0);
 	}
+}
+
+void ZLGtkApplicationWindow::setFocusToMainWidget() {
+	gtk_window_set_focus(myMainWindow, myViewWidget->area());
 }

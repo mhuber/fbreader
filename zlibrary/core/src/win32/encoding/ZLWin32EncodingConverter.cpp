@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ class ZLWin32EncodingConverter : public ZLEncodingConverter {
 
 private:
 	ZLWin32EncodingConverter(UINT code);
-	~ZLWin32EncodingConverter();
 
 	void convert(std::string &dst, const char *srcStart, const char *srcEnd);
 	void reset();
@@ -43,7 +42,32 @@ private:
 friend class ZLWin32EncodingConverterProvider;
 };
 
+class ZLWin32Utf16EncodingConverter : public ZLEncodingConverter {
+
+private:
+	ZLWin32Utf16EncodingConverter(bool littleEndian);
+
+	void convert(std::string &dst, const char *srcStart, const char *srcEnd);
+	void reset();
+	bool fillTable(int *map);
+
+private:
+	bool myLittleEndian;
+	ZLUnicodeUtil::Ucs2String myBuffer;
+	bool myUseStoredCharacter;
+	unsigned char myStoredCharacter;
+
+friend class ZLWin32EncodingConverterProvider;
+};
+
 bool ZLWin32EncodingConverterProvider::providesConverter(const std::string &encoding) {
+	if (encoding == "UTF-16") {
+		return true;
+	}
+	if (encoding == "UTF-16BE") {
+		return true;
+	}
+
 	UINT code = atoi(encoding.c_str());
 	if (code == 0) {
 		return false;
@@ -51,19 +75,20 @@ bool ZLWin32EncodingConverterProvider::providesConverter(const std::string &enco
 
 	static const std::string TEST = "TEST";
 	int len = TEST.length();
-	ZLUnicodeUtil::Ucs2String ucs2String;
-	ucs2String.insert(ucs2String.end(), len, 0);
-	return MultiByteToWideChar(code, MB_PRECOMPOSED, TEST.c_str(), len, (WCHAR*)&ucs2String.front(), len) == len;
+	return MultiByteToWideChar(code, 0, TEST.c_str(), len, 0, 0) == len;
 }
 
 shared_ptr<ZLEncodingConverter> ZLWin32EncodingConverterProvider::createConverter(const std::string &encoding) {
+	if (encoding == "UTF-16") {
+		return new ZLWin32Utf16EncodingConverter(true);
+	}
+	if (encoding == "UTF-16BE") {
+		return new ZLWin32Utf16EncodingConverter(false);
+	}
 	return new ZLWin32EncodingConverter(atoi(encoding.c_str()));
 }
 
 ZLWin32EncodingConverter::ZLWin32EncodingConverter(UINT code) : myCode(code), myUseStoredCharacter(false) {
-}
-
-ZLWin32EncodingConverter::~ZLWin32EncodingConverter() {
 }
 
 void ZLWin32EncodingConverter::convert(std::string &dst, const char *srcStart, const char *srcEnd) {
@@ -77,7 +102,7 @@ void ZLWin32EncodingConverter::convert(std::string &dst, const char *srcStart, c
 	if (myUseStoredCharacter) {
 		WCHAR symbol;
 		char buf[2] = { myStoredCharacter, *srcStart };
-		if (MultiByteToWideChar(myCode, MB_PRECOMPOSED, buf, 2, &symbol, 1) == 1) {
+		if (MultiByteToWideChar(myCode, 0, buf, 2, &symbol, 1) == 1) {
 			hasFirstChar = true;
 			myBuffer.push_back(symbol);
 			srcStart++;
@@ -92,14 +117,14 @@ void ZLWin32EncodingConverter::convert(std::string &dst, const char *srcStart, c
 		if (hasFirstChar) {
 			bufferStart++;
 		}
-		int ucs2Len = MultiByteToWideChar(myCode, MB_PRECOMPOSED, srcStart, len, bufferStart, len);
+		int ucs2Len = MultiByteToWideChar(myCode, 0, srcStart, len, bufferStart, len);
 		myBuffer.erase(myBuffer.begin() + ucs2Len + (hasFirstChar ? 1 : 0), myBuffer.end());
 
 		if (ucs2Len != len) {
 			myRBuffer.append(len, '\0');
 			char defaultChar = 'X';
 			BOOL usedDefaultChar = false;
-			int len1 = WideCharToMultiByte(myCode, MB_PRECOMPOSED, bufferStart, ucs2Len, (char*)myRBuffer.data(), len, &defaultChar, &usedDefaultChar);
+			int len1 = WideCharToMultiByte(myCode, 0, bufferStart, ucs2Len, (char*)myRBuffer.data(), len, &defaultChar, &usedDefaultChar);
 			if (len1 == len - 1) {
 				myUseStoredCharacter = true;
 				myStoredCharacter = *(srcEnd - 1);
@@ -108,7 +133,9 @@ void ZLWin32EncodingConverter::convert(std::string &dst, const char *srcStart, c
 		}
 	}
 
-	ZLUnicodeUtil::ucs2ToUtf8(dst, myBuffer);
+	std::string toAppend;
+	ZLUnicodeUtil::ucs2ToUtf8(toAppend, myBuffer);
+	dst += toAppend;
 	myBuffer.clear();
 }
 
@@ -125,11 +152,71 @@ bool ZLWin32EncodingConverter::fillTable(int *map) {
 	WCHAR out;
 	for (int i = 0; i < 256; ++i) {
 		in = i;
-		if (MultiByteToWideChar(myCode, MB_PRECOMPOSED, &in, 1, &out, 1) == 1) {
+		if (MultiByteToWideChar(myCode, 0, &in, 1, &out, 1) == 1) {
 			map[i] = out;
 		} else {
 			map[i] = i;
 		}
 	}
 	return true;
+}
+
+ZLWin32Utf16EncodingConverter::ZLWin32Utf16EncodingConverter(bool littleEndian) : myLittleEndian(littleEndian), myUseStoredCharacter(false) {
+}
+
+void ZLWin32Utf16EncodingConverter::convert(std::string &dst, const char *srcStart, const char *srcEnd) {
+	if (srcStart == srcEnd) {
+		return;
+	}
+
+	const unsigned char *ptr = (const unsigned char*)srcStart;
+	ZLUnicodeUtil::Ucs2Char ch;
+
+	myBuffer.clear();
+
+	if (myUseStoredCharacter) {
+		if (myLittleEndian) {
+			ch = *ptr;
+			ch <<= 8;
+			ch += myStoredCharacter;
+		} else {
+			ch = myStoredCharacter;
+			ch <<= 8;
+			ch += *ptr;
+		}
+		myBuffer.push_back(ch);
+		++ptr;
+	}
+
+	const unsigned char *end = (const unsigned char*)srcEnd;
+	if ((end - ptr) % 2 == 1) {
+		myStoredCharacter = *end;
+		myUseStoredCharacter = true;
+		--end;
+	} else {
+		myUseStoredCharacter = false;
+	}
+
+	if (myLittleEndian) {
+		for (; ptr < end; ptr += 2) {
+			myBuffer.push_back((((ZLUnicodeUtil::Ucs2Char)*(ptr + 1)) << 8) + *ptr);
+		}
+	} else {
+		for (; ptr < end; ptr += 2) {
+			myBuffer.push_back((((ZLUnicodeUtil::Ucs2Char)*ptr) << 8) + *(ptr + 1));
+		}
+	}
+
+	std::string toAppend;
+	ZLUnicodeUtil::ucs2ToUtf8(toAppend, myBuffer);
+	dst += toAppend;
+	myBuffer.clear();
+}
+
+void ZLWin32Utf16EncodingConverter::reset() {
+	myUseStoredCharacter = false;
+}
+
+bool ZLWin32Utf16EncodingConverter::fillTable(int *map) {
+	return false;
 }

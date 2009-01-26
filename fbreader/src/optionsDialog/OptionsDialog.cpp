@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <ZLPaintContext.h>
 #include <ZLLanguageList.h>
 #include <ZLEncodingConverter.h>
+#include <ZLNetworkManager.h>
 
 #include <optionEntries/ZLToggleBooleanOptionEntry.h>
 #include <optionEntries/ZLColorOptionBuilder.h>
@@ -42,8 +43,8 @@
 #include "../fbreader/FBReader.h"
 #include "../fbreader/BookTextView.h"
 #include "../fbreader/CollectionView.h"
-#include "../fbreader/RecentBooksView.h"
 
+#include "../network/NetworkLink.h"
 #include "../collection/BookCollection.h"
 #include "../external/ProgramCollection.h"
 #include "../formats/FormatPlugin.h"
@@ -96,11 +97,11 @@ int RotationTypeEntry::initialCheckedIndex() const {
 	switch (myAngleOption.value()) {
 		default:
 			return 0;
-		case ZLViewWidget::DEGREES90:
+		case ZLView::DEGREES90:
 			return 1;
-		case ZLViewWidget::DEGREES180:
+		case ZLView::DEGREES180:
 			return 2;
-		case ZLViewWidget::DEGREES270:
+		case ZLView::DEGREES270:
 			return 3;
 		case -1:
 			return 4;
@@ -108,16 +109,16 @@ int RotationTypeEntry::initialCheckedIndex() const {
 }
 
 void RotationTypeEntry::onAccept(int index) {
-	int angle = ZLViewWidget::DEGREES0;
+	int angle = ZLView::DEGREES0;
 	switch (index) {
 		case 1:
-			angle = ZLViewWidget::DEGREES90;
+			angle = ZLView::DEGREES90;
 			break;
 		case 2:
-			angle = ZLViewWidget::DEGREES180;
+			angle = ZLView::DEGREES180;
 			break;
 		case 3:
-			angle = ZLViewWidget::DEGREES270;
+			angle = ZLView::DEGREES270;
 			break;
 		case 4:
 			angle = -1;
@@ -152,18 +153,34 @@ OptionsDialog::OptionsDialog(FBReader &fbreader) {
 
 	myDialog = ZLDialogManager::instance().createOptionsDialog(ZLResourceKey("OptionsDialog"), new OptionsApplyRunnable(fbreader), true);
 
-	ZLDialogContent &generalTab = myDialog->createTab(ZLResourceKey("Library"));
+	ZLDialogContent &libraryTab = myDialog->createTab(ZLResourceKey("Library"));
 	CollectionView &collectionView = fbreader.collectionView();
-	generalTab.addOption(ZLResourceKey("bookPath"), collectionView.collection().PathOption);
-	generalTab.addOption(ZLResourceKey("lookInSubdirectories"), collectionView.collection().ScanSubdirsOption);
-	RecentBooksView &recentBooksView = (RecentBooksView&)*fbreader.myRecentBooksView;
-	generalTab.addOption(ZLResourceKey("recentListSize"), new ZLSimpleSpinOptionEntry(recentBooksView.lastBooks().MaxListSizeOption, 1));
-	ZLToggleBooleanOptionEntry *showTagsEntry = new ZLToggleBooleanOptionEntry(collectionView.ShowTagsOption);
-	ZLOptionEntry *showAllBooksTagEntry = new ZLSimpleBooleanOptionEntry(collectionView.ShowAllBooksTagOption);
-	showTagsEntry->addDependentEntry(showAllBooksTagEntry);
-	generalTab.addOption(ZLResourceKey("showTags"), showTagsEntry);
-	generalTab.addOption(ZLResourceKey("showAllBooksList"), showAllBooksTagEntry);
-	showTagsEntry->onStateChanged(showTagsEntry->initialState());
+	libraryTab.addOption(ZLResourceKey("bookPath"), collectionView.collection().PathOption);
+	libraryTab.addOption(ZLResourceKey("lookInSubdirectories"), collectionView.collection().ScanSubdirsOption);
+	libraryTab.addOption(ZLResourceKey("collectBooksWithoutMetaInfo"), collectionView.collection().CollectAllBooksOption);
+	libraryTab.addOption(ZLResourceKey("downloadDirectory"), NetworkLinkCollection::instance().DirectoryOption);
+	libraryTab.addOption(ZLResourceKey("showAllBooksTag"), collectionView.ShowAllBooksTagOption);
+
+	ZLDialogContent &networkTab = myDialog->createTab(ZLResourceKey("NetworkLibrary"));
+	NetworkLinkCollection &linkCollection = NetworkLinkCollection::instance();
+	const size_t linkCollectionSize = linkCollection.size();
+	for (size_t i = 0; i < linkCollectionSize; ++i) {
+		NetworkLink &link = linkCollection.link(i);
+		networkTab.addOption(link.SiteName, "", new ZLSimpleBooleanOptionEntry(link.OnOption));
+	}
+	ZLNetworkManager &networkManager = ZLNetworkManager::instance();
+	if (!networkManager.providesProxyInfo()) {
+		ZLToggleBooleanOptionEntry *useProxyEntry = new ZLToggleBooleanOptionEntry(networkManager.UseProxyOption);
+		networkTab.addOption(ZLResourceKey("useProxy"), useProxyEntry);
+		ZLSimpleStringOptionEntry *proxyHostEntry = new ZLSimpleStringOptionEntry(networkManager.ProxyHostOption);
+		networkTab.addOption(ZLResourceKey("proxyHost"), proxyHostEntry);
+		ZLSimpleStringOptionEntry *proxyPortEntry = new ZLSimpleStringOptionEntry(networkManager.ProxyPortOption);
+		networkTab.addOption(ZLResourceKey("proxyPort"), proxyPortEntry);
+		useProxyEntry->addDependentEntry(proxyHostEntry);
+		useProxyEntry->addDependentEntry(proxyPortEntry);
+		useProxyEntry->onStateChanged(useProxyEntry->initialState());
+	}
+	networkTab.addOption(ZLResourceKey("timeout"), new ZLSimpleSpinOptionEntry(networkManager.TimeoutOption, 5));
 
 	ZLDialogContent &encodingTab = myDialog->createTab(ZLResourceKey("Language"));
 	encodingTab.addOption(ZLResourceKey("autoDetect"), new ZLSimpleBooleanOptionEntry(PluginCollection::instance().LanguageAutoDetectOption));
@@ -178,6 +195,9 @@ OptionsDialog::OptionsDialog(FBReader &fbreader) {
 
 	ZLDialogContent &selectionTab = myDialog->createTab(ZLResourceKey("Selection"));
 	selectionTab.addOption(ZLResourceKey("enableSelection"), FBView::selectionOption());
+
+	ZLDialogContent &cssTab = myDialog->createTab(ZLResourceKey("CSS"));
+	cssTab.addOption(ZLResourceKey("overrideSpecifiedFonts"), ZLTextStyleCollection::instance().OverrideSpecifiedFontsOption);
 
 	ZLDialogContent &marginTab = myDialog->createTab(ZLResourceKey("Margins"));
 	FBMargins &margins = FBView::margins();
@@ -207,8 +227,9 @@ OptionsDialog::OptionsDialog(FBReader &fbreader) {
 	builder.addOption(BACKGROUND, baseStyle.BackgroundColorOption);
 	builder.addOption(resource["selectionBackground"].value(), baseStyle.SelectionBackgroundColorOption);
 	builder.addOption(resource["text"].value(), baseStyle.RegularTextColorOption);
-	builder.addOption(resource["internalLink"].value(), baseStyle.InternalHyperlinkTextColorOption);
-	builder.addOption(resource["externalLink"].value(), baseStyle.ExternalHyperlinkTextColorOption);
+	builder.addOption(resource["internalLink"].value(), baseStyle.hyperlinkColorOption("internal"));
+	builder.addOption(resource["externalLink"].value(), baseStyle.hyperlinkColorOption("external"));
+	builder.addOption(resource["bookLink"].value(), baseStyle.hyperlinkColorOption("book"));
 	builder.addOption(resource["highlighted"].value(), baseStyle.SelectedTextColorOption);
 	builder.addOption(resource["treeLines"].value(), baseStyle.TreeLinesColorOption);
 	builder.addOption(resource["indicator"].value(), (FBView::commonIndicatorInfo().ColorOption));

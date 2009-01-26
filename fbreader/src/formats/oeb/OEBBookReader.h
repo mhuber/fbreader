@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,9 +34,11 @@ public:
 	OEBBookReader(BookModel &model);
 	bool readBook(const std::string &fileName);
 
+private:
 	void startElementHandler(const char *tag, const char **attributes);
 	void endElementHandler(const char *tag);
-	void characterDataHandler(const char *text, int len);
+
+	void generateTOC();
 
 private:
 	enum ReaderState {
@@ -53,6 +55,7 @@ private:
 	std::string myFilePrefix;
 	std::map<std::string,std::string> myIdToHref;
 	std::vector<std::string> myHtmlFileNames;
+	std::string myNCXTOCFileName;
 	std::vector<std::pair<std::string,std::string> > myTourTOC;
 	std::vector<std::pair<std::string,std::string> > myGuideTOC;
 };

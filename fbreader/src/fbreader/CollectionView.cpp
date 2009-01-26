@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,34 +23,45 @@
 #include "CollectionView.h"
 #include "CollectionModel.h"
 #include "FBReader.h"
+#include "FBReaderActions.h"
 #include "BookInfoDialog.h"
 
 #include "../collection/BookList.h"
 
-static const std::string LIBRARY = "Library";
+class RebuildCollectionRunnable : public ZLRunnable {
+
+public:
+	RebuildCollectionRunnable(CollectionView &view) : myView(view) {}
+	void run() {
+		if (myView.myDoSynchronizeCollection) {
+			if (!myView.collection().synchronize()) {
+				return;
+			}
+		}
+		myView.collection().rebuild(true);
+		myView.myDoUpdateModel = true;
+		myView.collection().authors();
+	}
+
+private:
+	CollectionView &myView;
+};
 
 CollectionView::CollectionView(FBReader &reader, shared_ptr<ZLPaintContext> context) : FBView(reader, context),
-	ShowTagsOption(ZLCategoryKey::LOOK_AND_FEEL, LIBRARY, "ShowTags", true),
-	ShowAllBooksTagOption(ZLCategoryKey::LOOK_AND_FEEL, LIBRARY, "ShowAllBooksTag", true),
-	myUpdateModel(true) {
-	setModel(new CollectionModel(*this, myCollection));
-	myShowTags = ShowTagsOption.value();
+	ShowAllBooksTagOption(ZLCategoryKey::LOOK_AND_FEEL, "Library", "ShowAllBooksTag", false),
+	myDoSynchronizeCollection(false),
+	myDoUpdateModel(true) {
+	setModel(new CollectionModel(*this, myCollection), "");
+	myOrganizeByTags = organizeByTags();
 	myShowAllBooksList = ShowAllBooksTagOption.value();
 }
 
 CollectionView::~CollectionView() {
-	setModel(0);
-}
-
-void CollectionView::updateModel() {
-	myCollection.rebuild(true);
-	myUpdateModel = true;
+	setModel(0, "");
 }
 
 void CollectionView::synchronizeModel() {
-	if (myCollection.synchronize()) {
-		updateModel();
-	}
+	myDoSynchronizeCollection = true;
 }
 
 const std::string &CollectionView::caption() const {
@@ -58,47 +69,85 @@ const std::string &CollectionView::caption() const {
 }
 
 void CollectionView::selectBook(BookDescriptionPtr book) {
-	if (myUpdateModel) {
+	mySelectedBook = book;
+
+	if (myDoUpdateModel) {
 		shared_ptr<ZLTextModel> oldModel = model();
-		setModel(0);
+		setModel(0, "");
 		((CollectionModel&)*oldModel).update();
-		setModel(oldModel);
-		myUpdateModel = false;
+		setModel(oldModel, "");
+		myDoUpdateModel = false;
 	}
-	collectionModel().removeAllMarks();
-	const std::vector<int> &toSelect = collectionModel().paragraphNumbersByBook(book);
-	for (std::vector<int>::const_iterator it = toSelect.begin(); it != toSelect.end(); ++it) {
-		highlightParagraph(*it);
-	}
-	if (!toSelect.empty()) {
-		gotoParagraph(toSelect[toSelect.size() - 1]);
-		scrollPage(false, ZLTextView::SCROLL_PERCENTAGE, 40);
+
+	if (!book.isNull()) {
+		collectionModel().removeAllMarks();
+		const std::vector<int> &toSelect = collectionModel().paragraphIndicesByBook(book);
+		for (std::vector<int>::const_iterator it = toSelect.begin(); it != toSelect.end(); ++it) {
+			highlightParagraph(*it);
+		}
+		if (!toSelect.empty()) {
+			preparePaintInfo();
+			gotoParagraph(toSelect[toSelect.size() - 1]);
+			scrollPage(false, ZLTextView::SCROLL_PERCENTAGE, 40);
+		}
 	}
 }
 
 void CollectionView::paint() {
-	if ((myShowTags != ShowTagsOption.value()) ||
-			(myShowAllBooksList != ShowAllBooksTagOption.value())) {
-		myShowTags = ShowTagsOption.value();
-		myShowAllBooksList = ShowAllBooksTagOption.value();
-		myUpdateModel = true;
+	if (myDoSynchronizeCollection) {
+		myDoSynchronizeCollection = false;
+		RebuildCollectionRunnable runnable(*this);
+		ZLDialogManager::instance().wait(ZLResourceKey("loadingBookList"), runnable);
 	}
-	if (myUpdateModel) {
+	if ((myOrganizeByTags != organizeByTags()) ||
+			(myShowAllBooksList != ShowAllBooksTagOption.value())) {
+		myOrganizeByTags = organizeByTags();
+		myShowAllBooksList = ShowAllBooksTagOption.value();
+		myDoUpdateModel = true;
+	}
+	if (myDoUpdateModel) {
 		shared_ptr<ZLTextModel> oldModel = model();
-		setModel(0);
+		setModel(0, "");
 		((CollectionModel&)*oldModel).update();
-		setModel(oldModel);
-		myUpdateModel = false;
+		setModel(oldModel, "");
+		myDoUpdateModel = false;
+		selectBook(mySelectedBook);
 	}
 	FBView::paint();
 }
 
+bool CollectionView::onStylusMove(int x, int y) {
+	if (FBView::onStylusMove(x, y)) {
+		return true;
+	}
+
+	const ZLTextElementArea *imageArea = elementByCoordinates(x, y);
+	if ((imageArea != 0) && (imageArea->Kind == ZLTextElement::IMAGE_ELEMENT)) {
+		fbreader().setHyperlinkCursor(true);
+		return true;
+	}
+
+	int index = paragraphIndexByCoordinates(x, y);
+	if (index != -1) {
+		BookDescriptionPtr book = collectionModel().bookByParagraphIndex(index);
+		if (!book.isNull()) {
+			fbreader().setHyperlinkCursor(true);
+			return true;
+		}
+	}
+
+	fbreader().setHyperlinkCursor(false);
+	return false;
+}
+
 bool CollectionView::_onStylusPress(int x, int y) {
+	fbreader().setHyperlinkCursor(false);
+
 	const ZLTextElementArea *imageArea = elementByCoordinates(x, y);
 	if ((imageArea != 0) && (imageArea->Kind == ZLTextElement::IMAGE_ELEMENT)) {
 		ZLTextWordCursor cursor = startCursor();
-		cursor.moveToParagraph(imageArea->ParagraphNumber);
-		cursor.moveTo(imageArea->TextElementNumber, 0);
+		cursor.moveToParagraph(imageArea->ParagraphIndex);
+		cursor.moveTo(imageArea->ElementIndex, 0);
 		const ZLTextElement &element = cursor.element();
 		if (element.kind() != ZLTextElement::IMAGE_ELEMENT) {
 			return false;
@@ -108,28 +157,28 @@ bool CollectionView::_onStylusPress(int x, int y) {
 		const std::string &id = imageElement.id();
 
 		if (id == CollectionModel::BookInfoImageId) {
-			editBookInfo(collectionModel().bookByParagraphNumber(imageArea->ParagraphNumber));
+			editBookInfo(collectionModel().bookByParagraphIndex(imageArea->ParagraphIndex));
 			return true;
 		} else if (id == CollectionModel::RemoveBookImageId) {
-			removeBook(collectionModel().bookByParagraphNumber(imageArea->ParagraphNumber));
+			removeBook(collectionModel().bookByParagraphIndex(imageArea->ParagraphIndex));
 			return true;
 		} else if (id == CollectionModel::RemoveTagImageId) {
-			removeTag(collectionModel().tagByParagraphNumber(imageArea->ParagraphNumber));
+			removeTag(collectionModel().tagByParagraphIndex(imageArea->ParagraphIndex));
 			return true;
 		} else if (id == CollectionModel::TagInfoImageId) {
-			editTagInfo(collectionModel().tagByParagraphNumber(imageArea->ParagraphNumber));
+			editTagInfo(collectionModel().tagByParagraphIndex(imageArea->ParagraphIndex));
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	int index = paragraphIndexByCoordinate(y);
+	int index = paragraphIndexByCoordinates(x, y);
 	if (index == -1) {
 		return false;
 	}
 
-	BookDescriptionPtr book = collectionModel().bookByParagraphNumber(index);
+	BookDescriptionPtr book = collectionModel().bookByParagraphIndex(index);
 	if (!book.isNull()) {
 		fbreader().openBook(book);
 		fbreader().showBookTextView();
@@ -142,7 +191,7 @@ bool CollectionView::_onStylusPress(int x, int y) {
 void CollectionView::editBookInfo(BookDescriptionPtr book) {
 	if (!book.isNull() && BookInfoDialog(myCollection, book->fileName()).dialog().run()) {
 		myCollection.rebuild(false);
-		myUpdateModel = true;
+		myDoUpdateModel = true;
 		selectBook(book);
 		application().refreshWindow();
 	}
@@ -151,6 +200,10 @@ void CollectionView::editBookInfo(BookDescriptionPtr book) {
 void CollectionView::removeBook(BookDescriptionPtr book) {
 	if (book.isNull()) {
 		return;
+	}
+
+	if (book == mySelectedBook) {
+		mySelectedBook = 0;
 	}
 
 	CollectionModel &cModel = collectionModel();
@@ -177,7 +230,9 @@ void CollectionView::removeBook(BookDescriptionPtr book) {
 			gotoParagraph(index);
 		}
 		rebuildPaintInfo(true);
+		selectBook(mySelectedBook);
 		application().refreshWindow();
+		myCollection.rebuild(false);
 	}
 }
 
@@ -219,11 +274,29 @@ void CollectionView::removeTag(const std::string &tag) {
 	if (code != DONT_REMOVE) {
 		collectionModel().removeAllMarks();
 		myCollection.removeTag(tag, code == REMOVE_SUBTREE);
-		updateModel();
+		myCollection.rebuild(true);
+		myDoUpdateModel = true;
+		selectBook(mySelectedBook);
 		application().refreshWindow();
 	}
 }
 
 CollectionModel &CollectionView::collectionModel() {
 	return (CollectionModel&)*model();
+}
+
+void CollectionView::openWithBook(BookDescriptionPtr book) {
+	RebuildCollectionRunnable runnable(*this);
+	ZLDialogManager::instance().wait(ZLResourceKey("loadingBookList"), runnable);
+	if (book != 0) {
+		selectBook(book);
+	}
+}
+
+bool CollectionView::organizeByTags() const {
+	return ZLStringOption(ZLCategoryKey::LOOK_AND_FEEL, "ToggleButtonGroup", "booksOrder", "").value() == ActionCode::ORGANIZE_BOOKS_BY_TAG;
+}
+
+bool CollectionView::hasContents() const {
+	return !((CollectionModel&)*model()).empty();
 }

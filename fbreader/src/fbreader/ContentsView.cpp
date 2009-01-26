@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,22 @@ ContentsView::ContentsView(FBReader &reader, shared_ptr<ZLPaintContext> context)
 ContentsView::~ContentsView() {
 }
 
+bool ContentsView::onStylusMove(int x, int y) {
+	int index = paragraphIndexByCoordinates(x, y);
+	if ((index < 0) || ((int)model()->paragraphsNumber() <= index)) {
+		fbreader().setHyperlinkCursor(false);
+		return true;
+	}
+
+	const ContentsModel &contentsModel = (const ContentsModel&)*model();
+	const ZLTextTreeParagraph *paragraph = (const ZLTextTreeParagraph*)contentsModel[index];
+	
+	fbreader().setHyperlinkCursor(contentsModel.reference(paragraph) >= 0);
+	return true;
+}
+
 bool ContentsView::_onStylusPress(int x, int y) {
-	int index = paragraphIndexByCoordinate(y);
+	int index = paragraphIndexByCoordinates(x, y);
 	if ((index < 0) || ((int)model()->paragraphsNumber() <= index)) {
 		return false;
 	}
@@ -42,7 +56,7 @@ bool ContentsView::_onStylusPress(int x, int y) {
 	
 	int reference = contentsModel.reference(paragraph);
 
-	if (reference != -1) {
+	if (reference >= 0) {
 		fbreader().bookTextView().gotoParagraph(reference);
 		fbreader().showBookTextView();
 	}
@@ -58,7 +72,7 @@ size_t ContentsView::currentTextViewParagraph(bool includeStart) const {
 	const ZLTextWordCursor &cursor = fbreader().bookTextView().startCursor();
 	if (!cursor.isNull()) {
 		long reference = cursor.paragraphCursor().index();
-		bool startOfParagraph = cursor.wordNumber() == 0;
+		bool startOfParagraph = cursor.elementIndex() == 0;
 		if (cursor.isEndOfParagraph()) {
 			++reference;
 			startOfParagraph = true;
@@ -82,6 +96,7 @@ void ContentsView::gotoReference() {
 	model()->removeAllMarks();
 	const size_t selected = currentTextViewParagraph();
 	highlightParagraph(selected);
+	preparePaintInfo();
 	gotoParagraph(selected);
 	scrollPage(false, ZLTextView::SCROLL_PERCENTAGE, 40);
 }

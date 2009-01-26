@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ void ZLXMLReader::startElementHandler(const char*, const char**) {
 void ZLXMLReader::endElementHandler(const char*) {
 }
 
-void ZLXMLReader::characterDataHandler(const char*, int) {
+void ZLXMLReader::characterDataHandler(const char*, size_t) {
 }
 
 void ZLXMLReader::namespaceListChangedHandler() {
@@ -81,25 +81,35 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 			}
 		}
 	}
-	myInternalReader->init(useWindows1252 ? "windows-1252" : 0);
-
-	myInterrupted = false;
-
-	myNamespaces.push_back(new std::map<std::string, std::string>());
+	initialize(useWindows1252 ? "windows-1252" : 0);
 
 	size_t length;
 	do {
 		length = stream->read(myParserBuffer, BUFFER_SIZE);
-		if (!myInternalReader->parseBuffer(myParserBuffer, length)) {
+		if (!readFromBuffer(myParserBuffer, length)) {
 			break;
 		}
 	} while ((length == BUFFER_SIZE) && !myInterrupted);
 
 	stream->close();
 
-	myNamespaces.clear();
+	shutdown();
 
 	return true;
+}
+
+void ZLXMLReader::initialize(const char *encoding) {
+	myInternalReader->init(encoding);
+	myInterrupted = false;
+	myNamespaces.push_back(new std::map<std::string, std::string>());
+}
+
+void ZLXMLReader::shutdown() {
+	myNamespaces.clear();
+}
+
+bool ZLXMLReader::readFromBuffer(const char *data, int len) {
+	return myInternalReader->parseBuffer(data, len);
 }
 
 bool ZLXMLReader::processNamespaces() const {

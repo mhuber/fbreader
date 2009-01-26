@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ class ZLDialog;
 class ZLOptionsDialog;
 class ZLTreeHandler;
 class ZLApplication;
+class ZLImageData;
 
 class ZLDialogManager {
 
@@ -71,9 +72,12 @@ public:
 	virtual bool selectionDialog(const ZLResourceKey &key, ZLTreeHandler &handler) const = 0;
 
 	void informationBox(const ZLResourceKey &key) const;
-	virtual void informationBox(const ZLResourceKey &key, const std::string &message) const = 0;
+	void informationBox(const ZLResourceKey &key, const std::string &message) const;
+	virtual void informationBox(const std::string &title, const std::string &message) const = 0;
+
 	void errorBox(const ZLResourceKey &key) const;
 	virtual void errorBox(const ZLResourceKey &key, const std::string &message) const = 0;
+
 	int questionBox(const ZLResourceKey &key, const ZLResourceKey &button0, const ZLResourceKey &button1, const ZLResourceKey &button2 = ZLResourceKey()) const;
 	virtual int questionBox(const ZLResourceKey &key, const std::string &message, const ZLResourceKey &button0, const ZLResourceKey &button1, const ZLResourceKey &button2 = ZLResourceKey()) const = 0;
 
@@ -85,6 +89,7 @@ public:
 	};
 	virtual bool isClipboardSupported(ClipboardType type) const = 0;
 	virtual void setClipboardText(const std::string &text, ClipboardType type) const = 0;
+	virtual void setClipboardImage(const ZLImageData &imageData, ClipboardType type) const = 0;
 };
 
 #endif /* __ZLDIALOGMANAGER_H__ */
