@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2009 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,34 @@
  * 02110-1301, USA.
  */
 
-#ifndef __XMLPARSERCURLDATA_H__
-#define __XMLPARSERCURLDATA_H__
+#ifndef __ZLMAEMONETWORKMANAGER_H__
+#define __ZLMAEMONETWORKMANAGER_H__
 
-#include "CurlData.h"
+#include <conic.h>
 
-class ZLXMLReader;
+#include <ZLNetworkManager.h>
 
-class XMLParserCurlData : public CurlData {
+class ZLMaemoNetworkManager : public ZLNetworkManager {
 
 public:
-	XMLParserCurlData(const std::string &url, shared_ptr<ZLXMLReader> reader);
-	~XMLParserCurlData();
+	static void createInstance();
 
 private:
-	shared_ptr<ZLXMLReader> myReader;
+	ZLMaemoNetworkManager();
+	~ZLMaemoNetworkManager();
+
+private:
+	void connect();
+	void release();
+
+	bool providesProxyInfo() const;
+
+	bool useProxy() const;
+	std::string proxyHost() const;
+	std::string proxyPort() const;
+
+private:
+	ConIcConnection *myConnection;
 };
 
-#endif /* __XMLPARSERCURLDATA_H__ */
+#endif /* __ZLMAEMONETWORKMANAGER_H__ */

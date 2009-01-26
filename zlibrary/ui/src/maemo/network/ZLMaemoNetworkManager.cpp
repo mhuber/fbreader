@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Geometer Plus <contact@geometerplus.com>
+ * Copyright (C) 2009 Geometer Plus <contact@geometerplus.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,37 @@
  * 02110-1301, USA.
  */
 
-#include "FBOptions.h"
+#include "ZLMaemoNetworkManager.h"
 
-FBCategoryKey::FBCategoryKey(const std::string &name) : ZLCategoryKey(name) {
+void ZLMaemoNetworkManager::createInstance() {
+	ourInstance = new ZLMaemoNetworkManager();
 }
 
-const FBCategoryKey FBCategoryKey::BOOKS("books");
-const FBCategoryKey FBCategoryKey::SEARCH("search");
-const FBCategoryKey FBCategoryKey::EXTERNAL("external");
+ZLMaemoNetworkManager::ZLMaemoNetworkManager() {
+}
+
+ZLMaemoNetworkManager::~ZLMaemoNetworkManager() {
+}
+
+void ZLMaemoNetworkManager::connect() {
+	// TODO: implement
+}
+
+bool ZLMaemoNetworkManager::providesProxyInfo() const {
+	return true;
+}
+
+bool ZLMaemoNetworkManager::useProxy() const {
+	// TODO: implement
+	return false;
+}
+
+std::string ZLMaemoNetworkManager::proxyHost() const {
+	// TODO: implement
+	return "";
+}
+
+std::string ZLMaemoNetworkManager::proxyPort() const {
+	// TODO: implement
+	return 0;
+}
