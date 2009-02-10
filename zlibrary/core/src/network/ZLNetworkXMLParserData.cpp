@@ -27,12 +27,13 @@ static size_t parseXML(void *ptr, size_t size, size_t nmemb, void *data) {
 }
 
 ZLNetworkXMLParserData::ZLNetworkXMLParserData(const std::string &url, shared_ptr<ZLXMLReader> reader) : ZLNetworkData(url), myReader(reader) {
-	CURL *h = handle();
+/*	CURL *h = handle();
 	if (h != 0) {
 		curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, parseXML);
 		curl_easy_setopt(h, CURLOPT_WRITEDATA, &*myReader);
 		myReader->initialize();
 	}
+	*/
 }
 
 ZLNetworkXMLParserData::~ZLNetworkXMLParserData() {

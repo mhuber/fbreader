@@ -79,11 +79,12 @@ std::string ZLNetworkManager::proxyPort() const {
 }
 
 void ZLNetworkManager::setStandardOptions(CURL *handle, const std::string &proxy) const {
-	if (useProxy()) {
+/*	if (useProxy()) {
 		curl_easy_setopt(handle, CURLOPT_PROXY, proxy.c_str());
 	}
 	curl_easy_setopt(handle, CURLOPT_TIMEOUT, TimeoutOption.value());
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, ConnectTimeoutOption.value());
+	*/
 }
 
 static size_t writeToStream(void *ptr, size_t size, size_t nmemb, void *data) {
@@ -94,7 +95,7 @@ static size_t writeToStream(void *ptr, size_t size, size_t nmemb, void *data) {
 std::string ZLNetworkManager::downloadFile(const std::string &url, const std::string &fileName) const {
 	const ZLResource &errorResource = ZLResource::resource("dialog")["networkError"];
 
-	CURL *curl = curl_easy_init();
+/*	CURL *curl = curl_easy_init();
 	if (!curl) {
 		return errorResource["unknownErrorMessage"].value();
 	}
@@ -132,10 +133,11 @@ std::string ZLNetworkManager::downloadFile(const std::string &url, const std::st
 		case CURLE_OPERATION_TIMEDOUT:
 			return errorResource["operationTimedOutMessage"].value();
 	}
+	*/
 }
 
 std::string ZLNetworkManager::perform(const std::vector<shared_ptr<ZLNetworkData> > &dataList) const {
-	const ZLResource &errorResource = ZLResource::resource("dialog")["networkError"];
+/*	const ZLResource &errorResource = ZLResource::resource("dialog")["networkError"];
 
 	if (dataList.empty()) {
 		return errorResource["emptyLibrariesList"].value();
@@ -198,4 +200,5 @@ std::string ZLNetworkManager::perform(const std::vector<shared_ptr<ZLNetworkData
 		result += *et;
 	}
 	return result;
+	*/
 }

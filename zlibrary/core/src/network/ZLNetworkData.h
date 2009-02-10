@@ -20,7 +20,9 @@
 #ifndef __ZLNETWORKDATA_H__
 #define __ZLNETWORKDATA_H__
 
-#include <curl/curl.h>
+//#include <curl/curl.h>
+
+#define CURL void
 
 #include <string>
 

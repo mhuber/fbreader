@@ -1,7 +1,7 @@
 include $(ROOTDIR)/makefiles/platforms.mk
 
 VERSION = $(shell cat $(ROOTDIR)/fbreader/VERSION)
-MAKE = make ROOTDIR=$(ROOTDIR)
+MAKE = make -j4 ROOTDIR=$(ROOTDIR)
 LIBMAKE = $(MAKE) ZLSHARED=$(ZLSHARED)
 
 include $(ROOTDIR)/makefiles/arch/$(TARGET_ARCH).mk
@@ -14,7 +14,9 @@ BASEDIR ?= $(SHAREDIR)
 
 XML_LIBS ?= -lexpat
 ARCHIVER_LIBS ?= -lz -lbz2
-NETWORK_LIBS ?= -lcurl
+#NETWORK_LIBS ?= -lcurl
+NETWORK_LIBS = 
+
 
 CFLAGS += -DINSTALLDIR=\"$(INSTALLDIR)\" -DBASEDIR=\"$(BASEDIR)\" -DLIBDIR=\"$(LIBDIR)\" -DIMAGEDIR=\"$(IMAGEDIR)\" -DAPPIMAGEDIR=\"$(APPIMAGEDIR)\" -DVERSION=\"$(VERSION)\"
 ifeq "$(ZLSHARED)" "yes"

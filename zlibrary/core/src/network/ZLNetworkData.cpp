@@ -20,15 +20,15 @@
 #include "ZLNetworkData.h"
 
 ZLNetworkData::ZLNetworkData(const std::string &url) : myURL(url) {
-	myHandle = curl_easy_init();
+//	myHandle = curl_easy_init();
 	if (myHandle != 0) {
-		curl_easy_setopt(myHandle, CURLOPT_URL, myURL.c_str());
+//		curl_easy_setopt(myHandle, CURLOPT_URL, myURL.c_str());
 	}
 }
 
 ZLNetworkData::~ZLNetworkData() {
 	if (myHandle != 0) {
-		curl_easy_cleanup(myHandle);
+		//curl_easy_cleanup(myHandle);
 	}
 }
 
