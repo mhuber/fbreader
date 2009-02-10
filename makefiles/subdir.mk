@@ -1,6 +1,6 @@
 include $(ROOTDIR)/makefiles/config.mk
 
-INCLUDE = $(ZINCLUDE) $(EXTERNALINCLUDE)
+INCLUDE = $(ZINCLUDE) $(EXTERNAL_INCLUDE)
 
 HEADERS = $(wildcard *.h)
 SOURCES = $(wildcard *.cpp)
@@ -9,9 +9,9 @@ OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
 .SUFFIXES: .cpp .o .h
 
 .cpp.o:
-	@echo -n "Compiling $@ ..."
+	@echo -n 'Compiling $@ ...'
 	@$(CC) -MMD -c $(CFLAGS) $(INCLUDE) $<
-	@echo " OK"
+	@echo ' OK'
 
 all: $(OBJECTS)
 
