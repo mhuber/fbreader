@@ -1,3 +1,9 @@
+fbreader (0.10.3-1.oi1) stable; urgency=low
+
+  * merged with upstream
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Tue, 10 Feb 2009 16:00:10 +0000
+
 fbreader (0.8.17-1.oi19) stable; urgency=low
 
   * new ewl release
