@@ -17,6 +17,9 @@
  * 02110-1301, USA.
  */
 
+#include <ZLLanguageList.h>
+#include <ZLFile.h>
+
 #include "ZLEwlDialogs.h"
 #include "ZLEwlChoicebox.h"
 #include "ZLEwlEntry.h"
@@ -36,6 +39,11 @@
 #include "../../../../../fbreader/src/fbreader/FBView.h"
 #include "../../../../../fbreader/src/bookmodel/BookModel.h"
 #include "../../../../../fbreader/src/fbreader/BookTextView.h"
+#include "../../../../../fbreader/src/formats/FormatPlugin.h"
+#include "../../../../../fbreader/src/description/BookDescriptionUtil.h"
+#include "../../../../../fbreader/src/description/BookDescriptionUtil.h"
+#include "../../../../../zlibrary/core/src/encoding/ZLEncodingConverter.h"
+
 
 bool turbo = false;
 
@@ -280,6 +288,18 @@ void margins_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 			init_entry((char *)text.c_str(), value, f, parent));
 }
 
+void alignment_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	if(choice >= 0 && choice < 4) {
+		ZLTextStyleCollection::instance().baseStyle().AlignmentOption.setValue(choice+1);
+
+		char *alignments[] = { "undefined", "left", "right", "center", "justify" };
+		update_label(choicebox_get_parent(parent), 4, alignments[choice+1]);
+
+		fini_choicebox(parent);
+		redraw_text();
+	}
+}
 
 void fl_indent_handler(int value, Ewl_Widget *parent)
 {
@@ -290,7 +310,7 @@ void fl_indent_handler(int value, Ewl_Widget *parent)
 
 		char *o;
 		asprintf(&o, "%d", value);
-		update_label(entry_get_parent(parent), 5, o);
+		update_label(entry_get_parent(parent), 6, o);
 		if(o)
 			free(o);
 	}
@@ -299,9 +319,16 @@ void fl_indent_handler(int value, Ewl_Widget *parent)
 	redraw_text();
 }
 
-void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+void book_info_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	fini_choicebox(parent);
+	ZLEwlBookInfo(*myFbreader);
+}
+
+void format_style_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	if (choice == 0) {
+		// 1. Font family
 		char **initchoices = (char **)malloc(myContext->fontFamilies().size() * sizeof(char*));
 		char **values = (char **)malloc(myContext->fontFamilies().size() * sizeof(char*));		
 		for(int i = 0; i < myContext->fontFamilies().size(); i++) {
@@ -313,6 +340,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 				init_choicebox((const char**)initchoices, (const char**)values, myContext->fontFamilies().size(),
 					font_family_choicehandler, "Font Family", parent));
 	} else if (choice == 1) {
+		// 2. Font size
 		int count = 13;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
 		char **values = (char **)malloc(count * sizeof(char*));		
@@ -325,11 +353,13 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 				init_choicebox((const char**)initchoices, (const char**)values, count,
 					font_size_choicehandler, "Font Size", parent));
 	} else if (choice == 2) {
+		// 3. Bold
 		ZLBooleanOption &fbold_option = ZLTextStyleCollection::instance().baseStyle().BoldOption;
 		fbold_option.setValue(fbold_option.value() ? false : true);
 		update_label(parent, 2, fbold_option.value() ? "On" : "Off");
 		redraw_text();
 	} else if (choice == 3) {
+		// 4. Line Spacing
 		int count = 16;
 		char **initchoices = (char **)malloc(count * sizeof(char*));		
 		char **values = (char **)malloc(count * sizeof(char*));		
@@ -341,6 +371,19 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 				init_choicebox((const char**)initchoices, (const char**)values, count,
 					line_space_choicehandler, "Line Spacing", parent));
 	} else if (choice == 4) {
+		// 5. Alignment
+		const char *initchoices[] = {
+			"1. left",
+			"2. right",
+			"3. center",
+			"4. justify",
+		};
+
+		const char *values[] = {"", "", "", ""};
+
+		ewl_widget_show(init_choicebox(initchoices, values, 4, alignment_choicehandler, "Alignment", parent));
+	} else if (choice == 5) {
+		// 6. Margins
 		const char *initchoices[] = { 
 			"1. Left Margin",
 			"2. Right Margin",
@@ -362,19 +405,368 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 		};
 
 		ewl_widget_show(init_choicebox(initchoices, values, 4, margins_choicehandler, "Margins", parent));
-	} else if (choice == 5) {
+	} else if (choice == 6) {
+		// 7. First Line Indent
 		ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
 		ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
 
 		ewl_widget_show(fl_indent_option =
 				init_entry("First Line Indent", decoration->FirstLineIndentDeltaOption.value(), fl_indent_handler, parent));
-	} else if(choice == 6) {
+	} else if (choice == 7) {
+		// 8. Auto Hyphenations
+		ZLBooleanOption &ah_option = ZLTextStyleCollection::instance().baseStyle().AutoHyphenationOption;
+		ah_option.setValue(ah_option.value() ? false : true);
+		update_label(parent, 7, ah_option.value() ? "On" : "Off");
+		redraw_text();
+	}
+}
+
+void format_style()
+{
+	Ewl_Widget *w = ewl_widget_name_find("main_win");
+
+	myContext = &(*myFbreader->context());
+
+	const char *initchoices[] = { 		
+		"1. Font Family",
+		"2. Font Size",
+		"3. Bold",
+		"4. Line Spacing",
+		"5. Alignment",
+		"6. Margins",
+		"7. First Line Indent",
+		"8. Auto Hyphenations",
+	};
+
+	ZLStringOption &ff_option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
+	ZLIntegerRangeOption &fs_option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
+	ZLBooleanOption &fbold_option = ZLTextStyleCollection::instance().baseStyle().BoldOption;
+	ZLIntegerOption &lsp_option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
+	ZLIntegerOption &al_option = ZLTextStyleCollection::instance().baseStyle().AlignmentOption;
+	ZLBooleanOption &ah_option = ZLTextStyleCollection::instance().baseStyle().AutoHyphenationOption;
+	ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
+	ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
+	char *fs_option_c, *lsp_option_c, *fl_option_c;
+	asprintf(&fs_option_c, "%dpt", fs_option.value());
+	asprintf(&lsp_option_c, "%d%%", lsp_option.value());
+	asprintf(&fl_option_c, "%d", decoration->FirstLineIndentDeltaOption.value());
+
+	char *alignments[] = { "undefined", "left", "right", "center", "justify" };
+
+	const char *values[] = {
+		ff_option.value().c_str(),
+		fs_option_c,
+		fbold_option.value() ? "On" : "Off",
+		lsp_option_c,
+		alignments[al_option.value()],
+		"",
+		fl_option_c,
+		ah_option.value() ? "On" : "Off",
+	};
+
+	ewl_widget_show(init_choicebox(initchoices, values, 8, format_style_choicehandler, "Format & Style", w, true));
+
+	//FIXME
+	free(fs_option_c);
+	free(fl_option_c);
+	free(lsp_option_c);
+}
+
+void def_enc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
+
+	bool found = false;
+	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+	for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+		pinfos = &(*it)->infos();
+
+		for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = pinfos->begin(); !found && (jt != pinfos->end()); ++jt)
+			if ((*jt)->name() == PluginCollection::instance().DefaultEncodingOption.value())
+				found = true;
+	}
+
+	if(choice >= pinfos->size())
+		return;
+
+	std::string newenc = (*pinfos).at(choice)->name();
+
+	PluginCollection::instance().DefaultEncodingOption.setValue(newenc);
+
+	update_label(choicebox_get_parent(parent), 3, newenc.c_str());
+
+	fini_choicebox(parent);
+}
+
+void def_encset_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+	if(choice > sets.size())
+		return;
+
+	update_label(choicebox_get_parent(parent), 2, sets.at(choice)->name().c_str());
+
+	PluginCollection::instance().DefaultEncodingOption.setValue(sets.at(choice)->infos().at(0)->name());
+	update_label(choicebox_get_parent(parent), 3, sets.at(choice)->infos().at(0)->name().c_str());
+
+	fini_choicebox(parent);
+}
+
+void def_def_language_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
+
+	if(choice < l.size()) {
+		PluginCollection::instance().DefaultLanguageOption.setValue(l.at(choice));
+
+		update_label(choicebox_get_parent(parent), 1, ZLLanguageList::languageName(PluginCollection::instance().DefaultLanguageOption.value()).c_str());
+
+		fini_choicebox(parent);
+	}
+}
+
+void def_language_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	if(choice == 0) {
+		PluginCollection::instance().LanguageAutoDetectOption.setValue(
+				PluginCollection::instance().LanguageAutoDetectOption.value() ?
+				false : true);
+		update_label(parent, 0, PluginCollection::instance().LanguageAutoDetectOption.value() ? "On" : "Off");
+	} else if(choice == 1) {
+		const std::vector<std::string> &l = ZLLanguageList::languageCodes();
+
+		char **initchoices = (char **)malloc((l.size() + 1) * sizeof(char*));
+		char **values = (char **)malloc((l.size() + 1) * sizeof(char*));
+		for(unsigned int i = 0; i < l.size(); i++) {
+			asprintf(&initchoices[i], "%d. %s", i % 8 + 1, ZLLanguageList::languageName(l.at(i)).c_str());
+			asprintf(&values[i], "");
+		}
+		int i = l.size();
+		asprintf(&initchoices[i], "%d. %s", i % 8 + 1, ZLLanguageList::languageName("other").c_str());
+		asprintf(&values[i], "");
+
+		ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, 1 + l.size(), def_def_language_choicehandler, "Default Language", parent, false));
+	} else if(choice == 2) {
+			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+			char **initchoices = (char **)malloc(sets.size() * sizeof(char*));
+			char **values = (char **)malloc(sets.size() * sizeof(char*));
+			for(unsigned int i = 0; i < sets.size(); i++) {
+				asprintf(&initchoices[i], "%d. %s", i % 8 + 1, sets.at(i)->name().c_str());
+				asprintf(&values[i], "");
+			}
+			ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, sets.size(), def_encset_choicehandler, "Default Encoding Set", parent, false));
+	} else if(choice == 3) {
+			const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
+
+			bool found = false;
+			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+			for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+				pinfos = &(*it)->infos();
+
+				for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = pinfos->begin(); !found && (jt != pinfos->end()); ++jt)
+					if ((*jt)->name() == PluginCollection::instance().DefaultEncodingOption.value())
+						found = true;
+			}
+
+			const std::vector<ZLEncodingConverterInfoPtr> &infos = *pinfos;
+
+			char **initchoices = (char **)malloc(infos.size() * sizeof(char*));
+			char **values = (char **)malloc(infos.size() * sizeof(char*));
+			for(unsigned int i = 0; i < infos.size(); i++) {
+				asprintf(&initchoices[i], "%d. %s", i % 8 + 1, infos.at(i)->visibleName().c_str());
+				asprintf(&values[i], "");
+			}
+			ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, infos.size(), def_enc_choicehandler, "Default Encoding", parent, false));
+	} else if(choice == 4) {
+		ZLEncodingCollection::useWindows1252HackOption().setValue(ZLEncodingCollection::useWindows1252HackOption().value() ? false : true);
+		update_label(parent, 4, ZLEncodingCollection::useWindows1252HackOption().value() ? "On" : "Off");
+	}
+}
+
+void language()
+{
+	int cnt = 5;
+	char **initchoices = (char **)malloc(cnt * sizeof(char*));
+	char **values = (char **)malloc(cnt * sizeof(char*));
+
+	int i = 0;
+	asprintf(&initchoices[i], "%d. Detect Language and Encoding", i % 8 + 1);
+	asprintf(&values[i++], "%s", PluginCollection::instance().LanguageAutoDetectOption.value() ? "On" : "Off");
+
+	asprintf(&initchoices[i], "%d. Default Language", i % 8 + 1);
+	if(ZLLanguageList::languageName(PluginCollection::instance().DefaultLanguageOption.value()) == "????????")
+		asprintf(&values[i++], "%s", ZLLanguageList::languageName("other").c_str());
+	else
+		asprintf(&values[i++], "%s", ZLLanguageList::languageName(PluginCollection::instance().DefaultLanguageOption.value()).c_str());
+	asprintf(&initchoices[i], "%d. Default Encoding Set", i % 8 + 1);
+
+	bool found = false;
+	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+	for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+		const std::vector<ZLEncodingConverterInfoPtr> &infos = (*it)->infos();
+
+		for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = infos.begin(); !found && (jt != infos.end()); ++jt) {
+			if ((*jt)->name() == PluginCollection::instance().DefaultEncodingOption.value()) {
+				asprintf(&values[i++], (*it)->name().c_str());
+
+				asprintf(&initchoices[i], "%d. Default Encoding", i % 8 + 1);
+				asprintf(&values[i++], (*jt)->name().c_str());
+				//(*jt)->visibleName().c_str());
+				//myBookInfo->EncodingOption.value().c_str());
+
+				found =true;
+				break;
+			}
+		}
+	}
+	asprintf(&initchoices[i], "%d: iso-8859-1 -> win-1251", i % 8 + 1);
+	asprintf(&values[i], "%s", ZLEncodingCollection::useWindows1252HackOption().value() ? "On" : "Off");
+
+	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, def_language_choicehandler, "Language", ewl_widget_name_find("main_win"), true));
+}
+
+Ewl_Widget *ind_h, *ind_o, *ind_f;
+
+void ind_height_handler(int value, Ewl_Widget *parent)
+{
+	if(value > 0) {
+		FBIndicatorStyle &indicatorInfo = FBView::commonIndicatorInfo();
+		indicatorInfo.HeightOption.setValue(value);
+		char *l;
+		asprintf(&l, "%d", value);
+		update_label(entry_get_parent(parent), 4, l);
+		free(l);
+	}
+	fini_entry(parent);
+	redraw_text();
+}
+
+void ind_offset_handler(int value, Ewl_Widget *parent)
+{
+	if(value < 0)
+		value = 0;
+
+	FBIndicatorStyle &indicatorInfo = FBView::commonIndicatorInfo();
+	indicatorInfo.OffsetOption.setValue(value);
+	char *l;
+	asprintf(&l, "%d", value);
+	update_label(entry_get_parent(parent), 5, l);
+	free(l);
+	fini_entry(parent);
+	redraw_text();
+}
+
+void ind_fontsize_handler(int value, Ewl_Widget *parent)
+{
+	if(value < 4)
+		value = 4;
+	FBIndicatorStyle &indicatorInfo = FBView::commonIndicatorInfo();
+	indicatorInfo.FontSizeOption.setValue(value);
+	char *l;
+	asprintf(&l, "%dpt", value);
+	update_label(entry_get_parent(parent), 6, l);
+	free(l);
+	fini_entry(parent);
+	redraw_text();
+}
+
+#define toggle_bool_option(a, b) a.setValue(a.value() ? false : true); update_label(parent, b, a.value() ? "On" : "Off");
+
+void indicator_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	FBIndicatorStyle &indicatorInfo = FBView::commonIndicatorInfo();
+	switch(choice) {
+		case 0:
+			indicatorInfo.TypeOption.setValue(
+					(indicatorInfo.TypeOption.value() == ZLTextPositionIndicatorInfo::FB_INDICATOR) ?
+					ZLTextPositionIndicatorInfo::NONE : ZLTextPositionIndicatorInfo::FB_INDICATOR);
+
+			update_label(parent, 0, (indicatorInfo.TypeOption.value() == ZLTextPositionIndicatorInfo::FB_INDICATOR) ? "On" : "Off");
+	redraw_text();
+			break;
+		case 1:
+			toggle_bool_option(myFbreader->bookTextView().ShowTOCMarksOption, 1);
+	redraw_text();
+			break;
+		case 2:
+			toggle_bool_option(indicatorInfo.ShowTextPositionOption, 2);
+	redraw_text();
+			break;
+		case 3:
+			toggle_bool_option(indicatorInfo.ShowTimeOption, 3);
+	redraw_text();
+			break;
+		case 4:
+			ewl_widget_show(ind_h = init_entry("Indicator Height", indicatorInfo.HeightOption.value(), ind_height_handler, parent));
+			break;
+		case 5:
+			ewl_widget_show(ind_o = init_entry("Indicator Offset", indicatorInfo.OffsetOption.value(), ind_offset_handler, parent));
+			break;
+		case 6:
+			ewl_widget_show(ind_f = init_entry("Indicator Font Size", indicatorInfo.FontSizeOption.value(), ind_fontsize_handler, parent));
+			break;
+	}
+}
+
+void indicator()
+{
+	FBIndicatorStyle &indicatorInfo = FBView::commonIndicatorInfo();
+
+	int cnt = 7;
+	char **initchoices = (char **)malloc(cnt * sizeof(char*));
+	char **values = (char **)malloc(cnt * sizeof(char*));
+
+	int i = 0;
+	asprintf(&initchoices[i], "%d. Show Indicator", i % 8 + 1);
+	asprintf(&values[i++], "%s", (indicatorInfo.TypeOption.value() == ZLTextPositionIndicatorInfo::FB_INDICATOR) ? "On" : "Off");
+
+	asprintf(&initchoices[i], "%d. Show TOC Marks", i % 8 + 1);
+	asprintf(&values[i++], "%s", myFbreader->bookTextView().ShowTOCMarksOption.value() ? "On" : "Off");
+
+	asprintf(&initchoices[i], "%d. Show Position", i % 8 + 1);
+	asprintf(&values[i++], "%s", indicatorInfo.ShowTextPositionOption.value() ? "On" : "Off");
+
+	asprintf(&initchoices[i], "%d. Show Time and Battery", i % 8 + 1);
+	asprintf(&values[i++], "%s", indicatorInfo.ShowTimeOption.value() ? "On" : "Off");
+
+	asprintf(&initchoices[i], "%d. Indicator Height", i % 8 + 1);
+	asprintf(&values[i++], "%d", indicatorInfo.HeightOption.value());
+
+	asprintf(&initchoices[i], "%d. Offset from Text", i % 8 + 1);
+	asprintf(&values[i++], "%d", indicatorInfo.OffsetOption.value());
+
+	asprintf(&initchoices[i], "%d. Font Size", i % 8 + 1);
+	asprintf(&values[i++], "%dpt", indicatorInfo.FontSizeOption.value());
+
+	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, indicator_choicehandler, "Indicator", ewl_widget_name_find("main_win"), true));
+}
+
+void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	if(choice == 0) {
+		// Book Info
+		//fini_choicebox(parent);
+		ZLEwlBookInfo(*myFbreader);
+	} else if(choice == 1) {
+		// Language
+		//fini_choicebox(parent);
+		language();
+	} else if(choice == 2) {
+		// Format & Style
+		//fini_choicebox(parent);
+		format_style();
+	} else if(choice == 3) {
+		// Indicator
+		//fini_choicebox(parent);
+		indicator();
+	} else if(choice == 4) {
+		// Turbo Mode
 		if(turbo) {
 			turbo = false;
-			update_label(parent, 6, "Off");
+			update_label(parent, 4, "Off");
 		} else {
 			turbo = true;
-			update_label(parent, 6, "On");;
+			update_label(parent, 4, "On");;
 		}
 	}
 }
@@ -386,39 +778,22 @@ void ZLEwlOptionsDialog(FBReader &f)
 	myFbreader = &f;
 	myContext = &(*f.context());
 
-	const char *initchoices[] = { 		
-		"1. Font Family",
-		"2. Font Size",
-		"3. Bold",
-		"4. Line Spacing",
-		"5. Margins",
-		"6. First Line Indent",
-		"7. Turbo mode",
+	const char *initchoices[] = {
+		"1. Book Info",
+		"2. Language",
+		"3. Format & Style",
+		"4. Indicator",
+		"5. Turbo mode",
 	};
 
-	ZLStringOption &ff_option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
-	ZLIntegerRangeOption &fs_option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
-	ZLBooleanOption &fbold_option = ZLTextStyleCollection::instance().baseStyle().BoldOption;
-	ZLIntegerOption &lsp_option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
-	ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
-	ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
-	char *fs_option_c, *lsp_option_c, *fl_option_c;
-	asprintf(&fs_option_c, "%dpt", fs_option.value());
-	asprintf(&lsp_option_c, "%d%%", lsp_option.value());
-	asprintf(&fl_option_c, "%d", decoration->FirstLineIndentDeltaOption.value());
-
 	const char *values[] = {
-		ff_option.value().c_str(),	
-		fs_option_c,
-		fbold_option.value() ? "On" : "Off",
-		lsp_option_c,
-		"",
-		fl_option_c,
+		"", "", "", "",
 		turbo ? "On" : "Off",
 	};
 
-	ewl_widget_show(init_choicebox(initchoices, values, 7, options_dialog_choicehandler, "Settings", w, true));
+	ewl_widget_show(init_choicebox(initchoices, values, 5, options_dialog_choicehandler, "Settings", w, true));
 }
+
 
 ZLTextTreeParagraph *curTOCParent;
 
@@ -714,4 +1089,226 @@ void ZLEwlSearchDialog(FBReader &f)
 	myFbreader = &f;
 
 	ewl_widget_show(init_virtk(w, "Search", search_input_handler));
+}
+
+
+// book info dialogs
+BookInfo *myBookInfo;
+BookDescriptionPtr description;
+
+void set_encoding(std::string enc)
+{
+	BookDescriptionPtr description = new BookDescription(myFbreader->myModel->fileName());
+	description->myEncoding = enc;
+	BookDescriptionUtil::saveInfo(ZLFile(myFbreader->myModel->fileName()));
+
+	myBookInfo->EncodingOption.setValue(enc);
+
+	myFbreader->openFile(myFbreader->myModel->fileName());
+
+	myFbreader->clearTextCaches();
+    myFbreader->refreshWindow();
+}
+
+void enc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
+
+	bool found = false;
+	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+	for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+		pinfos = &(*it)->infos();
+
+		for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = pinfos->begin(); !found && (jt != pinfos->end()); ++jt)
+			if ((*jt)->name() == myBookInfo->EncodingOption.value())
+				found = true;
+	}
+
+	if(choice >= pinfos->size())
+		return;
+
+	std::string newenc = (*pinfos).at(choice)->name();
+
+	fini_choicebox(choicebox_get_parent(parent));
+	fini_choicebox(parent);
+	set_encoding(newenc);
+	ZLEwlBookInfo(*myFbreader);
+}
+
+void encset_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+	if(choice > sets.size())
+		return;
+
+	std::string newenc = sets.at(choice)->infos().at(0)->name();
+	fini_choicebox(choicebox_get_parent(parent));
+	fini_choicebox(parent);
+	set_encoding(newenc);
+	ZLEwlBookInfo(*myFbreader);
+}
+
+void language_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	BookDescriptionPtr description = new BookDescription(myFbreader->myModel->fileName());
+	if(choice < ZLLanguageList::languageCodes().size())
+		description->myLanguage = ZLLanguageList::languageCodes().at(choice);
+	else
+		description->myLanguage = "other";
+
+	BookDescriptionUtil::saveInfo(ZLFile(myFbreader->myModel->fileName()));
+
+	//update_label(choicebox_get_parent(parent), 0, description->myLanguage);
+	//fini_choicebox(choicebox_get_parent(parent));
+
+	// set encoding
+	myBookInfo->LanguageOption.setValue(description->myLanguage);
+
+	fini_choicebox(choicebox_get_parent(parent));
+	fini_choicebox(parent);
+
+	myFbreader->openFile(myFbreader->myModel->fileName());
+
+	myFbreader->clearTextCaches();
+    myFbreader->refreshWindow();
+
+	ZLEwlBookInfo(*myFbreader);
+}
+
+void bookinfo_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+{
+	if(choice == 0) {
+		const std::vector<std::string> &l = ZLLanguageList::languageCodes();
+
+		char **initchoices = (char **)malloc((l.size() + 1) * sizeof(char*));
+		char **values = (char **)malloc((l.size() + 1) * sizeof(char*));
+		for(unsigned int i = 0; i < l.size(); i++) {
+			asprintf(&initchoices[i], "%d. %s", i % 8 + 1, ZLLanguageList::languageName(l.at(i)).c_str());
+			asprintf(&values[i], "");
+		}
+		int i = l.size();
+		asprintf(&initchoices[i], "%d. %s", i % 8 + 1, ZLLanguageList::languageName("other").c_str());
+		asprintf(&values[i], "");
+
+//		fini_choicebox(parent);
+		ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, 1 + l.size(), language_choicehandler, "Language", parent, false));
+	}
+
+	if(myBookInfo->EncodingOption.value() != "auto") {
+		if(choice == 1) {
+			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+			char **initchoices = (char **)malloc(sets.size() * sizeof(char*));
+			char **values = (char **)malloc(sets.size() * sizeof(char*));
+			for(unsigned int i = 0; i < sets.size(); i++) {
+				asprintf(&initchoices[i], "%d. %s", i % 8 + 1, sets.at(i)->name().c_str());
+				asprintf(&values[i], "");
+			}
+//			fini_choicebox(parent);
+			ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, sets.size(), encset_choicehandler, "Encoding Set", parent, false));
+		} else if(choice == 2) {
+			const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
+
+			bool found = false;
+			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+			for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+				pinfos = &(*it)->infos();
+
+				for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = pinfos->begin(); !found && (jt != pinfos->end()); ++jt)
+					if ((*jt)->name() == myBookInfo->EncodingOption.value())
+						found = true;
+			}
+
+			const std::vector<ZLEncodingConverterInfoPtr> &infos = *pinfos;
+
+			char **initchoices = (char **)malloc(infos.size() * sizeof(char*));
+			char **values = (char **)malloc(infos.size() * sizeof(char*));
+			for(unsigned int i = 0; i < infos.size(); i++) {
+				asprintf(&initchoices[i], "%d. %s", i % 8 + 1, infos.at(i)->visibleName().c_str());
+				asprintf(&values[i], "");
+			}
+//			fini_choicebox(parent);
+			ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, infos.size(), enc_choicehandler, "Encoding", parent, false));
+		}
+	}
+}
+
+
+void ZLEwlBookInfo(FBReader &f)
+{
+	Ewl_Widget *w = ewl_widget_name_find("main_win");
+
+	myFbreader = &f;
+
+	const std::string &fileName = f.myModel->fileName();
+	myBookInfo = new BookInfo(fileName);
+//	description = new BookDescription(fileName);
+
+
+	int cnt = 20;
+	char **initchoices = (char **)malloc(cnt * sizeof(char*));
+	char **values = (char **)malloc(cnt * sizeof(char*));
+
+	//FIXME
+	int choice = 0;
+	int i = 0;
+	asprintf(&initchoices[i], "File: %s", ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)).c_str());
+	asprintf(&values[i++], "");
+	asprintf(&initchoices[i], "Full path: %s", ZLFile::fileNameToUtf8(ZLFile(fileName).path()).c_str());
+	asprintf(&values[i++], "");
+	asprintf(&initchoices[i], "Title: %s", myBookInfo->TitleOption.value().c_str());
+	asprintf(&values[i++], "");
+	asprintf(&initchoices[i], "Author: %s", myBookInfo->AuthorDisplayNameOption.value().c_str());
+	asprintf(&values[i++], "");
+
+	if(!myBookInfo->SeriesNameOption.value().empty()) {
+		asprintf(&initchoices[i], "Series: %s", myBookInfo->SeriesNameOption.value().c_str());
+		asprintf(&values[i++], "");
+		asprintf(&initchoices[i], "Book number: %d", myBookInfo->NumberInSeriesOption.value());
+		asprintf(&values[i++], "");
+	}
+
+	asprintf(&initchoices[i], "%d. Language", ++choice);
+	asprintf(&values[i++], ZLLanguageList::languageName(myBookInfo->LanguageOption.value()).c_str());
+	if(myBookInfo->EncodingOption.value() == "auto") {
+		asprintf(&initchoices[i], "Encoding");
+		asprintf(&values[i++], myBookInfo->EncodingOption.value().c_str());
+	} else {
+		asprintf(&initchoices[i], "%d. Encoding Set", ++choice);
+
+		bool found = false;
+		const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+		for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+			const std::vector<ZLEncodingConverterInfoPtr> &infos = (*it)->infos();
+
+			for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = infos.begin(); !found && (jt != infos.end()); ++jt) {
+				if ((*jt)->name() == myBookInfo->EncodingOption.value()) {
+					asprintf(&values[i++], (*it)->name().c_str());
+
+					asprintf(&initchoices[i], "%d. Encoding", ++choice);
+					asprintf(&values[i++], (*jt)->name().c_str());
+							//(*jt)->visibleName().c_str());
+							//myBookInfo->EncodingOption.value().c_str());
+
+					found =true;
+					break;
+				}
+			}
+		}
+
+	}
+
+	FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
+	if (plugin != 0) {
+	}
+	//fixme
+	cnt = i;
+
+/*	while(i < cnt) {
+		asprintf(&initchoices[i], "File %s", fileName.c_str());
+		asprintf(&values[i++], "");
+	}
+*/
+
+
+	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, bookinfo_choicehandler, "Book Information", w, true));
 }

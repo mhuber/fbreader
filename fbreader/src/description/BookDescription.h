@@ -57,7 +57,7 @@ public:
 private:
 	static std::map<std::string,BookDescriptionPtr> ourDescriptions;
 
-private:
+public:
 	BookDescription(const std::string &fileName);
 
 public:
@@ -82,6 +82,7 @@ private:
 	std::string mySeriesName;
 	int myNumberInSeries;
 	std::string myFileName;
+public:	
 	std::string myLanguage;
 	std::string myEncoding;
 	std::vector<std::string> myTags;

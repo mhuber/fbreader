@@ -105,6 +105,8 @@ private:
 
 	bool closeView();
 	std::string helpFileName(const std::string &language) const;
+
+public:
 	void openFile(const std::string &fileName);
 
 	bool isViewFinal() const;
