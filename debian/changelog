@@ -1,3 +1,10 @@
+fbreader (0.10.3-1.oi2) stable; urgency=low
+
+  * book info dialog
+  * new settings
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sat, 14 Feb 2009 22:15:13 +0000
+
 fbreader (0.10.3-1.oi1) stable; urgency=low
 
   * merged with upstream
