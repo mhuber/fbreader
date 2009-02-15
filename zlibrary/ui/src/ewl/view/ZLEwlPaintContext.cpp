@@ -624,8 +624,9 @@ void ZLEwlPaintContext::fillRectangle(int x0, int y0, int x1, int y1) {
 			j++;
 		else if(y1 < y0)
 			j--;
-	} while(( y1 > y0) && ( j <= y1 )  ||
-			(j <= y0));
+		else
+			return;
+	} while(((y1 > y0) && (j <= y1)) || ((y1 < y0) && (j >= y1)));
 }
 
 void ZLEwlPaintContext::drawFilledCircle(int x, int y, int r) {
