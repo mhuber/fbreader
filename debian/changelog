@@ -1,3 +1,9 @@
+fbreader (0.10.3-1.oi3) stable; urgency=low
+
+  * hangup fixed
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sun, 15 Feb 2009 16:53:02 +0000
+
 fbreader (0.10.3-1.oi2) stable; urgency=low
 
   * book info dialog
