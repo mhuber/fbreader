@@ -808,14 +808,16 @@ void toc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 	if(curTOCParent != cm.myRoot) {
 		if(choice == 0)
 			selEntry = curTOCParent->parent();
+		else if(choice == 1)
+			selEntry = curTOCParent;
 		else
-			selEntry = curTOCParent->children().at(choice - 1);
+			selEntry = curTOCParent->children().at(choice - 2);
 	} else {
 		selEntry = curTOCParent->children().at(choice);
 	}
 
 	list = selEntry->children();
-	if(list.empty()) {
+	if(list.empty() || (curTOCParent == selEntry)) {
 		fini_choicebox(parent, false);
 		myFbreader->bookTextView().gotoParagraph(cm.reference(selEntry));
 		myFbreader->refreshWindow();
@@ -824,16 +826,17 @@ void toc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 
 	curTOCParent = selEntry;
 
-	char **initchoices = (char **)malloc((list.size() + 1) * sizeof(char*));
-	char **values = (char **)malloc((list.size() + 1) * sizeof(char*));
+	char **initchoices = (char **)malloc((list.size() + 2) * sizeof(char*));
+	char **values = (char **)malloc((list.size() + 2) * sizeof(char*));
 
-	int cnt;
+	int cnt = 0;
 	if(selEntry != cm.myRoot) {
-		asprintf(&initchoices[0], "1. ..");
-		asprintf(&values[0], "");
-		cnt = 1;
-	} else {
-		cnt = 0;
+		asprintf(&initchoices[cnt], "1. ..");
+		asprintf(&values[cnt], "");
+		cnt++;
+		asprintf(&initchoices[cnt], "%d. .", cnt + 1);
+		asprintf(&values[cnt], "");
+		cnt++;
 	}
 
 	short len;
