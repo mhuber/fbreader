@@ -45,7 +45,7 @@ public:
 	int emptyLinesBeforeNewSection() const { return EmptyLinesBeforeNewSectionOption.value(); }
 	bool createContentsTable() const { return CreateContentsTableOption.value(); }
 
-private:
+//private:
 	ZLBooleanOption InitializedOption;
 	ZLIntegerOption BreakTypeOption;
 	ZLIntegerRangeOption IgnoredIndentOption;

@@ -43,7 +43,8 @@
 #include "../../../../../fbreader/src/description/BookDescriptionUtil.h"
 #include "../../../../../fbreader/src/description/BookDescriptionUtil.h"
 #include "../../../../../zlibrary/core/src/encoding/ZLEncodingConverter.h"
-
+#include "../../../../../fbreader/src/formats/txt/TxtPlugin.h"
+#include "../../../../../fbreader/src/formats/txt/PlainTextFormat.h"
 
 bool turbo = false;
 
@@ -1178,6 +1179,9 @@ void language_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 	ZLEwlBookInfo(*myFbreader);
 }
 
+char *break_type_values[] = { "New Line", "Empty Line", "Line With Indent" };
+int curBreakType = 0;
+
 void bookinfo_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	if(choice == 0) {
@@ -1197,7 +1201,7 @@ void bookinfo_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 		ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, 1 + l.size(), language_choicehandler, "Language", parent, false));
 	}
 
-	if(myBookInfo->EncodingOption.value() != "auto") {
+	if((myBookInfo->EncodingOption.value() != "auto") && ((choice == 2) || (choice == 3))) {
 		if(choice == 1) {
 			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
 			char **initchoices = (char **)malloc(sets.size() * sizeof(char*));
@@ -1233,8 +1237,40 @@ void bookinfo_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 			ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, infos.size(), enc_choicehandler, "Encoding", parent, false));
 		}
 	}
-}
 
+	if(((myBookInfo->EncodingOption.value() != "auto") && (choice == 3)) ||
+		((myBookInfo->EncodingOption.value() == "auto") && (choice == 1))) {
+
+		FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(myFbreader->myModel->fileName()), false);
+		if (plugin != 0) {
+			TxtPlugin *test = dynamic_cast<TxtPlugin*>(plugin);
+			if(test != NULL) {
+				PlainTextFormat myFormat(myFbreader->myModel->fileName());
+				if (!myFormat.initialized()) {
+					PlainTextFormatDetector detector;
+					shared_ptr<ZLInputStream> stream = ZLFile(myFbreader->myModel->fileName()).inputStream();
+					if (!stream.isNull()) {
+						detector.detect(*stream, myFormat);
+					}
+				}
+
+				curBreakType << 1;
+				curBreakType %= 5;
+
+				myFormat.BreakTypeOption.setValue(curBreakType);
+
+				fini_choicebox(parent);
+
+				myFbreader->openFile(myFbreader->myModel->fileName());
+
+				myFbreader->clearTextCaches();
+				myFbreader->refreshWindow();
+
+				ZLEwlBookInfo(*myFbreader);
+			}
+		}
+	}
+}
 
 void ZLEwlBookInfo(FBReader &f)
 {
@@ -1302,6 +1338,34 @@ void ZLEwlBookInfo(FBReader &f)
 
 	FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
 	if (plugin != 0) {
+		TxtPlugin *test = dynamic_cast<TxtPlugin*>(plugin);
+		if(test != NULL) {
+			 PlainTextFormat myFormat(fileName);
+			 if (!myFormat.initialized()) {
+				 PlainTextFormatDetector detector;
+				 shared_ptr<ZLInputStream> stream = ZLFile(fileName).inputStream();
+				 if (!stream.isNull()) {
+					 detector.detect(*stream, myFormat);
+				 }
+			 }
+
+			 switch (myFormat.BreakTypeOption.value()) {
+				 case PlainTextFormat::BREAK_PARAGRAPH_AT_NEW_LINE:
+					 curBreakType = 0;
+					 break;
+				 case PlainTextFormat::BREAK_PARAGRAPH_AT_EMPTY_LINE:
+					 curBreakType = 1;
+					 break;
+				 case PlainTextFormat::BREAK_PARAGRAPH_AT_EMPTY_LINE | PlainTextFormat::BREAK_PARAGRAPH_AT_LINE_WITH_INDENT:
+				 default:
+					 curBreakType = 2;
+			 }
+
+			 curBreakType;
+
+			 asprintf(&initchoices[i], "%d. Break Paragraph at", ++choice);
+			 asprintf(&values[i++], break_type_values[curBreakType]);
+		}
 	}
 	//fixme
 	cnt = i;
