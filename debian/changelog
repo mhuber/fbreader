@@ -1,3 +1,9 @@
+fbreader (0.10.3-1.oi5) stable; urgency=low
+
+  * fixed default margine size
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sun, 22 Feb 2009 18:04:42 +0000
+
 fbreader (0.10.3-1.oi4) stable; urgency=low
 
   * added paragraph break option
