@@ -702,7 +702,12 @@ void ZLEwlPaintContext::drawGlyph(FT_Bitmap* bitmap, FT_Int x, FT_Int y)
 					i >= myWidth || j >= myHeight )
 				continue;
 
-			val = bitmap->buffer[q * bitmap->width + p];
+			if(bitmap->pixel_mode == ft_pixel_mode_grays)
+				val = bitmap->buffer[q * bitmap->pitch + p];
+			else if(bitmap->pixel_mode == ft_pixel_mode_mono)
+				val = (bitmap->buffer[q * bitmap->pitch + p / 8] & (1 << (7 - (p % 8)))) ? 255 : 0;
+			else
+				val = 0;
 
 			if(val < 64)
 				continue;
