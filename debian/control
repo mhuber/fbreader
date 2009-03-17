@@ -3,9 +3,9 @@ Section: media
 Priority: optional
 Maintainer: Alexander Kerner <lunohod@openinkpot.org>
 Standards-Version: 3.7.2
-Build-Depends: debhelper (>= 5.0.22), libxcb1-dev, libxcb-image0-dev, libxcb-aux0-dev, libexpat1-dev, libbz2-dev, libz1-dev, libjpeg62-dev, libpng12-dev, libgif-dev
-XCS-Cross-Host-Build-Depends: debhelper (>= 5.0.22)
-XCS-Cross-Build-Depends: libexpat1-dev, libbz2-dev (>= 1.0.5-2), libz1-dev, libjpeg62-dev, libpng12-dev, libgif-dev, libewl1-dev, libevas-dev, libglib2.0-dev, libpango1.0-dev, liblinebreak-dev, libfribidi0
+Build-Depends: debhelper (>= 5.0.22), libxcb1-dev, libxcb-image0-dev, libxcb-aux0-dev, libexpat1-dev, libbz2-dev, libz1-dev, libjpeg62-dev, libpng12-dev, libgif-dev, libewl1-dev, libevas-dev, libglib2.0-dev, libpango1.0-dev, liblinebreak-dev, libfribidi-dev, pkg-config
+XCS-Cross-Host-Build-Depends: debhelper (>= 5.0.22), pkg-config
+XCS-Cross-Build-Depends: libexpat1-dev, libbz2-dev (>= 1.0.5-2), libz1-dev, libjpeg62-dev, libpng12-dev, libgif-dev, libewl1-dev, libevas-dev, libglib2.0-dev, libpango1.0-dev, liblinebreak-dev, libfribidi-dev, libxcb1-dev, libxcb-image0-dev, libxcb-aux0-dev, libexpat1-dev
 XS-Vcs-Git: http://git.openinkpot.org/fbreader.git
 XS-Vcs-Browser: http://git.openinkpot.org/fbreader.git
 Format: 3.0 (native)
