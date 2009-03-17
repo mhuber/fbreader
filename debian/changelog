@@ -1,3 +1,10 @@
+fbreader (0.10.3-1.oi6) asimov; urgency=low
+
+  * version bump
+  * unstable -> asimov
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Tue, 17 Mar 2009 02:03:46 +0100
+
 fbreader (0.10.3-1.oi5) stable; urgency=low
 
   * fixed default margine size
