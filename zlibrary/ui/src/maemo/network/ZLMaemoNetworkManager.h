@@ -33,9 +33,12 @@ private:
 	ZLMaemoNetworkManager();
 	~ZLMaemoNetworkManager();
 
+public:
+	void onStatusChanged(ConIcConnectionStatus status);
+
 private:
-	void connect();
-	void release();
+	bool connect() const;
+	void release() const;
 
 	bool providesProxyInfo() const;
 
@@ -44,7 +47,12 @@ private:
 	std::string proxyPort() const;
 
 private:
-	ConIcConnection *myConnection;
+	mutable ConIcConnection *myConnection;
+	mutable volatile enum {
+		CONNECTED,
+		FAILED,
+		IN_PROGRESS
+	} myConnectionStatus;
 };
 
 #endif /* __ZLMAEMONETWORKMANAGER_H__ */

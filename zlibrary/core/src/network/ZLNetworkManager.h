@@ -37,19 +37,19 @@ protected:
 	static ZLNetworkManager *ourInstance;
 	
 public:
-	ZLIntegerRangeOption ConnectTimeoutOption;
-	ZLIntegerRangeOption TimeoutOption;
-	ZLBooleanOption UseProxyOption;
-	ZLStringOption ProxyHostOption;
-	ZLStringOption ProxyPortOption;
+	ZLIntegerRangeOption &ConnectTimeoutOption() const;
+	ZLIntegerRangeOption &TimeoutOption() const;
+	ZLBooleanOption &UseProxyOption() const;
+	ZLStringOption &ProxyHostOption() const;
+	ZLStringOption &ProxyPortOption() const;
 
 protected:
 	ZLNetworkManager();
 	virtual ~ZLNetworkManager();
 
 public:
-	virtual void connect();
-	virtual void release();
+	virtual bool connect() const;
+	virtual void release() const;
 
 	virtual bool providesProxyInfo() const;
 
@@ -66,6 +66,12 @@ public:
 
 private:
 	void setStandardOptions(CURL *handle, const std::string &proxy) const;
+
+	mutable shared_ptr<ZLIntegerRangeOption> myConnectTimeoutOption;
+	mutable shared_ptr<ZLIntegerRangeOption> myTimeoutOption;
+	mutable shared_ptr<ZLBooleanOption> myUseProxyOption;
+	mutable shared_ptr<ZLStringOption> myProxyHostOption;
+	mutable shared_ptr<ZLStringOption> myProxyPortOption;
 };
 
 #endif /* __ZLNETWORKMANAGER_H__ */

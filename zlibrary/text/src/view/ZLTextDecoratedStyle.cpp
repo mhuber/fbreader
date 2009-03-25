@@ -35,11 +35,11 @@ ZLTextStyleDecoration::ZLTextStyleDecoration(const std::string &name, int fontSi
 	myName(name) {
 }
 
-ZLTextFullStyleDecoration::ZLTextFullStyleDecoration(const std::string &name, int fontSizeDelta, ZLBoolean3 bold, ZLBoolean3 italic, short spaceBefore, short spaceAfter, short leftIndent, short rightIndent, short firstLineIndentDelta, int verticalShift, ZLTextAlignmentType alignment, double lineSpace, ZLBoolean3 allowHyphenations) : ZLTextStyleDecoration(name, fontSizeDelta, bold, italic, verticalShift, allowHyphenations),
+ZLTextFullStyleDecoration::ZLTextFullStyleDecoration(const std::string &name, int fontSizeDelta, ZLBoolean3 bold, ZLBoolean3 italic, short spaceBefore, short spaceAfter, short lineStartIndent, short lineEndIndent, short firstLineIndentDelta, int verticalShift, ZLTextAlignmentType alignment, double lineSpace, ZLBoolean3 allowHyphenations) : ZLTextStyleDecoration(name, fontSizeDelta, bold, italic, verticalShift, allowHyphenations),
 	SpaceBeforeOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":spaceBefore", -10, 100, spaceBefore),
 	SpaceAfterOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":spaceAfter", -10, 100, spaceAfter),
-	LeftIndentOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":leftIndent", -300, 300, leftIndent),
-	RightIndentOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":rightIndent", -300, 300, rightIndent),
+	LineStartIndentOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":leftIndent", -300, 300, lineStartIndent),
+	LineEndIndentOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":rightIndent", -300, 300, lineEndIndent),
 	FirstLineIndentDeltaOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":firstLineIndentDelta", -300, 300, firstLineIndentDelta),
 	AlignmentOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":alignment", alignment),
 	LineSpaceOption(ZLCategoryKey::LOOK_AND_FEEL, STYLE, name + ":lineSpace", lineSpace),
@@ -135,18 +135,24 @@ ZLColor ZLTextFullDecoratedStyle::color() const {
 	return base()->color();
 }
 
-short ZLTextForcedStyle::leftIndent(const ZLTextStyleEntry::Metrics &metrics) const {
+short ZLTextForcedStyle::lineStartIndent(const ZLTextStyleEntry::Metrics &metrics, bool rtl) const {
+	ZLTextStyleEntry::Length lengthType = rtl ?
+		ZLTextStyleEntry::LENGTH_RIGHT_INDENT :
+		ZLTextStyleEntry::LENGTH_LEFT_INDENT;
 	return
-		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_LEFT_INDENT) ?
-			myEntry.length(ZLTextStyleEntry::LENGTH_LEFT_INDENT, metrics) :
-			base()->leftIndent(metrics);
+		myEntry.lengthSupported(lengthType) ?
+			myEntry.length(lengthType, metrics) :
+			base()->lineStartIndent(metrics, rtl);
 }
 
-short ZLTextForcedStyle::rightIndent(const ZLTextStyleEntry::Metrics &metrics) const {
+short ZLTextForcedStyle::lineEndIndent(const ZLTextStyleEntry::Metrics &metrics, bool rtl) const {
+	ZLTextStyleEntry::Length lengthType = rtl ?
+		ZLTextStyleEntry::LENGTH_LEFT_INDENT :
+		ZLTextStyleEntry::LENGTH_RIGHT_INDENT;
 	return
-		myEntry.lengthSupported(ZLTextStyleEntry::LENGTH_RIGHT_INDENT) ?
-			myEntry.length(ZLTextStyleEntry::LENGTH_RIGHT_INDENT, metrics) :
-			base()->rightIndent(metrics);
+		myEntry.lengthSupported(lengthType) ?
+			myEntry.length(lengthType, metrics) :
+			base()->lineEndIndent(metrics, rtl);
 }
 
 short ZLTextForcedStyle::spaceBefore(const ZLTextStyleEntry::Metrics &metrics) const {
