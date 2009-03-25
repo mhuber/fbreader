@@ -53,6 +53,8 @@ public:
 private:
 	ZLViewWidget *createViewWidget();
 	void init();
+	GtkToolItem *createGtkToolButton(const ZLToolbar::AbstractButtonItem &button);
+	void updatePopupData(GtkMenuToolButton *button, shared_ptr<ZLPopupData> data);
 	void addToolbarItem(ZLToolbar::ItemPtr item);
 	void buildTabs(ZLOptionsDialog &dialog);
 
@@ -73,6 +75,7 @@ private:
 	};
 	void initMenu();
 	void refresh();
+	void processAllEvents();
 	void present();
 	void close();
 
@@ -87,32 +90,30 @@ private:
 	void setToolbarItemState(ZLToolbar::ItemPtr item, bool visible, bool enabled);
 
 public:
-	void handleKeyEventSlot(GdkEventKey *event, bool isKeyRelease);
+	bool handleKeyEventSlot(GdkEventKey *event, bool isKeyRelease);
+	void onGtkButtonPress(GtkToolItem *gtkButton);
 	HildonWindow *getMainWindow() const { return myWindow; }
+	void setFocusToMainWidget();
 
 public:
-	class ToolbarButton {
+	class GtkEntryParameter : public VisualParameter {
 
 	public:
-		void press(bool state);
+		GtkEntryParameter(ZLGtkApplicationWindow &window, const ZLToolbar::ParameterItem &item);
+		void onKeyPressed(const std::string &keyName);
+		void onValueChanged();
+		GtkToolItem *createToolItem();
 
 	private:
-		ToolbarButton(ZLToolbar::AbstractButtonItem &buttonItem, ZLGtkApplicationWindow &window);
-		void forcePress(bool state);
-		GtkToolItem *toolItem() const { return myToolItem; }
+		std::string internalValue() const;
+		void internalSetValue(const std::string &value);
+		void setValueList(const std::vector<std::string> &values);
 
 	private:
-		ZLToolbar::AbstractButtonItem &myButtonItem;
 		ZLGtkApplicationWindow &myWindow;
-		shared_ptr<ZLApplication::Action> myAction;
-
-		GtkToolItem *myToolItem;
-		GtkWidget *myEventBox;
-		GtkImage *myCurrentImage;
-		GtkImage *myReleasedImage;
-		GtkImage *myPressedImage;
-
-	friend class ZLGtkApplicationWindow;
+		const ZLToolbar::ParameterItem &myItem;
+		GtkWidget *myWidget;
+		GtkEntry *myEntry;
 	};
 
 private:
@@ -124,13 +125,12 @@ private:
 
 	bool myFullScreen;
 
-	std::map<ZLToolbar::ItemPtr,GtkToolItem*> myToolItems;
+	std::map<const ZLToolbar::Item*,GtkToolItem*> myAbstractToGtk;
+	std::map<GtkToolItem*,ZLToolbar::ItemPtr> myGtkToAbstract;
+	std::map<GtkToolItem*,size_t> myPopupIdMap;
 	std::map<std::string,GtkMenuItem*> myMenuItems;
-	std::map<const ZLToolbar::AbstractButtonItem*,ToolbarButton*> myToolbarButtons;
-	std::vector<shared_ptr<ZLOptionView> > myViews;
 
 friend class MenuBuilder;
-friend class ToolbarButton;
 };
 
 #endif /* __ZLGTKAPPLICATIONWINDOW_H__ */

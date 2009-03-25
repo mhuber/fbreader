@@ -26,6 +26,9 @@
 
 class Migration {
 
+public:
+	static int extractVersionInformation(const std::string &name);
+
 protected:
 	static void moveOption(
 		const ZLCategoryKey &oldCategory, const std::string &oldGroup, const std::string &oldName,
@@ -68,6 +71,15 @@ class Migration_0_8_16 : public Migration {
 
 public:
 	Migration_0_8_16();
+
+protected:
+	void doMigrationInternal();
+};
+
+class Migration_0_10_4 : public Migration {
+
+public:
+	Migration_0_10_4();
 
 protected:
 	void doMigrationInternal();

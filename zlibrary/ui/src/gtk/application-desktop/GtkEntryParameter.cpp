@@ -18,24 +18,29 @@
  */
 
 #include "ZLGtkApplicationWindow.h"
-#include "gtkwidgettoolitem.h"
 
 #include "../util/ZLGtkKeyUtil.h"
 #include "../util/ZLGtkSignalUtil.h"
 
-void ZLGtkApplicationWindow::GtkEntryParameter::onKeyPressed(const std::string &keyName) {
-	if (keyName == "<Return>") {
+bool ZLGtkApplicationWindow::GtkEntryParameter::onKeyPressed(const std::string &keyName) {
+	static const std::string Return = "<Return>";
+	static const std::string Esc = "<Esc>";
+	static const std::string UpArrow = "<UpArrow>";
+	static const std::string DownArrow = "<DownArrow>";
+	if (keyName == Return) {
 		myWindow.application().doAction(myItem.actionId());
 		myWindow.setFocusToMainWidget();
-	} else if (keyName == "<Esc>") {
+		return true;
+	} else if (keyName == Esc) {
 		restoreOldValue();
 		myWindow.setFocusToMainWidget();
+		return true;
 	}
+	return (keyName == UpArrow) || (keyName == DownArrow);
 }
 
 static bool onKeyPressed(GtkEntry*, GdkEventKey *event, ZLGtkApplicationWindow::GtkEntryParameter *parameter) {
-	parameter->onKeyPressed(ZLGtkKeyUtil::keyName(event));
-	return false;
+	return parameter->onKeyPressed(ZLGtkKeyUtil::keyName(event));
 }
 
 void ZLGtkApplicationWindow::GtkEntryParameter::onValueChanged() {
@@ -75,7 +80,10 @@ ZLGtkApplicationWindow::GtkEntryParameter::GtkEntryParameter(ZLGtkApplicationWin
 }
 
 GtkToolItem *ZLGtkApplicationWindow::GtkEntryParameter::createToolItem() {
-	return gtk_widget_tool_item_new(myWidget);
+	GtkToolItem *toolItem = gtk_tool_item_new();
+	gtk_container_add(GTK_CONTAINER(toolItem), myWidget);
+	return toolItem;
+	//return gtk_widget_tool_item_new(myWidget);
 }
 
 void ZLGtkApplicationWindow::GtkEntryParameter::internalSetValue(const std::string &value) {

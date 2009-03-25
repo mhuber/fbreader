@@ -17,6 +17,8 @@
  * 02110-1301, USA.
  */
 
+#include <cstdlib>
+
 #include <ZLStringUtil.h>
 
 #include "../options/FBOptions.h"
@@ -42,7 +44,7 @@ bool Migration::isLikeToFileName(const std::string &str) {
 	return
 		ZLStringUtil::stringStartsWith(str, "/") ||
 		ZLStringUtil::stringStartsWith(str, "\\\\") ||
-		(str.length() > 2) && (str.substr(1, 2) == ":\\");
+		((str.length() > 2) && (str.substr(1, 2) == ":\\"));
 }
 
 Migration::Migration(const std::string &version) : myVersion(version) {
@@ -51,9 +53,25 @@ Migration::Migration(const std::string &version) : myVersion(version) {
 Migration::~Migration() {
 }
 
+int Migration::extractVersionInformation(const std::string &name) {
+	int major = atoi(name.c_str());
+	int minor = 0;
+	int point = 0;
+	int index = name.find('.');
+	if (index > 0) {
+		minor = atoi(name.c_str() + index + 1);
+		index = name.find('.', index + 1);
+		if (index > 0) {
+			point = atoi(name.c_str() + index + 1);
+		}
+	}
+	return 10000 * major + 100 * minor + point;
+}
+
 void Migration::doMigration() {
 	ZLStringOption versionOption(FBCategoryKey::SYSTEM, "Version", "FBReaderVersion", "0");
-	if (versionOption.value() < myVersion) {
+	if (extractVersionInformation(versionOption.value()) <
+			extractVersionInformation(myVersion)) {
 		doMigrationInternal();
 	}
 }

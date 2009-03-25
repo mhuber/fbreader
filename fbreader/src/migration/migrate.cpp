@@ -27,13 +27,16 @@ MigrationRunnable::MigrationRunnable() :
 }
 
 bool MigrationRunnable::shouldMigrate() const {
-	return myVersionOption.value() < VERSION;
+	return
+		Migration::extractVersionInformation(myVersionOption.value()) <
+		Migration::extractVersionInformation(VERSION);
 }
 
 void MigrationRunnable::run() {
 	Migration_0_8_11().doMigration();
 	Migration_0_8_13().doMigration();
 	Migration_0_8_16().doMigration();
+	Migration_0_10_4().doMigration();
 
 	myVersionOption.setValue(VERSION);
 }
