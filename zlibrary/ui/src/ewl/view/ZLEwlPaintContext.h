@@ -75,6 +75,7 @@ public:
 
 private:
 	int myWidth, myHeight;
+	double dpi_x, dpi_y;
 	//int *image;
 
 	PangoContext *myContext;

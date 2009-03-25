@@ -30,9 +30,6 @@
 #include FT_GLYPH_H
 #include FT_BITMAP_H
 
-extern xcb_connection_t     *connection;
-extern xcb_window_t          window;
-extern xcb_screen_t         *screen;
 extern xcb_image_t *im;
 extern unsigned int *pal;
 
@@ -62,7 +59,26 @@ ZLEwlPaintContext::ZLEwlPaintContext() {
 	if (myContext == 0) {
 		PangoFontMap *font_map;
 		font_map = pango_ft2_font_map_new();
-		pango_ft2_font_map_set_resolution (PANGO_FT2_FONT_MAP (font_map), 170, 170);
+
+		xcb_connection_t     *connection;
+		xcb_screen_t         *screen;
+		int                   screen_number;
+
+		/* getting the connection */
+		connection = xcb_connect (NULL, &screen_number);
+		if (xcb_connection_has_error(connection)) {
+			fprintf (stderr, "ERROR: can't connect to an X server\n");
+			exit(-1);
+		}
+
+		screen = xcb_aux_get_screen (connection, screen_number);
+
+		dpi_x = (((double)screen->width_in_pixels) * 25.4) / ((double) screen->width_in_millimeters);
+		dpi_y = (((double)screen->height_in_pixels) * 25.4) / ((double) screen->height_in_millimeters);
+
+		xcb_disconnect(connection);
+
+		pango_ft2_font_map_set_resolution (PANGO_FT2_FONT_MAP (font_map), dpi_x, dpi_y);
 		myContext = pango_ft2_font_map_create_context (PANGO_FT2_FONT_MAP(font_map));
 
 		if (myFontDescription != 0) {
@@ -315,7 +331,7 @@ int ZLEwlPaintContext::stringHeight() const {
 		if (pango_font_description_get_size_is_absolute(myFontDescription)) {
 			myStringHeight = pango_font_description_get_size(myFontDescription) / PANGO_SCALE + 2;
 		} else {
-			myStringHeight = pango_font_description_get_size(myFontDescription) * 170 / 72 / PANGO_SCALE + 2;
+			myStringHeight = pango_font_description_get_size(myFontDescription) * dpi_y / 72 / PANGO_SCALE + 2;
 		}
 	}
 	return myStringHeight;
