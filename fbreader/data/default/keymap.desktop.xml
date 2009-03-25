@@ -26,9 +26,9 @@
 
 	<binding key="Menu" action="preferences"/> 
 	<binding key="Next" action="largeScrollForward"/>
-	<binding key="Prev" action="largeScrollBackward"/>
+	<binding key="Prior" action="largeScrollBackward"/>
 	<binding key="Right" action="increaseFont"/>
 	<binding key="Left" action="decreaseFont"/>
-	<binding key="space" action="toggleIndicator"/>
+	<binding key=" " action="toggleIndicator"/>
 	<binding key="XF86Search" action="search"/>
 </keymap>
