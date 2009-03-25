@@ -1,3 +1,10 @@
+fbreader (0.10.3-1.oi8) asimov; urgency=low
+
+  * Removed hardcoded dpi setting
+  * Added some new keys to the keymap
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Wed, 25 Mar 2009 23:08:54 +0100
+
 fbreader (0.10.3-1.oi7) asimov; urgency=low
 
   * Fixed cross-compiling
