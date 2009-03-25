@@ -23,4 +23,12 @@
 	<binding key="Alt+8" action="search"/>
 	<binding key="3" action="addBookmark"/>
 	<binding key="Alt+3" action="showBookmarks"/>
+
+	<binding key="Menu" action="preferences"/> 
+	<binding key="Next" action="largeScrollForward"/>
+	<binding key="Prev" action="largeScrollBackward"/>
+	<binding key="Right" action="increaseFont"/>
+	<binding key="Left" action="decreaseFont"/>
+	<binding key="space" action="toggleIndicator"/>
+	<binding key="XF86Search" action="search"/>
 </keymap>
