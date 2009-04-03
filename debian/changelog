@@ -1,3 +1,9 @@
+fbreader (0.10.5-1.oi1+b1) asimov; urgency=low
+
+  * Rebuild with new toolchain.
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Fri, 03 Apr 2009 17:36:02 +0200
+
 fbreader (0.10.5-1.oi1) asimov; urgency=low
 
   * Merged with upstream
