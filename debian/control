@@ -36,7 +36,7 @@ Description: e-book reader
 Package: fbreader-settings-v3
 Priority: optional
 Architecture: all
-Depends: fbreader
+Depends: fbreader (>= 0.10.5-1.oi2)
 Provides: fbreader-settings
 Conflicts: fbreader-settings
 Replaces: fbreader-settings
@@ -46,7 +46,7 @@ Description: V3 specific settings
 Package: fbreader-settings-n516
 Priority: optional
 Architecture: all
-Depends: fbreader
+Depends: fbreader (>= 0.10.5-1.oi2)
 Provides: fbreader-settings
 Conflicts: fbreader-settings
 Replaces: fbreader-settings
