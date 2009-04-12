@@ -14,7 +14,7 @@ Package: fbreader
 Priority: optional
 Architecture: any
 Replaces: 
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, fbreader-settings
 Description: e-book reader
  FBReader is an e-book reader.
  .
@@ -33,3 +33,22 @@ Description: e-book reader
  .
   Homepage: http://www.fbreader.org/
 
+Package: fbreader-settings-v3
+Priority: optional
+Architecture: all
+Depends: fbreader
+Provides: fbreader-settings
+Conflicts: fbreader-settings
+Replaces: fbreader-settings
+Description: V3 specific settings
+ This package contains V3 specific settings: keybindings, styles, etc.
+
+Package: fbreader-settings-n516
+Priority: optional
+Architecture: all
+Depends: fbreader
+Provides: fbreader-settings
+Conflicts: fbreader-settings
+Replaces: fbreader-settings
+Description: n516 specific settings
+ This package contains n516 specific settings: keybindings, styles, etc.

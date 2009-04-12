@@ -8,6 +8,8 @@ CC=$(DEB_HOST_GNU_TYPE)-gcc
 LD=$(DEB_HOST_GNU_TYPE)-g++
 MAKE := CC=$(CC) LD=$(LD) $(MAKE)
 
+flavours := v3 n516
+
 clean:
 		dh_testdir
 		dh_testroot
@@ -42,6 +44,13 @@ install-stamp: build
 		install -m 644 themes/oitheme.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/virtktheme.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/virtk_layout $(DEB_DIR)/fbreader/usr/share/FBReader/themes
+		for FLAVOUR in $(flavours); do \
+			DEFAULT_DIR=$(DEB_DIR)/fbreader-settings-$$FLAVOUR/usr/share/FBReader/default; \
+			mkdir -p $$DEFAULT_DIR; \
+			install -m 0644 fbreader/data/default/config.$$FLAVOUR.xml $$DEFAULT_DIR/config.xml; \
+			install -m 0644 fbreader/data/default/keymap.$$FLAVOUR.xml $$DEFAULT_DIR/keymap.xml; \
+			install -m 0644 fbreader/data/default/styles.$$FLAVOUR.xml $$DEFAULT_DIR/styles.xml; \
+		done
 		touch install-stamp
 
 binary-arch: VERSION=$(shell expr "`dpkg-parsechangelog |grep Version:`" : '.*Version: \(.*\)')
