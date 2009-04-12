@@ -1,3 +1,9 @@
+fbreader (0.10.5-1.oi2) asimov; urgency=low
+
+  * separated settings for different devices
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Sun, 12 Apr 2009 15:36:37 +0200
+
 fbreader (0.10.5-1.oi1+b1) asimov; urgency=low
 
   * Rebuild with new toolchain.
