@@ -517,8 +517,14 @@ void def_def_language_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 {
 	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
 
-	if(choice < l.size()) {
-		PluginCollection::instance().DefaultLanguageOption.setValue(l.at(choice));
+	if(choice <= l.size()) {
+		std::string lang;
+		if(choice == l.size())
+			lang = "other";
+		else
+			lang = l.at(choice);
+
+		PluginCollection::instance().DefaultLanguageOption.setValue(lang);
 
 		update_label(choicebox_get_parent(parent), 1, ZLLanguageList::languageName(PluginCollection::instance().DefaultLanguageOption.value()).c_str());
 
@@ -1201,7 +1207,7 @@ void bookinfo_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 		ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, 1 + l.size(), language_choicehandler, "Language", parent, false));
 	}
 
-	if((myBookInfo->EncodingOption.value() != "auto") && ((choice == 2) || (choice == 3))) {
+	if((myBookInfo->EncodingOption.value() != "auto") && ((choice == 1) || (choice == 2))) {
 		if(choice == 1) {
 			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
 			char **initchoices = (char **)malloc(sets.size() * sizeof(char*));
