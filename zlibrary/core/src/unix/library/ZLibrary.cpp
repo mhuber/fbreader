@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 
 #include <algorithm>
+#include <iostream>
 
 #include <ZLibrary.h>
 #include <ZLStringUtil.h>
@@ -99,20 +100,26 @@ bool ZLibrary::init(int &argc, char **&argv) {
 		closedir(dir);
 
 		std::sort(names.begin(), names.end());
-		for (std::vector<std::string>::const_iterator it = names.begin();
-				 (it != names.end()) && (handle == 0); ++it) {
+		for (std::vector<std::string>::const_iterator it = names.begin(); it != names.end(); ++it) {
+			std::cerr << "loading " << *it << "...\n";
 			handle = dlopen(it->c_str(), RTLD_NOW);
+			if (handle == 0) {
+				std::cerr << dlerror() << "\n";
+			} else {
+				break;
+			}
 		}
 
 		if (handle == 0) {
 			return false;
 		}
 	}
-	dlerror();
 
 	void (*initLibrary)();
 	*(void**)&initLibrary = dlsym(handle, "initLibrary");
-	if (dlerror() != 0) {
+	const char *error = dlerror();
+	if (error != 0) {
+		std::cerr << error << "\n";
 		return false;
 	}
 #endif /* ZLSHARED */
