@@ -192,14 +192,6 @@ ZLEwlViewWidget::~ZLEwlViewWidget() {
 void ZLEwlViewWidget::doPaint()	{
 	ZLEwlPaintContext &pContext = (ZLEwlPaintContext&)view()->context();
 
-	int i;
-	i = xcb_image_shm_get (connection, window,
-			im, shminfo,
-			0, 0,
-			XCB_ALL_PLANES);
-	if(!i)
-		return;
-
 	pContext.image = im;
 
 	view()->paint();
@@ -220,14 +212,6 @@ void ZLEwlViewWidget::repaint()	{
 void ZLEwlViewWidget::invertRegion(int x0, int y0, int x1, int y1, bool flush)
 {
 	unsigned int pixel;
-
-	int i;
-	i = xcb_image_shm_get (connection, window,
-			im, shminfo,
-			0, 0,
-			XCB_ALL_PLANES);
-	if(!i)
-		return;
 
 	for(int i = x0; i <= x1; i++) {
 		for(int j = y0; j <= y1; j++) {
