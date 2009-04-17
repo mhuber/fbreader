@@ -27,7 +27,7 @@
 #include <gtk/gtkwidget.h>
 #include <gtk/gtkwindow.h>
 
-#if MAEMO_VERSION == 2
+#if MAEMO_VERSION <= 3
 	#include <hildon-widgets/hildon-program.h>
 #elif MAEMO_VERSION == 4
 	#include <hildon/hildon-program.h>
@@ -129,6 +129,7 @@ private:
 	std::map<GtkToolItem*,ZLToolbar::ItemPtr> myGtkToAbstract;
 	std::map<GtkToolItem*,size_t> myPopupIdMap;
 	std::map<std::string,GtkMenuItem*> myMenuItems;
+	std::vector<GtkMenuItem*> mySubmenuItems;
 
 friend class MenuBuilder;
 };

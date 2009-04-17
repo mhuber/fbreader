@@ -19,6 +19,8 @@ if [ $# -lt 1 ]; then
 	echo "  $0 [-non-GPL] <architecture>"
 	echo "or"
 	echo "  $0 [-non-GPL] all"
+	echo "or"
+	echo "  $0 [-non-GPL] supported"
 	echo ""
 	echo "available architectures are:"
 	for pkgtype in $distdir/*; do
@@ -73,12 +75,16 @@ build_package() {
 					/scratchbox/login sb-conf se SDK_ARM
 					/scratchbox/login -d `pwd` $make_package ARCHITECTURE=$1 $2
 					;;
-				maemo2)
+				maemo2|maemo3)
 					/scratchbox/login sb-conf se SDK_ARMEL
 					/scratchbox/login -d `pwd` $make_package ARCHITECTURE=$1 $2
 					;;
 				maemo4)
 					/scratchbox/login sb-conf se CHINOOK_ARMEL
+					/scratchbox/login -d `pwd` $make_package ARCHITECTURE=$1 $2
+					;;
+				maemo5)
+					/scratchbox/login sb-conf se FREMANTLE_X86
 					/scratchbox/login -d `pwd` $make_package ARCHITECTURE=$1 $2
 					;;
 				*)
@@ -121,6 +127,16 @@ if [ $1 == all ]; then
 			build_package `basename $archtype` `basename $pkgtype`;
 		done;
 	done;
+	remove_tmpdir
+elif [ $1 == supported ]; then
+	create_tmpdir
+	build_package desktop debian
+	build_package maemo2 debian
+	build_package maemo3 debian
+	build_package maemo4 debian
+	build_package win32 nsi
+	build_package desktop tarball
+	build_package source tarball
 	remove_tmpdir
 else
 	while [ $# -gt 0 ] ; do

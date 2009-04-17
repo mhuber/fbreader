@@ -159,6 +159,7 @@ void ZLGtkApplicationWindow::MenuBuilder::processSubmenuBeforeItems(ZLMenubar::S
 	gtk_menu_shell_append(GTK_MENU_SHELL(myMenuStack.top()), GTK_WIDGET(gtkItem));
 	gtk_widget_show_all(GTK_WIDGET(gtkItem));
 	myMenuStack.push(gtkSubmenu);
+	myWindow.mySubmenuItems.push_back(gtkItem);
 }
 
 void ZLGtkApplicationWindow::MenuBuilder::processSubmenuAfterItems(ZLMenubar::Submenu&) {
@@ -373,6 +374,25 @@ void ZLGtkApplicationWindow::refresh() {
 		bool alreadyEnabled = GTK_WIDGET_STATE(gtkItem) != GTK_STATE_INSENSITIVE;
 		if (application().isActionEnabled(id) != alreadyEnabled) {
 			gtk_widget_set_sensitive(gtkItem, !alreadyEnabled);
+		}
+	}
+	for (std::vector<GtkMenuItem*>::reverse_iterator rit = mySubmenuItems.rbegin(); rit != mySubmenuItems.rend(); ++rit) {
+		bool isEnabled = false;
+		GtkMenu *menu = GTK_MENU(gtk_menu_item_get_submenu(*rit));
+		GList *children = gtk_container_get_children(GTK_CONTAINER(menu));
+		if (children != 0) {
+			for (GList *ptr =  g_list_first(children); ptr != 0; ptr = g_list_next(ptr)) {
+				GtkMenuItem *item = GTK_MENU_ITEM(ptr->data);
+				if (GTK_WIDGET_VISIBLE(item)) {
+					isEnabled = true;
+					break;
+				}
+			}
+		}
+		if (isEnabled) {
+			gtk_widget_show(GTK_WIDGET(*rit));
+		} else {
+			gtk_widget_hide(GTK_WIDGET(*rit));
 		}
 	}
 }

@@ -10,7 +10,9 @@
 
 #TARGET_ARCH = maemo
 #UI_TYPE = maemo2
+#UI_TYPE = maemo3
 #UI_TYPE = maemo4
+#UI_TYPE = maemo5
 
 #TARGET_ARCH = ebr
 #UI_TYPE = nanoX
