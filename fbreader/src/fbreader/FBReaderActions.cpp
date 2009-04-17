@@ -314,7 +314,6 @@ void ScrollingAction::run() {
 		}
 
 		((FBView&)*view).scrollAndUpdatePage(myForward, oType, oValue);
-		fbreader().refreshWindow();
 		fbreader().myLastScrollingTime = ZLTime();
 
 		if(turbo && myForward) {
