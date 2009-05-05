@@ -546,19 +546,59 @@ void ZLEwlPaintContext::drawImage(int x, int y, const ZLImageData &image) {
 	int s, s_src;
 	int iW = image.width();
 	int iH = image.height();
+	int scal = 1;
 	unsigned char val;
 
-	if((iW + x) > myWidth || y > myHeight)
-		return;
+#define SCALMUL 1024
+
+//	if((iW + x) > myWidth || y > myHeight)
+//		return;
 
 	ZLEwlImageData *source_image = (ZLEwlImageData *)&image;
 
 	char *src = source_image->getImageData();
 
-	for(int j = 0; j < iH; j++)
-		for(int i = 0; i < iW; i++) {
-			c_src = src + i / 4 + iW * j / 4;
-			s_src = (i & 3) << 1;
+	if(iW > myWidth)
+		scal = SCALMUL * iW / myWidth;
+
+	if((SCALMUL * iH / scal) > myHeight)
+		scal = SCALMUL * iH / myHeight;
+
+
+	int sW, sH;
+	if(scal > SCALMUL) {
+		sW = (iW * SCALMUL / scal);
+		sH = (iH * SCALMUL / scal);
+
+		if (y >= myHeight || y < sH || y <= iH)
+			y = sH;
+
+		if (x < 0)
+			x = (myWidth - sW) / 2;
+
+	} else {
+		sW = iW;
+		sH = iH;
+	}
+
+	int si, sj;
+	for(int j = 0; j < sH; j++)
+		for(int i = 0; i < sW; i++) {
+			if(j+(y-sH) >= 800 || j+(y-sH) < 0)
+				continue;
+			if(i+x >= 600 || i+x < 0)
+				continue;
+
+			if(scal > SCALMUL) {
+				si = i * scal / SCALMUL;
+				sj = j * scal / SCALMUL;
+			} else {
+				si = i;
+				sj = j;
+			}
+
+			c_src = src + si / 4 + iW * sj / 4;
+			s_src = (si & 3) << 1;
 
 			val = (*c_src << s_src) & 0xc0;
 
@@ -566,11 +606,11 @@ void ZLEwlPaintContext::drawImage(int x, int y, const ZLImageData &image) {
 				continue;
 
 			if(val == 0x00)
-				xcb_image_put_pixel (this->image, i+x, j + (y - iH), pal[0]);
+				xcb_image_put_pixel (this->image, i+x, j + (y - sH), pal[0]);
 			else if(val == 0x40)
-				xcb_image_put_pixel (this->image, i+x, j + (y - iH), pal[1]);
+				xcb_image_put_pixel (this->image, i+x, j + (y - sH), pal[1]);
 			else
-				xcb_image_put_pixel (this->image, i+x, j + (y - iH), pal[2]);
+				xcb_image_put_pixel (this->image, i+x, j + (y - sH), pal[2]);
 		}
 }
 
