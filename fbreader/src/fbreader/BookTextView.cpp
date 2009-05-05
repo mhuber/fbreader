@@ -179,16 +179,19 @@ std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > BookT
 		pos.moveToParagraph(myBookmarks.at(i).first.first);
 		pos.moveTo(myBookmarks.at(i).first.second, 0);
 
-		if (pos.isEndOfParagraph()) {
+		if (pos.isEndOfParagraph())
 			pos.nextParagraph();
-		}
 
-		while(pos.isNull() || (pos.element().kind() != ZLTextElement::WORD_ELEMENT))
+		while(pos.isNull() || (pos.element().kind() != ZLTextElement::WORD_ELEMENT)) {
+			if(pos.isEndOfParagraph())
+				pos.nextParagraph();
 			pos.nextWord();
+		}
 
 		std::string s;
 		while(!pos.isNull() && !pos.isEndOfParagraph()) {
-			s += std::string(((const ZLTextWord&)pos.element()).Data, ((const ZLTextWord&)pos.element()).Size) + " ";
+			if(pos.element().kind() == ZLTextElement::WORD_ELEMENT)
+				s += std::string(((const ZLTextWord&)pos.element()).Data, ((const ZLTextWord&)pos.element()).Size) + " ";
 			pos.nextWord();
 		}
 
