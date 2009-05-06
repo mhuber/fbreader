@@ -1,3 +1,11 @@
+fbreader (0.10.7-1.oi1) asimov; urgency=low
+
+  * image downscaling
+  *	fixed freeze while viewing bookmarks. Ticket #280
+  * merged with upstream (0.10.7)
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Wed, 06 May 2009 19:34:01 +0200
+
 fbreader (0.10.5-1.oi4) asimov; urgency=low
 
   * Fixed non-working menu entries
