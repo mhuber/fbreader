@@ -47,6 +47,7 @@ public:
 	ZLBooleanOption IsSensitiveOption;
 	ZLBooleanOption ShowTextPositionOption;
 	ZLBooleanOption ShowTimeOption;
+	ZLBooleanOption ShowBatteryOption;
 	ZLColorOption ColorOption;
 	ZLIntegerRangeOption HeightOption;
 	ZLIntegerRangeOption OffsetOption;
@@ -58,6 +59,7 @@ public:
 	Type type() const;
 	bool isSensitive() const;
 	bool isTextPositionShown() const;
+	bool isBatteryShown() const;
 	bool isTimeShown() const;
 	ZLColor color() const;
 	int height() const;

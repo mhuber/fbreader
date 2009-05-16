@@ -42,6 +42,7 @@ FBIndicatorStyle::FBIndicatorStyle() :
 	IsSensitiveOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "TouchSensitive", false),
 	ShowTextPositionOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "PositionText", true),
 	ShowTimeOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Time", true),
+	ShowBatteryOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Battery", true),
 	ColorOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Color", ZLColor(127, 127, 127)),
 	HeightOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Height", 1, 100, 10),
 	OffsetOption(ZLCategoryKey::LOOK_AND_FEEL, INDICATOR, "Offset", 0, 100, 3),
@@ -58,6 +59,10 @@ bool FBIndicatorStyle::isSensitive() const {
 
 bool FBIndicatorStyle::isTextPositionShown() const {
 	return ShowTextPositionOption.value();
+}
+
+bool FBIndicatorStyle::isBatteryShown() const {
+	return ShowBatteryOption.value();
 }
 
 bool FBIndicatorStyle::isTimeShown() const {

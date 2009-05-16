@@ -83,6 +83,7 @@ public:
 		void drawExtraText(const std::string &text);
 		std::string textPositionString() const;
 		std::string timeString() const;
+		std::string batteryString() const;
 		size_t sizeOfParagraph(size_t paragraphNumber) const;
 		size_t sizeOfTextBeforeParagraph(size_t paragraphNumber) const;
 		size_t sizeOfTextBeforeCursor(const ZLTextWordCursor &cursor) const;

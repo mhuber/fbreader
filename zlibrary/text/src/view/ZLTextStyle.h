@@ -298,6 +298,7 @@ public:
 	virtual bool isSensitive() const = 0;
 	virtual bool isTextPositionShown() const = 0;
 	virtual bool isTimeShown() const = 0;
+	virtual bool isBatteryShown() const = 0;
 	virtual ZLColor color() const = 0;
 	virtual int height() const = 0;
 	virtual int offset() const = 0;

@@ -193,7 +193,7 @@ std::string ZLTextView::PositionIndicator::textPositionString() const {
 	*/
 }
 
-std::string ZLTextView::PositionIndicator::timeString() const {
+std::string ZLTextView::PositionIndicator::batteryString() const {
 	std::string buffer;
 
     char b[10];
@@ -219,9 +219,15 @@ std::string ZLTextView::PositionIndicator::timeString() const {
     if(f_cf != NULL)
         fclose(f_cf);
 
-    sprintf(b, "<%d\%>  ", charge);
+    sprintf(b, "<%d\%>", charge);
 
 	buffer += std::string(b);
+
+	return buffer;
+}
+
+std::string ZLTextView::PositionIndicator::timeString() const {
+	std::string buffer;
 
 	ZLTime time;
 	const short hours = time.hours();
@@ -251,6 +257,9 @@ void ZLTextView::PositionIndicator::draw() {
 	myExtraWidth = 0;
 	if (myInfo.isTimeShown()) {
 		drawExtraText(timeString());
+	}
+	if (myInfo.isBatteryShown()) {
+		drawExtraText(batteryString());
 	}
 	if (myInfo.isTextPositionShown()) {
 		drawExtraText(textPositionString());
