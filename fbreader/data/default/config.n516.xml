@@ -9,7 +9,17 @@
   <group name="TapScrolling">
     <option name="Enabled" value="false"/>
   </group>
+  <group name="Indicator">
+    <option name="PositionText" value="false"/>
+    <option name="Time" value="false"/>
+    <option name="Battery" value="false"/>
+    <option name="Type" value="1"/>
+  </group>
   <group name="Options">
+    <option name="LeftMargin" value="15"/>
+    <option name="RightMargin" value="15"/>
+    <option name="TopMargin" value="5"/>
+    <option name="BottomMargin" value="10"/>
     <option name="KeyDelay" value="0"/>
     <option name="BookPath" value="~/FBooks:~/Books"/>
     <option name="DownloadDirectory" value="~/FBooks"/>
