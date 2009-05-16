@@ -72,27 +72,93 @@ ZLPaintContext *ZLEwlLibraryImplementation::createContext() {
 	return (ZLPaintContext *)pc;
 }
 
+static struct {
+	int keynum;
+	char *keyname;
+} _keys[] = {
+	9, "Escape",
+	10, "1",
+	11, "2",
+	12, "3",
+	13, "4",
+	14, "5",
+	15, "6",
+	16, "7",
+	17, "8",
+	18, "9",
+	19, "0",
+	36, "Return",
+	64, "Alt_L",
+	65, " ",
+	82, "-",
+	86, "+",
+	119, "Delete",
+	111, "Up",
+	112, "Prior",
+	113, "Left",
+	114, "Right",
+	116, "Down",
+	117, "Next",
+	124, "XF86PowerOff",
+	147, "Menu",
+	161, "XF86RotateWindows",
+	172, "XF86AudioPlay",
+	225, "XF86Search",
+	0, NULL
+};
+
+bool _fbreader_closed;
+
 void main_loop(ZLApplication *application)
 {
 	xcb_generic_event_t  *e;
-	bool end = false;
+	static bool alt_pressed = false;
+
+	std::map<int, std::string> kmap;
+	int i = 0;
+
+	while(_keys[i].keynum) {
+		kmap.insert(std::make_pair(_keys[i].keynum, _keys[i].keyname));
+		i++;
+	}
+
 
 //	init_timer();
 
-	while (!end) {
+	_fbreader_closed = false;
+	while (!_fbreader_closed) {
 //		set_timer();
 		e = xcb_wait_for_event(connection);
 //		busy();
 		if (e) {
 			switch (e->response_type & ~0x80) {
+				case XCB_KEY_PRESS:
+					{
+						xcb_key_press_event_t *ev = (xcb_key_press_event_t *)e;
+
+						if(!alt_pressed && kmap[ev->detail] == "ALT_L")
+							alt_pressed = true;
+
+						break;
+					}
 				case XCB_KEY_RELEASE:
 					{
-						xcb_key_release_event_t *ev;
-						ev = (xcb_key_release_event_t *)e;
+						xcb_key_release_event_t *ev = (xcb_key_release_event_t *)e;
+
+						if(alt_pressed && kmap[ev->detail] == "ALT_L") {
+							alt_pressed = false;
+							continue;
+						}
+
+						printf("ev->detail: %d %s\n", ev->detail, kmap[ev->detail].c_str());
+
+						if(alt_pressed)
+							application->doActionByKey(std::string("Alt+") + kmap[ev->detail]);
+						else
+							application->doActionByKey(kmap[ev->detail]);
 
 //						application->doActionByKey(ZLKeyUtil::keyName(ev->detail, ev->detail, ev->state));
 
-						//printf("ev->detail: %d\n", ev->detail);
 
 /*						switch (ev->detail) {
 							// ESC
@@ -125,7 +191,6 @@ void main_loop(ZLApplication *application)
 void ZLEwlLibraryImplementation::run(ZLApplication *application) {
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
-	ewl_main();
-//	main_loop(application);
+	main_loop(application);
 	delete application;
 }
