@@ -79,7 +79,7 @@ void ZLTextStyleReader::startElementHandler(const char *tag, const char **attrib
 	static const std::string STYLE = "style";
 
 	if (BASE == tag) {
-		myCollection.myBaseStyle = new ZLTextBaseStyle(attributeValue(attributes, "family"), intValue(attributes, "fontSize"));
+		myCollection.myBaseStyle = new ZLTextBaseStyle(attributeValue(attributes, "family"), intValue(attributes, "fontSize"), b3Value(attributes, "bold") == B3_TRUE, intValue(attributes, "lineSpacingPercent", 100));
 	} else if (STYLE == tag) {
 		const char *idString = attributeValue(attributes, "id");
 		const char *name = attributeValue(attributes, "name");
@@ -140,7 +140,7 @@ ZLTextStyleCollection::ZLTextStyleCollection() :
 	myBaseStyle(0) {
 	ZLTextStyleReader(*this).readDocument(ZLibrary::DefaultFilesPathPrefix() + "styles.xml");
 	if (myBaseStyle.isNull()) {
-		myBaseStyle = new ZLTextBaseStyle("", 20);
+		myBaseStyle = new ZLTextBaseStyle("", 20, false, 100);
 	}
 }
 

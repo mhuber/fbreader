@@ -68,7 +68,8 @@ typedef shared_ptr<ZLTextStyle> ZLTextStylePtr;
 class ZLTextBaseStyle : public ZLTextStyle {
 
 public:
-	ZLTextBaseStyle(const std::string &fontFamily, int fontSize);
+	ZLTextBaseStyle(const std::string &fontFamily, int fontSize, bool bold, int lineSpacePercent);
+	//ZLTextBaseStyle(const std::string &fontFamily, int fontSize);
 
 	bool isDecorated() const;
 
