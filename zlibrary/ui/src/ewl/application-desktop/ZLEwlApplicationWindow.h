@@ -20,8 +20,6 @@
 #ifndef __ZLEWLAPPLICATIONWINDOW_H__
 #define __ZLEWLAPPLICATIONWINDOW_H__
 
-#include  <ewl/Ewl.h>
-
 #include <vector>
 #include <map>
 
@@ -54,12 +52,11 @@ private:
 	//void addToolbarItem(ZLApplication::Toolbar::ItemPtr item) { }
 
 public:
-	void handleKeyEventSlot(void *ev);
 
-	Ewl_Widget *getMainWindow() { return myMainWindow; }
+	void *getMainWindow() { return myMainWindow; }
 
 private:
-	Ewl_Widget *myMainWindow;
+	void *myMainWindow;
 };
 
 #endif /* __ZLEWLAPPLICATIONWINDOW_H__ */
