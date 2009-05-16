@@ -29,6 +29,7 @@
 #include "../dialogs/ZLEwlDialogManager.h"
 #include "../image/ZLEwlImageManager.h"
 #include "../view/ZLEwlPaintContext.h"
+#include "../view/ZLEwlViewWidget.h"
 #include "../util/ZLEwlUtil.h"
 #include "../../unix/message/ZLUnixMessage.h"
 #include "../../../../core/src/util/ZLKeyUtil.h"
@@ -50,10 +51,10 @@ void initLibrary() {
 }
 
 void ZLEwlLibraryImplementation::init(int &argc, char **&argv) {
-	if(!ewl_init(&argc, argv)) {
+/*	if(!ewl_init(&argc, argv)) {
 		fprintf(stderr, "Unable to init EWL.\n");
 	}		
-
+*/
 	ZLibrary::parseArguments(argc, argv);
 
 	XMLConfigManager::createInstance();
@@ -131,7 +132,7 @@ void main_loop(ZLApplication *application)
 		e = xcb_wait_for_event(connection);
 //		busy();
 		if (e) {
-			switch (e->response_type & ~0x80) {
+			switch (e->response_type & ~0x80) {	
 				case XCB_KEY_PRESS:
 					{
 						xcb_key_press_event_t *ev = (xcb_key_press_event_t *)e;
@@ -150,36 +151,34 @@ void main_loop(ZLApplication *application)
 							continue;
 						}
 
-						printf("ev->detail: %d %s\n", ev->detail, kmap[ev->detail].c_str());
+						//printf("ev->detail: %d %s\n", ev->detail, kmap[ev->detail].c_str());
 
 						if(alt_pressed)
 							application->doActionByKey(std::string("Alt+") + kmap[ev->detail]);
 						else
 							application->doActionByKey(kmap[ev->detail]);
 
-//						application->doActionByKey(ZLKeyUtil::keyName(ev->detail, ev->detail, ev->state));
+						break;
+					}
+				case XCB_EXPOSE:
+					{
+						xcb_expose_event_t *expose = (xcb_expose_event_t *)e;
 
+						application->refreshWindow();
+						
+						break;
+					}
+				case XCB_CONFIGURE_NOTIFY:
+					{
+						xcb_configure_notify_event_t *conf = (xcb_configure_notify_event_t *)e;
 
-/*						switch (ev->detail) {
-							// ESC
-							case 9:
-								application->doAction(ActionCode::CANCEL);
-								end = true;
-								break;
+						//printf("resize: %d %d\n", conf->width, conf->height);	
+						//
+						((ZLEwlViewWidget*)application->myViewWidget)->resize(conf->width, conf->height);
 
-							case 19:
-							case 90:
-							case 111:
-								application->doAction(ActionCode::LARGE_SCROLL_FORWARD);
-								break;
-
-							case 18:
-							case 81:
-							case 116:
-								application->doAction(ActionCode::LARGE_SCROLL_BACKWARD);
-								break;
-						}
-*/
+						application->refreshWindow();
+						
+						break;
 					}
 			}
 			free (e);

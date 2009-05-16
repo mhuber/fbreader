@@ -72,9 +72,9 @@ public:
 	void drawFilledCircle(int x, int y, int r);
 
 	xcb_image_t     *image;
+	int myWidth, myHeight;
 
 private:
-	int myWidth, myHeight;
 	double dpi_x, dpi_y;
 	//int *image;
 

@@ -36,6 +36,7 @@ public:
 
 	int width() const;
 	int height() const;
+	void resize(int w, int h);
 	void doPaint();
 	void invertRegion(int x0, int y0, int x1, int y1, bool flush);
 
@@ -45,11 +46,11 @@ public:
 
 
 private:
+	int w, h;
 	void trackStylus(bool track);
 	void repaint();
 
 private:
-	xcb_gcontext_t		gc;
 	xcb_gcontext_t		bgcolor;
 	unsigned int pal_[4];
 

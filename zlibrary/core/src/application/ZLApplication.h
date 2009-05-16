@@ -179,8 +179,9 @@ private:
 	void createMenubar();
 	const ZLMenubar &menubar() const;
 
-private:
+public:
 	ZLViewWidget *myViewWidget;
+private:
 	shared_ptr<ZLView> myInitialView;
 	std::map<std::string,shared_ptr<Action> > myActionMap;
 	mutable shared_ptr<ZLToolbar> myToolbar;

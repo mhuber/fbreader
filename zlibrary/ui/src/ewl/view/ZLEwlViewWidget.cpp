@@ -32,6 +32,7 @@ xcb_screen_t *screen;
 xcb_drawable_t rect;
 xcb_shm_segment_info_t shminfo;
 xcb_image_t *im;
+xcb_gcontext_t		gc;
 unsigned int *pal;
 
 static void updatePoint(ZLEwlViewWidget *viewWidget, int &x, int &y) {
@@ -60,15 +61,17 @@ static void updatePoint(ZLEwlViewWidget *viewWidget, int &x, int &y) {
 }
 
 int ZLEwlViewWidget::width() const {
-	return 600;
+	return w;
 }
 
 int ZLEwlViewWidget::height() const {
-	return 800;
+	return h;
 }
 
 ZLEwlViewWidget::ZLEwlViewWidget(ZLApplication *application, ZLView::Angle initialAngle) : ZLViewWidget(initialAngle) {
 	myApplication = application;
+	w = 600;
+	h = 800;
 
 	xcb_screen_iterator_t screen_iter;
 	const xcb_setup_t    *setup;
@@ -108,10 +111,12 @@ ZLEwlViewWidget::ZLEwlViewWidget(ZLApplication *application, ZLView::Angle initi
 	mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
 	values[0] = screen->white_pixel;
 	values[1] =
-		XCB_EVENT_MASK_KEY_RELEASE |
+		XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
 		XCB_EVENT_MASK_BUTTON_PRESS |
 		XCB_EVENT_MASK_EXPOSURE |
-		XCB_EVENT_MASK_POINTER_MOTION;
+		XCB_EVENT_MASK_POINTER_MOTION |
+		XCB_EVENT_MASK_VISIBILITY_CHANGE | XCB_EVENT_MASK_STRUCTURE_NOTIFY |
+		XCB_EVENT_MASK_FOCUS_CHANGE      | XCB_EVENT_MASK_PROPERTY_CHANGE;
 
 	uint8_t depth = xcb_aux_get_depth (connection, screen);
 	xcb_create_window(connection,
@@ -193,16 +198,66 @@ void ZLEwlViewWidget::doPaint()	{
 	ZLEwlPaintContext &pContext = (ZLEwlPaintContext&)view()->context();
 
 	pContext.image = im;
+	pContext.myWidth = w;
+	pContext.myHeight = h;
 
 	view()->paint();
 
 	xcb_image_shm_put (connection, window, gc,
 			pContext.image, shminfo,
-			0, 0, 0, 0, 600, 800, 0);
+			0, 0, 0, 0, w, h, 0);
 	xcb_flush(connection);
 }
 
 void ZLEwlViewWidget::trackStylus(bool track) {
+}
+
+void ZLEwlViewWidget::resize(int w, int h) {
+	if(w == this->w && h == this->h)
+		return;
+
+	this->w = w;
+	this->h = h;
+
+	xcb_shm_detach(connection, shminfo.shmseg);
+	shmdt(im->data);
+	xcb_image_destroy(im);
+
+	xcb_shm_query_version_reply_t *rep_shm;
+
+	rep_shm = xcb_shm_query_version_reply (connection,
+			xcb_shm_query_version (connection),
+			NULL);
+	if(rep_shm) {
+		xcb_image_format_t format;
+		int shmctl_status;
+
+		if (rep_shm->shared_pixmaps &&
+				(rep_shm->major_version > 1 || rep_shm->minor_version > 0))
+			format = (xcb_image_format_t)rep_shm->pixmap_format;
+		else
+			format = (xcb_image_format_t)0;
+
+		uint8_t depth = xcb_aux_get_depth (connection, screen);
+		im = xcb_image_create_native (connection, w, h,
+				format, depth, NULL, ~0, NULL);
+		assert(im);
+
+		shminfo.shmid = shmget (IPC_PRIVATE,
+				im->stride*im->height,
+				IPC_CREAT | 0777);
+		assert(shminfo.shmid != -1);
+		shminfo.shmaddr = (uint8_t*)shmat (shminfo.shmid, 0, 0);
+		assert(shminfo.shmaddr);
+		im->data = shminfo.shmaddr;
+
+		shminfo.shmseg = xcb_generate_id (connection);
+		xcb_shm_attach (connection, shminfo.shmseg,
+				shminfo.shmid, 0);
+		shmctl_status = shmctl(shminfo.shmid, IPC_RMID, 0);
+		assert(shmctl_status != -1);
+		free (rep_shm);
+	}
 }
 
 void ZLEwlViewWidget::repaint()	{
