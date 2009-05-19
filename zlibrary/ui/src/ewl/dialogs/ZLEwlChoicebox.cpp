@@ -240,6 +240,7 @@ void choicebox_previous_page(Ewl_Widget * widget)
 void choicebox_esc(Ewl_Widget * widget)
 {
 	fini_choicebox(widget);
+	ewl_main_quit();
 }
 
 void choicebox_item(Ewl_Widget * widget, int item, bool lp)
@@ -331,8 +332,9 @@ void choicebox_destroy_cb(Ewl_Widget * w, void *event, void *data)
 	fini_choicebox(w);
 	Ewl_Widget *win;
 	win = ewl_widget_name_find("main_win");
-	if(win == data)
-		redraw_text();
+//	if(win == data)
+		//redraw_text();
+	ewl_main_quit();
 }
 
 Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int numchoices,
@@ -506,8 +508,8 @@ void fini_choicebox(Ewl_Widget * win, bool redraw)
 	free_choices(infostruct);
 	free(infostruct);
 	ewl_widget_destroy(win);
-	if(master && redraw)
-		redraw_text();
+//	if(master && redraw)
+//		redraw_text();
 }
 
 void update_choicebox(Ewl_Widget *w, const char *choicelist[], const char *values[], int numchoices, bool rewind)

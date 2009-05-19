@@ -29,6 +29,6 @@ void ZLEwlBMKDialog(FBReader &f);
 void ZLEwlBMKAddedMsg(FBReader &f);
 void ZLEwlSearchDialog(FBReader &f);
 void ZLEwlBookInfo(FBReader &f);
-void redraw_text();
+//void redraw_text();
 
 #endif

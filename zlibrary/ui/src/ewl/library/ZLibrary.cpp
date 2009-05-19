@@ -51,10 +51,10 @@ void initLibrary() {
 }
 
 void ZLEwlLibraryImplementation::init(int &argc, char **&argv) {
-/*	if(!ewl_init(&argc, argv)) {
+	if(!ewl_init(&argc, argv)) {
 		fprintf(stderr, "Unable to init EWL.\n");
 	}		
-*/
+
 	ZLibrary::parseArguments(argc, argv);
 
 	XMLConfigManager::createInstance();
@@ -187,9 +187,21 @@ void main_loop(ZLApplication *application)
 	//delete_timer();
 }
 
+void signal_handler(int )
+{
+	exit(1);
+}
+
 void ZLEwlLibraryImplementation::run(ZLApplication *application) {
+	struct sigaction act;
+	act.sa_handler = signal_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+	sigaction(SIGINT, &act, NULL);
+
 	ZLDialogManager::instance().createApplicationWindow(application);
 	application->initWindow();
+
 	main_loop(application);
 	delete application;
 }

@@ -32,7 +32,6 @@ typedef struct _layout {
 	char *keys[10][10];
 	int size[10][10];
 } t_layout;
-
 t_layout *layouts[10];
 int layouts_cnt;
 
@@ -226,6 +225,8 @@ void keypress_cb(Ewl_Widget *w, void *event, void *data)
 		if((e->base.modifiers & EWL_KEY_MODIFIER_ALT) || !(ewl_text_length_get(&EWL_ENTRY(entry)->text))) {
 //			ewl_widget_hide(win);
 			ewl_widget_destroy(win);
+			ewl_main_quit();
+
 			//free_layouts();
 			Ewl_Widget *mwin = ewl_widget_name_find("main_win");
 			if(mwin)
@@ -388,7 +389,7 @@ Ewl_Widget *init_virtk(Ewl_Widget *parent, char *ltext, virtk_handler handler)
 
 	virtk_info_struct *info = (virtk_info_struct *)malloc(sizeof(virtk_info_struct));
 	info->handler = handler;
-	info->parent = parent;
+//	info->parent = parent;
 
 	win = ewl_window_new();
 	ewl_window_title_set(EWL_WINDOW(win), "EWL_WINDOW");
