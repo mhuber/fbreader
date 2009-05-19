@@ -46,6 +46,11 @@
 #include "../../../../../fbreader/src/formats/txt/TxtPlugin.h"
 #include "../../../../../fbreader/src/formats/txt/PlainTextFormat.h"
 
+#include "ZLEwlChoicebox_new.h"
+
+vector<cb_olist *> olists;
+cb_vlist *vlist;
+
 bool turbo = false;
 
 static void ZLEwlGotoPageDialog_reveal(Ewl_Widget *w, void *ev, void *data) {
@@ -778,7 +783,7 @@ void options_dialog_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 	}
 }
 
-void ZLEwlOptionsDialog(FBReader &f)
+/*void ZLEwlOptionsDialog(FBReader &f)
 {
 	Ewl_Widget *w = ewl_widget_name_find("main_win");
 
@@ -800,6 +805,7 @@ void ZLEwlOptionsDialog(FBReader &f)
 
 	ewl_widget_show(init_choicebox(initchoices, values, 5, options_dialog_choicehandler, "Settings", w, true));
 }
+*/
 
 
 ZLTextTreeParagraph *curTOCParent;
@@ -1384,4 +1390,174 @@ void ZLEwlBookInfo(FBReader &f)
 
 
 	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, bookinfo_choicehandler, "Book Information", w, true));
+}
+
+void margins_handler(int idx)
+{
+}
+
+void format_style_handler(int idx)
+{
+	cb_olist *current_olist = olists.back();
+	if(2 == idx) {
+		cb_olist_item *i = &current_olist->items.at(idx);
+		++i->curval_idx %= i->values.size();
+
+		ZLTextStyleCollection::instance().baseStyle().BoldOption.setValue(i->values.at(i->curval_idx).ibool);
+
+		cb_lcb_invalidate(idx);
+	} else if(5 == idx) {
+		cb_olist *options = new cb_olist;
+		olists.push_back(options);
+
+		options->name = "Margins";
+		options->parent = current_olist;
+		options->parent_item_idx = idx;
+		options->item_handler = margins_handler;
+
+		cb_olist_item i;
+
+		FBMargins &margins = FBView::margins();
+
+		ADD_OPTION_INT("Left Margin", margins.LeftMarginOption.value());
+		ADD_OPTION_INT("Right Margin", margins.RightMarginOption.value());
+		ADD_OPTION_INT("Top Margin", margins.TopMarginOption.value());
+		ADD_OPTION_INT("Bottom Margin", margins.BottomMarginOption.value());
+
+		cb_lcb_redraw();
+	}
+}
+
+void indicator_handler(int idx)
+{
+}
+
+void language_handler(int idx)
+{
+}
+
+void options_dialog_handler(int idx)
+{
+	fprintf(stderr, "options_dialog_handler: %d\n", idx);
+
+	cb_olist *current_olist = olists.back();
+
+	if(0 == idx) {
+		myContext = &(*myFbreader->context());
+
+		ZLTextBaseStyle &bs = ZLTextStyleCollection::instance().baseStyle();
+
+		ZLTextStyleCollection &collection = ZLTextStyleCollection::instance();
+		ZLTextFullStyleDecoration *decoration = (ZLTextFullStyleDecoration*)collection.decoration(/*REGULAR*/0);
+
+		char *alignments[] = { "undefined", "left", "right", "center", "justify" };
+
+		cb_olist *options = new cb_olist;
+		olists.push_back(options);
+
+		options->name = "Format & Style";
+		options->parent = current_olist;
+		options->parent_item_idx = idx;
+		options->item_handler = format_style_handler;
+
+		cb_olist_item i;
+
+		ADD_OPTION_STRING("Font Family", bs.FontFamilyOption.value());
+		ADD_OPTION_INT_F("Font Size", bs.FontSizeOption.value(), "%dpt");
+		ADD_OPTION_BOOL("Bold", bs.BoldOption.value());
+		ADD_OPTION_INT("Line Spacing", bs.LineSpacePercentOption.value());
+		ADD_OPTION_INT_T("Alignment", bs.AlignmentOption.value(), alignments[bs.AlignmentOption.value()]);
+		ADD_SUBMENU_ITEM("Margins");
+		ADD_OPTION_INT("First Line Indent", decoration->FirstLineIndentDeltaOption.value());
+		ADD_OPTION_BOOL("Auto Hyphenations", bs.AutoHyphenationOption.value());
+
+		cb_lcb_redraw();
+	} else if(1 == idx) {
+		FBIndicatorStyle &indicatorInfo = FBView::commonIndicatorInfo();
+
+		cb_olist *options = new cb_olist;
+		olists.push_back(options);
+
+		options->name = "Indicator";
+		options->parent = current_olist;
+		options->parent_item_idx = idx;
+		options->item_handler = indicator_handler;
+
+		cb_olist_item i;
+
+		ADD_OPTION_BOOL("Show Indicator", (indicatorInfo.TypeOption.value() == ZLTextPositionIndicatorInfo::FB_INDICATOR));
+		ADD_OPTION_BOOL("Show TOC Marks", myFbreader->bookTextView().ShowTOCMarksOption.value());
+		ADD_OPTION_BOOL("Show Position", indicatorInfo.ShowTextPositionOption.value());
+		ADD_OPTION_BOOL("Show Time", indicatorInfo.ShowTimeOption.value());
+		ADD_OPTION_BOOL("Show Battery", indicatorInfo.ShowBatteryOption.value());
+		ADD_OPTION_INT("Indicator Height", indicatorInfo.HeightOption.value());
+		ADD_OPTION_INT("Offset from Text", indicatorInfo.OffsetOption.value());
+		ADD_OPTION_INT_F("Font Size", indicatorInfo.FontSizeOption.value(), "%dpt");
+
+		cb_lcb_redraw();
+	} else if(2 == idx) {
+		cb_olist *options = new cb_olist;
+		olists.push_back(options);
+
+		options->name = "Language";
+		options->parent = current_olist;
+		options->parent_item_idx = idx;
+		options->item_handler = language_handler;
+
+		PluginCollection &pc = PluginCollection::instance();
+
+
+		cb_olist_item i;
+
+		ADD_OPTION_BOOL("Detect Language and Encoding", pc.LanguageAutoDetectOption.value());
+		ADD_OPTION_STRING("Default Language",
+				(ZLLanguageList::languageName(pc.DefaultLanguageOption.value()) == "????????") ?
+				ZLLanguageList::languageName("other").c_str() :
+				ZLLanguageList::languageName(pc.DefaultLanguageOption.value()).c_str());
+
+
+		bool found = false;
+		const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
+		for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
+			const std::vector<ZLEncodingConverterInfoPtr> &infos = (*it)->infos();
+
+			for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = infos.begin(); !found && (jt != infos.end()); ++jt) {
+				if ((*jt)->name() == pc.DefaultEncodingOption.value()) {
+					ADD_OPTION_STRING("Default Encoding Set", (*it)->name().c_str());
+					ADD_OPTION_STRING("Default Encoding", (*jt)->name().c_str());
+
+					//(*jt)->visibleName().c_str());
+					//myBookInfo->EncodingOption.value().c_str());
+
+					found =true;
+					break;
+				}
+			}
+		}
+		ADD_OPTION_BOOL("iso-8859-1 -> win-1251", ZLEncodingCollection::useWindows1252HackOption().value());
+
+		cb_lcb_redraw();
+	}
+}
+
+void ZLEwlOptionsDialog(FBReader &f)
+{
+	myFbreader = &f;
+	myContext = &(*f.context());
+
+	cb_olist *options = new cb_olist;
+	olists.push_back(options);
+
+	options->name = "Settings";
+	options->parent = NULL;
+	options->parent_item_idx = -1;
+	options->item_handler = options_dialog_handler;
+
+	cb_olist_item i;
+
+	ADD_SUBMENU_ITEM("Format & Style");
+	ADD_SUBMENU_ITEM("Indicator");
+	ADD_SUBMENU_ITEM("Language");
+
+	cb_lcb_new();
 }
