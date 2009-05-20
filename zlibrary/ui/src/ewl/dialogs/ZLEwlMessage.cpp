@@ -53,7 +53,7 @@ static void message_keyhandler(Ewl_Widget *w, void *ev, void *data)
 
 	if(!strcmp(e->base.keyname, "Escape") 
 			|| !strcmp(e->base.keyname, "Return")) {
-		ewl_widget_destroy(w);
+		ewl_widget_hide(w);
 		ewl_main_quit();
 //		if(data)
 //			redraw_text();

@@ -90,7 +90,6 @@ static void ZLEwlGotoPageDialog_unrealize(Ewl_Widget *w, void *ev, void *data) {
 
 static void ZLEwlGotoPageDialog_window_close_cb(Ewl_Widget *w, void *ev, void *data)
 {
-	ewl_widget_destroy(w);
 	ewl_main_quit();
 }
 
@@ -112,8 +111,6 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 			free(s);
 			ewl_entry_delete_left(EWL_ENTRY(entry));
 		} else {
-			ewl_widget_hide(dialog);
-			ewl_widget_destroy(dialog);
 			ewl_main_quit();
 			((GotoPageNumber *)data)->callback(-1);			
 		}
@@ -124,8 +121,6 @@ static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
 			free(s);
 		}
 
-		ewl_widget_hide(dialog);
-		ewl_widget_destroy(dialog);
 		ewl_main_quit();
 		((GotoPageNumber *)data)->callback(n);
 	}
@@ -183,6 +178,8 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 	ewl_widget_focus_send(entry);
 
 	ecore_main_loop_begin();
+	ewl_widget_hide(dialog);
+	ewl_widget_destroy(dialog);
 }
 
 static ZLTextTreeParagraph *curTOCParent;
@@ -339,17 +336,9 @@ static void search_info_reveal_cb(Ewl_Widget *w, void *ev, void *data) {
 }
 
 static void search_info_realize_cb(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 0);
 }
 
 static void search_info_unrealize_cb(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
 }
 
 static void search_info_keyhandler(Ewl_Widget *w, void *ev, void *data)
@@ -362,7 +351,6 @@ static void search_info_keyhandler(Ewl_Widget *w, void *ev, void *data)
 
 
 	if(!strcmp(e->base.keyname, "Escape") || !strcmp(e->base.keyname, "Return")) {
-		ewl_widget_destroy(w);
 		myFbreader->myModel->bookTextModel()->removeAllMarks();
 		//redraw_text();
 		ewl_main_quit();
@@ -439,15 +427,18 @@ Ewl_Widget *init_search_info()
 	return w;
 }
 
+Ewl_Widget *huj;
 void search_input_handler(char *text)
 {
 	if(text && strlen(text)) {
 		if(myFbreader->bookTextView().search(std::string(text), true, false, false, false)) {
-			ewl_widget_show(init_search_info());
+			ewl_widget_show(huj = init_search_info());
 		} else {
 			//redraw_text();
-			ewl_widget_show(init_message("Text not found", true));;
+			ewl_widget_show(huj = init_message("Text not found", true));;
 		}
+		myFbreader->clearTextCaches();
+		myFbreader->refreshWindow();
 	} else {
 		//redraw_text();
 	}
@@ -455,12 +446,21 @@ void search_input_handler(char *text)
 
 void ZLEwlSearchDialog(FBReader &f)
 {
-//	Ewl_Widget *w = ewl_widget_name_find("main_win");
+	Ewl_Widget *w;
 
 	myFbreader = &f;
 
-	ewl_widget_show(init_virtk(NULL, "Search", search_input_handler));
+	huj = NULL;
+	ewl_widget_show(w = init_virtk(NULL, "Search", search_input_handler));
 	ecore_main_loop_begin();
+	if(huj) {
+		ewl_widget_hide(huj);
+		ewl_widget_destroy(huj);
+	}
+	if(w) {
+		ewl_widget_hide(w);
+		ewl_widget_destroy(w);
+	}
 }
 
 void ZLEwlBookInfo(FBReader &f)

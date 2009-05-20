@@ -214,17 +214,17 @@ void keypress_cb(Ewl_Widget *w, void *event, void *data)
 			}
 		}
 	} else if(!strcmp(k, "Return")) {
-//		ewl_widget_hide(win);
-		ewl_widget_destroy(win);
+		ewl_widget_hide(win);
+//		ewl_widget_destroy(win);
 		//free_layouts();
-		Ewl_Widget *mwin = ewl_widget_name_find("main_win");
-		if(mwin)
-			ewl_window_keyboard_grab_set(EWL_WINDOW(mwin), 1);
+//		Ewl_Widget *mwin = ewl_widget_name_find("main_win");
+//		if(mwin)
+//			ewl_window_keyboard_grab_set(EWL_WINDOW(mwin), 1);
 		(info->handler)(ewl_text_text_get(&EWL_ENTRY(entry)->text));
 	} else if(!strcmp(k, "Escape")) {
 		if((e->base.modifiers & EWL_KEY_MODIFIER_ALT) || !(ewl_text_length_get(&EWL_ENTRY(entry)->text))) {
-//			ewl_widget_hide(win);
-			ewl_widget_destroy(win);
+			ewl_widget_hide(win);
+//			ewl_widget_destroy(win);
 			ewl_main_quit();
 
 			//free_layouts();
