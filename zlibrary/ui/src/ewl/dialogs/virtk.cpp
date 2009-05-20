@@ -334,17 +334,9 @@ static void virtk_reveal_cb(Ewl_Widget *w, void *ev, void *data) {
 }
 
 static void virtk_realize_cb(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 0);
 }
 
 static void virtk_unrealize_cb(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
 }
 
 Ewl_Widget *init_virtk(Ewl_Widget *parent, char *ltext, virtk_handler handler)

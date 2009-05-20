@@ -355,10 +355,10 @@ static void search_info_keyhandler(Ewl_Widget *w, void *ev, void *data)
 		//redraw_text();
 		ewl_main_quit();
 		return;
-	} else if(!strcmp(e->base.keyname, "Up") || !strcmp(e->base.keyname, "0")) {
+	} else if(!strcmp(e->base.keyname, "Right") || !strcmp(e->base.keyname, "Next") || !strcmp(e->base.keyname, "Up") || !strcmp(e->base.keyname, "0")) {
 		if(myFbreader->bookTextView().canFindNext())
 			myFbreader->bookTextView().findNext();
-	} else if(!strcmp(e->base.keyname, "Down") || !strcmp(e->base.keyname, "9")) {
+	} else if(!strcmp(e->base.keyname, "Left") || !strcmp(e->base.keyname, "Prior") || !!strcmp(e->base.keyname, "Down") || !strcmp(e->base.keyname, "9")) {
 		if(myFbreader->bookTextView().canFindPrevious())
 			myFbreader->bookTextView().findPrevious();
 	}
@@ -431,14 +431,16 @@ Ewl_Widget *huj;
 void search_input_handler(char *text)
 {
 	if(text && strlen(text)) {
+		myFbreader->clearTextCaches();
+		myFbreader->refreshWindow();
+
 		if(myFbreader->bookTextView().search(std::string(text), true, false, false, false)) {
 			ewl_widget_show(huj = init_search_info());
 		} else {
 			//redraw_text();
 			ewl_widget_show(huj = init_message("Text not found", true));;
 		}
-		myFbreader->clearTextCaches();
-		myFbreader->refreshWindow();
+		
 	} else {
 		//redraw_text();
 	}
