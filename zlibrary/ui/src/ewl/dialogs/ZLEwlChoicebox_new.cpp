@@ -55,10 +55,6 @@ static int exit_handler(void* param, int ev_type, void* event)
 {
 	fprintf(stderr, "exit_handler\n");
 	ecore_main_loop_quit();
-	if(lcb_win)
-		ecore_evas_free(lcb_win);
-	if(fcb_win)
-		ecore_evas_free(fcb_win);
 
 	return 1;
 }
@@ -67,8 +63,6 @@ static void lcb_win_close_handler(Ecore_Evas* main_win)
 {
 	fprintf(stderr, "main_win_close_handler\n");
 	ecore_main_loop_quit();
-	ecore_evas_free(lcb_win);
-	lcb_win = NULL;
 }
 
 static void lcb_page_updated_handler(Evas_Object* choicebox,
@@ -231,11 +225,8 @@ static void cb_lcb_destroy()
 
 	if(olists.size() > 0)
 		cb_lcb_redraw();
-	else {
+	else
 		ecore_main_loop_quit();
-		ecore_evas_free(lcb_win);
-		lcb_win = NULL;
-	}
 }
 
 static void lcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
@@ -375,6 +366,10 @@ void cb_lcb_new()
 	ecore_evas_show(lcb_win);
 
 	ecore_main_loop_begin();
+
+	ecore_evas_hide(lcb_win);
+	ecore_evas_free(lcb_win);
+	lcb_win = NULL;
 }
 
 // rcb
@@ -548,8 +543,6 @@ static void fcb_win_close_handler(Ecore_Evas* main_win)
 {
 	fprintf(stderr, "main_win_close_handler\n");
 	ecore_main_loop_quit();
-	ecore_evas_free(fcb_win);
-	fcb_win = NULL;
 }
 
 static void fcb_page_updated_handler(Evas_Object* choicebox,
@@ -595,13 +588,8 @@ static void fcb_handler(Evas_Object* choicebox,
 			choicebox, item_num, is_alt, param);
 
 	cb_list *l = (cb_list *)param;
-	if(l->item_handler(item_num, is_alt) != 0) {
+	if(l->item_handler(item_num, is_alt) != 0)
 		ecore_main_loop_quit();
-		if(fcb_win) {
-			ecore_evas_free(fcb_win);
-			lcb_win = NULL;
-		}
-	}
 }
 
 
@@ -643,8 +631,6 @@ static void cb_fcb_destroy()
 //		l->destroy_handler();
 
 	ecore_main_loop_quit();
-	ecore_evas_free(fcb_win);
-	fcb_win = NULL;
 }
 
 static void fcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
@@ -776,4 +762,8 @@ void cb_fcb_new(cb_list *list)
 	ecore_evas_show(fcb_win);
 
 	ecore_main_loop_begin();
+
+	ecore_evas_hide(fcb_win);
+	ecore_evas_free(fcb_win);
+	fcb_win = NULL;
 }
