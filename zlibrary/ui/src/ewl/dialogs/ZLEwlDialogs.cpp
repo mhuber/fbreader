@@ -184,54 +184,46 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 	ecore_main_loop_begin();
 }
 
-ZLTextTreeParagraph *curTOCParent;
+static ZLTextTreeParagraph *curTOCParent;
+static cb_list *list;
 
-void toc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+int toc_handler(int idx)
 {
-	Ewl_Widget *w = ewl_widget_name_find("main_win");
-
 	ZLTextTreeParagraph *selEntry;
-	std::vector<ZLTextTreeParagraph*> list;
+	std::vector<ZLTextTreeParagraph*> toc_list;
 	ContentsModel &cm = (ContentsModel&)*myFbreader->myModel->contentsModel();
 
 	if(curTOCParent != cm.myRoot) {
-		if(choice == 0)
+		if(idx == 0)
 			selEntry = curTOCParent->parent();
-		else if(choice == 1)
+		else if(idx == 1)
 			selEntry = curTOCParent;
 		else
-			selEntry = curTOCParent->children().at(choice - 2);
-	} else {
-		selEntry = curTOCParent->children().at(choice);
-	}
+			selEntry = curTOCParent->children().at(idx - 2);
+	} else
+		selEntry = curTOCParent->children().at(idx);
 
-	list = selEntry->children();
-	if(list.empty() || (curTOCParent == selEntry)) {
-		fini_choicebox(parent, false);
+	toc_list = selEntry->children();
+	if(toc_list.empty() || (curTOCParent == selEntry)) {
 		myFbreader->bookTextView().gotoParagraph(cm.reference(selEntry));
 		myFbreader->refreshWindow();
-		return;
+		return 1;
 	}
 
 	curTOCParent = selEntry;
 
-	char **initchoices = (char **)malloc((list.size() + 2) * sizeof(char*));
-	char **values = (char **)malloc((list.size() + 2) * sizeof(char*));
+	list->items.clear();
 
 	int cnt = 0;
 	if(selEntry != cm.myRoot) {
-		asprintf(&initchoices[cnt], "1. ..");
-		asprintf(&values[cnt], "");
-		cnt++;
-		asprintf(&initchoices[cnt], "%d. .", cnt + 1);
-		asprintf(&values[cnt], "");
-		cnt++;
+		list->items.push_back("..");
+		list->items.push_back(".");
 	}
 
 	short len;
 	char *p;
-	for(int i = 0; i < list.size(); i++) {
-		p = list.at(i)->myFirstEntryAddress;
+	for(int i = 0; i < toc_list.size(); i++) {
+		p = toc_list.at(i)->myFirstEntryAddress;
 
 		len = 0;
 		memcpy(&len, p + 3, sizeof(short));
@@ -239,26 +231,15 @@ void toc_choicehandler(int choice, Ewl_Widget *parent, bool lp)
 		bzero(t, len + 1);
 		memcpy(t, p + 7, len);
 
-		if(list.at(i)->children().empty())
-			asprintf(&initchoices[cnt], "%d. %s", cnt % 8 + 1, t);
+		if(toc_list.at(i)->children().empty())
+			list->items.push_back(t);
 		else
-			asprintf(&initchoices[cnt], "%d. + %s", cnt % 8 + 1, t);
+			list->items.push_back(string("+") + t);
 		free(t);
-
-		asprintf(&values[cnt], "");
-		cnt++;
 	}
 
-	update_choicebox(parent, (const char **)initchoices, (const char **)values, cnt, true); 
-
-//	fini_choicebox(parent, false);
-//	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
-}
-
-cb_list *list;
-
-int toc_handler(int idx)
-{
+	cb_fcb_redraw(list->items.size());
+	return 0;
 }
 
 void ZLEwlTOCDialog(FBReader &f)
@@ -299,53 +280,6 @@ void ZLEwlTOCDialog(FBReader &f)
 	curTOCParent = cm.myRoot;
 
 	cb_fcb_new(list);
-}
-
-void _ZLEwlTOCDialog(FBReader &f)
-{
-	Ewl_Widget *w = ewl_widget_name_find("main_win");
-
-	myFbreader = &f;
-
-	int cnt = 0;
-	ContentsModel &cm = (ContentsModel&)*myFbreader->myModel->contentsModel();
-	for(int i = 0; i < cm.paragraphsNumber(); i++)
-		if(((ZLTextTreeParagraph*)cm[i])->parent() == cm.myRoot)
-			cnt++;
-
-	char **initchoices = (char **)malloc(cnt * sizeof(char*));
-	char **values = (char **)malloc(cnt * sizeof(char*));
-
-
-	cnt = 0;
-	short len;
-	char *p;
-	for(int i = 0; i < cm.paragraphsNumber(); i++) {
-		if(((ZLTextTreeParagraph*)cm[i])->parent() == cm.myRoot) {
-			p = ((ZLTextParagraph*)cm[i])->myFirstEntryAddress;
-
-			len = 0;
-			memcpy(&len, p + 3, sizeof(short));
-			char *t = (char*)malloc((len + 1) * sizeof(char));
-			bzero(t, len + 1);
-			memcpy(t, p + 7, len);
-
-			std::vector<ZLTextTreeParagraph*> vpar = ((ZLTextTreeParagraph*)cm[i])->children();
-
-			if(vpar.empty())
-				asprintf(&initchoices[cnt], "%d. %s", cnt % 8 + 1, t);
-			else
-				asprintf(&initchoices[cnt], "%d. + %s", cnt % 8 + 1, t);
-			free(t);
-
-			asprintf(&values[cnt], "");
-			cnt++;
-		}
-	}
-
-
-	curTOCParent = cm.myRoot;
-	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, toc_choicehandler, "TOC", w, true));
 }
 
 // Bookmarks

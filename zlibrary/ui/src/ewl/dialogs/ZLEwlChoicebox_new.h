@@ -71,6 +71,7 @@ struct _cb_vlist {
 };
 
 void cb_fcb_new(cb_list *list);
+void cb_fcb_redraw(int newsize = -1);
 
 void cb_rcb_new();
 

@@ -470,8 +470,10 @@ static void fcb_handler(Evas_Object* choicebox,
 	cb_list *l = (cb_list *)param;
 	if(l->item_handler(item_num) != 0) {
 		ecore_main_loop_quit();
-		ecore_evas_free(lcb_win);
-		lcb_win = NULL;
+		if(fcb_win) {
+			ecore_evas_free(fcb_win);
+			lcb_win = NULL;
+		}
 	}
 }
 
@@ -543,19 +545,14 @@ static void fcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* even
 	}
 }
 
-void cb_fcb_redraw()
+void cb_fcb_redraw(int newsize)
 {
-	if(olists.size() < 1)
-		return;
-
-	cb_olist *l = olists.back();
-	if(!l)
-		return;
-
 	Evas* canvas = ecore_evas_get(fcb_win);
 	Evas_Object* choicebox = evas_object_name_find(canvas, "cb_full");
-	choicebox_set_size(choicebox, l->items.size());
-	choicebox_invalidate_interval(choicebox, 0, l->items.size());
+	if(newsize > 0) {
+		choicebox_set_size(choicebox, newsize);
+		choicebox_invalidate_interval(choicebox, 0, newsize);
+	}
 	choicebox_set_selection(choicebox, 0);
 }
 
