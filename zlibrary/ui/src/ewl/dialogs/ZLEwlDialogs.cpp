@@ -29,6 +29,7 @@
 #include <ewl/Ewl.h>
 
 #include <iostream>
+#include <sstream>
 #include <cstdlib>
 #include <cstring>
 
@@ -187,7 +188,7 @@ void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
 static ZLTextTreeParagraph *curTOCParent;
 static cb_list *list;
 
-int toc_handler(int idx)
+int toc_handler(int idx, bool is_alt)
 {
 	ZLTextTreeParagraph *selEntry;
 	std::vector<ZLTextTreeParagraph*> toc_list;
@@ -282,29 +283,20 @@ void ZLEwlTOCDialog(FBReader &f)
 	cb_fcb_new(list);
 }
 
-// Bookmarks
-void bmk_choicehandler(int choice, Ewl_Widget *parent, bool lp)
+int bookmarks_handler(int idx, bool is_alt)
 {
-	if(lp) {
-		myFbreader->bookTextView().removeBookmark(choice);
+	if(is_alt) {
+		myFbreader->bookTextView().removeBookmark(idx);
 
-		std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > bookmarks
-			= myFbreader->bookTextView().getBookmarks();
+		list->items.erase(list->items.begin() + idx);
 
-		char **initchoices = (char **)malloc(bookmarks.size() * sizeof(char*));
-		char **values = (char **)malloc(bookmarks.size() * sizeof(char*));
+		cb_fcb_redraw(list->items.size());
+//		cb_fcb_invalidate_interval(idx, list->items.size() - 1);
 
-		for(int i = 0; i < bookmarks.size(); i++) {
-			asprintf(&initchoices[i], "%d. Page %d: %s", i % 8 + 1, bookmarks.at(i).second.first, bookmarks.at(i).second.second.c_str());
-			asprintf(&values[i], "");
-		}
-
-		update_choicebox(parent, (const char **)initchoices, (const char **)values, bookmarks.size()); 
+		return 0;
 	} else {
-		myFbreader->bookTextView().gotoBookmark(choice);
-		//myFbreader->refreshWindow();
-
-		fini_choicebox(parent);
+		myFbreader->bookTextView().gotoBookmark(idx);
+		return 1;
 	}
 }
 
@@ -314,19 +306,23 @@ void ZLEwlBMKDialog(FBReader &f)
 
 	myFbreader = &f;
 
+	if(list)
+		delete list;
+	list = new cb_list;
+
+	list->name = "Bookmarks";
+	list->item_handler = bookmarks_handler;
+
 	std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > bookmarks
 		= myFbreader->bookTextView().getBookmarks();
 
-	char **initchoices = (char **)malloc(bookmarks.size() * sizeof(char*));
-	char **values = (char **)malloc(bookmarks.size() * sizeof(char*));
-
 	for(int i = 0; i < bookmarks.size(); i++) {
-			asprintf(&initchoices[i], "%d. Page %d: %s", i % 8 + 1, bookmarks.at(i).second.first, bookmarks.at(i).second.second.c_str());
-			asprintf(&values[i], "");
+		stringstream s;
+		s << "Page " << bookmarks.at(i).second.first << ": " << bookmarks.at(i).second.second;
+		list->items.push_back(s.str());
 	}
 
-	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, bookmarks.size(), bmk_choicehandler, "Bookmarks", w, true));
-	ecore_main_loop_begin();
+	cb_fcb_new(list);
 }
 
 void ZLEwlBMKAddedMsg(FBReader &f) {
@@ -588,7 +584,7 @@ void settings_close_handler()
     myFbreader->refreshWindow();
 }
 
-void ZLBooleanOption_handler(int idx)
+void ZLBooleanOption_handler(int idx, bool is_alt)
 {
 	cb_olist_item *i = &olists.back()->items.at(idx);
 	++i->curval_idx %= i->values.size();
@@ -599,7 +595,7 @@ void ZLBooleanOption_handler(int idx)
 	cb_lcb_invalidate(idx);
 }
 
-void font_family_handler(int idx)
+void font_family_handler(int idx, bool is_alt)
 {
 	ZLStringOption &option = ZLTextStyleCollection::instance().baseStyle().FontFamilyOption;
 	option.setValue(myContext->fontFamilies().at(idx));
@@ -610,7 +606,7 @@ void font_family_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void line_spacing_handler(int idx)
+void line_spacing_handler(int idx, bool is_alt)
 {
 	ZLIntegerOption &option = ZLTextStyleCollection::instance().baseStyle().LineSpacePercentOption;
 	option.setValue(idx * 10 + 50);
@@ -625,7 +621,7 @@ void line_spacing_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void font_size_handler(int idx)
+void font_size_handler(int idx, bool is_alt)
 {
 	ZLIntegerRangeOption &option = ZLTextStyleCollection::instance().baseStyle().FontSizeOption;
 	option.setValue(FONT_SIZE(idx));
@@ -641,7 +637,7 @@ void font_size_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void indicator_offset_handler(int idx)
+void indicator_offset_handler(int idx, bool is_alt)
 {
 	ZLIntegerRangeOption &option = FBView::commonIndicatorInfo().OffsetOption;
 
@@ -658,7 +654,7 @@ void indicator_offset_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void indicator_height_handler(int idx)
+void indicator_height_handler(int idx, bool is_alt)
 {
 	ZLIntegerRangeOption &option = FBView::commonIndicatorInfo().HeightOption;
 
@@ -675,9 +671,10 @@ void indicator_height_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void indicator_font_size_handler(int idx)
+void indicator_font_size_handler(int idx, bool is_alt)
 {
 	ZLIntegerRangeOption &option = FBView::commonIndicatorInfo().FontSizeOption;
+	option.setValue(FONT_SIZE(idx));
 
 	cb_item_value &iv = olists.back()->items.at(vlist->parent_item_idx).current_value;
 	iv.ival = option.value();
@@ -690,7 +687,7 @@ void indicator_font_size_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void alignment_handler(int idx)
+void alignment_handler(int idx, bool is_alt)
 {
 	ZLIntegerOption &option = ZLTextStyleCollection::instance().baseStyle().AlignmentOption;
 	option.setValue(idx+1);
@@ -702,7 +699,7 @@ void alignment_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void margins_val_handler(int idx)
+void margins_val_handler(int idx, bool is_alt)
 {
 	FBMargins &margins = FBView::margins();
 	ZLIntegerRangeOption *option;
@@ -735,7 +732,7 @@ void margins_val_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void margins_handler(int idx)
+void margins_handler(int idx, bool is_alt)
 {
 	string t;
 
@@ -762,7 +759,7 @@ void margins_handler(int idx)
 	cb_rcb_new();
 }
 
-void first_line_indent_handler(int idx)
+void first_line_indent_handler(int idx, bool is_alt)
 {
 	ZLIntegerRangeOption &option = ((ZLTextFullStyleDecoration*)ZLTextStyleCollection::instance().decoration(/*REGULAR*/0))->FirstLineIndentDeltaOption;
 	option.setValue(idx * 5);
@@ -779,7 +776,7 @@ void first_line_indent_handler(int idx)
 
 }
 
-void format_style_handler(int idx)
+void format_style_handler(int idx, bool is_alt)
 {
 	cb_olist *current_olist = olists.back();
 	if(0 == idx) {
@@ -840,7 +837,7 @@ void format_style_handler(int idx)
 	}
 }
 
-void indicator_handler(int idx)
+void indicator_handler(int idx, bool is_alt)
 {
 	cb_olist *current_olist = olists.back();
 
@@ -879,7 +876,7 @@ void indicator_handler(int idx)
 	}
 }
 
-void default_language_handler(int idx)
+void default_language_handler(int idx, bool is_alt)
 {
 	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
 	ZLStringOption &option = PluginCollection::instance().DefaultLanguageOption;
@@ -896,7 +893,7 @@ void default_language_handler(int idx)
 	}
 }
 
-void default_encoding_set_handler(int idx)
+void default_encoding_set_handler(int idx, bool is_alt)
 {
 	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
 	if(idx > sets.size())
@@ -913,7 +910,7 @@ void default_encoding_set_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx + 1);
 }
 
-void default_encoding_handler(int idx)
+void default_encoding_handler(int idx, bool is_alt)
 {
 	const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
 
@@ -939,7 +936,7 @@ void default_encoding_handler(int idx)
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
 
-void language_handler(int idx)
+void language_handler(int idx, bool is_alt)
 {
 	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
 
@@ -984,7 +981,7 @@ void language_handler(int idx)
 	}
 }
 
-void book_encoding_set_handler(int idx)
+void book_encoding_set_handler(int idx, bool is_alt)
 {
 	const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
 	if(idx > sets.size())
@@ -1009,7 +1006,7 @@ void book_encoding_set_handler(int idx)
 	reopen_file = true;
 }
 
-void book_encoding_handler(int idx)
+void book_encoding_handler(int idx, bool is_alt)
 {
 	const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
 
@@ -1041,7 +1038,7 @@ void book_encoding_handler(int idx)
 	reopen_file = true;
 }
 
-void book_language_handler(int idx)
+void book_language_handler(int idx, bool is_alt)
 {
 	BookDescriptionPtr description = new BookDescription(myFbreader->myModel->fileName());
 	if(idx < ZLLanguageList::languageCodes().size())
@@ -1061,7 +1058,7 @@ void book_language_handler(int idx)
 	reopen_file = true;
 }
 
-void book_para_break_handler(int idx)
+void book_para_break_handler(int idx, bool is_alt)
 {
 	FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(myFbreader->myModel->fileName()), false);
 	if (plugin != 0) {
@@ -1104,7 +1101,7 @@ void book_para_break_handler(int idx)
 	}
 }
 
-void book_settings_handler(int idx)
+void book_settings_handler(int idx, bool is_alt)
 {
 	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
 
@@ -1164,7 +1161,7 @@ void book_settings_handler(int idx)
 	}
 }
 
-void options_dialog_handler(int idx)
+void options_dialog_handler(int idx, bool is_alt)
 {
 	fprintf(stderr, "options_dialog_handler: %d\n", idx);
 

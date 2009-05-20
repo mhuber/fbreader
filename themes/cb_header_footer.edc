@@ -1,0 +1,113 @@
+collections {
+    group {
+        name, "header";
+        parts {
+            part {
+                name, "background";
+                type, RECT;
+                mouse_events, 0;
+                description {
+                    state, "default" 0.0;
+                    color, 0 0 0 255;
+                    rel1 { relative, 0.0 0.0; offset, 0 0; }
+                    rel2 { relative, 1.0 1.0; offset, -1 -1; }
+                }
+            }
+            part {
+                name, "text";
+                type, TEXT;
+                mouse_events, 0;
+                description {
+                    state, "default" 0.0;
+                    color, 255 255 255 255;
+                    text {
+                        align, 0.0 0.5;
+                        text, "omg, somebody forgot to set the text!!!!11oneone";
+                        font, "serif";
+                        size, 30;
+                        text_class, "chrome";
+                    }
+                    rel1 { relative, 0.0 0.0; offset, 17 0; }
+                    rel2 { relative, 1.0 1.0;offset, -17 -1; }
+                }
+            }
+        }
+        data {
+            /* HACK: until edje fetches size_hints */
+            item, "min_height" "49";
+        }
+    }
+    group {
+        name, "footer";
+        parts {
+            part {
+                name, "background";
+                type, RECT;
+                mouse_events, 0;
+                description {
+                    state, "default" 0.0;
+                    color, 0 0 0 255;
+                    rel1 { relative, 0.0 0.0; offset, 0 0; }
+                    rel2 { relative, 1.0 1.0; offset, -1 -1; }
+                }
+            }
+            part {
+                name, "text";
+                type, TEXT;
+                mouse_events, 0;
+                description {
+                    state, "default" 0.0;
+                    color, 255 255 255 255;
+                    text {
+                        text, "omg, somebody forgot to set the text!!!!11oneone";
+                        font, "serif";
+                        size, 12;
+                        text_class, "chrome";
+                    }
+                }
+            }
+            part {
+                name, "alt";
+                type, TEXT;
+                mouse_events, 0;
+                description {
+                    state, "default" 0.0;
+					color, 255 255 255 255;
+                    rel1 { relative, 0.0 0.0; offset, 17 0; }
+                    rel2 { relative, 1.0 1.0; offset, -17 -1; }
+                }
+				description {
+					state, "on" 0.0;
+					inherit, "default" 0.0;
+                    text {
+						align, 0.0 0.5;
+                        text, "ALT";
+                        font, "serif";
+                        size, 30;
+                        text_class, "chrome";
+                    }
+				}
+            }
+        }
+		programs {
+			program {
+				name, "alt_on";
+				signal, "alt_on";
+				script {
+					set_state(PART:"alt", "on", 0.0);
+				}
+			}
+			program {
+				name, "alt_off";
+				signal, "alt_off";
+				script {
+					set_state(PART:"alt", "default", 0.0);
+				}
+			}
+		}
+        data {
+            /* HACK: until edje fetches size_hints */
+            item, "min_height" "49";
+        }
+    }
+}

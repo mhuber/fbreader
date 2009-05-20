@@ -26,7 +26,7 @@ struct _cb_list {
 	string name;
 	vector<string> items;
 
-	int(*item_handler)(int);
+	int(*item_handler)(int, bool);
 };
 
 struct _cb_item_value {
@@ -45,7 +45,7 @@ struct _cb_olist_item {
 	vector<cb_item_value> values;
 	int curval_idx;
 
-	void (*item_handler)(int);
+	void (*item_handler)(int, bool);
 	void *data;
 };
 
@@ -56,7 +56,7 @@ struct _cb_olist {
 	cb_olist *parent;
 	int parent_item_idx;
 
-	void(*item_handler)(int);
+	void(*item_handler)(int, bool);
 	void(*destroy_handler)();
 };
 
@@ -67,11 +67,13 @@ struct _cb_vlist {
 	vector<cb_item_value> values;
 	cb_olist *parent;
 	int parent_item_idx;
-	void(*item_handler)(int);
+	void(*item_handler)(int, bool);
 };
 
 void cb_fcb_new(cb_list *list);
 void cb_fcb_redraw(int newsize = -1);
+void cb_fcb_invalidate(int idx);
+void cb_fcb_invalidate_interval(int start, int end);
 
 void cb_rcb_new();
 
