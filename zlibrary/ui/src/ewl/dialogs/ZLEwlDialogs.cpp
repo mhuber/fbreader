@@ -1155,7 +1155,7 @@ void book_settings_handler(int idx, bool is_alt)
 	}
 
 	if(((myBookInfo->EncodingOption.value() != "auto") && (3 == idx)) ||
-		((myBookInfo->EncodingOption.value() == "auto") && (1 == idx))) {
+		((myBookInfo->EncodingOption.value() == "auto") && (2 == idx))) {
 
 		INIT_VLIST("Break Paragraph At", book_para_break_handler);
 
