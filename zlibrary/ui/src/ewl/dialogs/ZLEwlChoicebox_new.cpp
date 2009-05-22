@@ -280,6 +280,8 @@ void cb_lcb_redraw()
 
 	Evas* canvas = ecore_evas_get(lcb_win);
 	Evas_Object* choicebox = evas_object_name_find(canvas, SETTINGS_LEFT_NAME);
+	Evas_Object* header = evas_object_name_find(canvas, "lcb_header");
+	edje_object_part_text_set(header, "text", olists.empty() ? "" : olists.back()->name.c_str());
 	choicebox_set_size(choicebox, l->items.size());
 	choicebox_invalidate_interval(choicebox, 0, l->items.size());
 	if(l->items.size() > 0)
