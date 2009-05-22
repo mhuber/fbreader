@@ -660,7 +660,10 @@ void indicator_height_handler(int idx, bool is_alt)
 {
 	ZLIntegerRangeOption &option = FBView::commonIndicatorInfo().HeightOption;
 
-	option.setValue(idx * 5);
+	if(!idx)
+		option.setValue(1);
+	else
+		option.setValue(idx * 5);
 
 	cb_item_value &iv = olists.back()->items.at(vlist->parent_item_idx).current_value;
 	iv.ival = option.value();
@@ -857,7 +860,7 @@ void indicator_handler(int idx, bool is_alt)
 	} else if(5 == idx) {
 		INIT_VLIST("Indicator Height", indicator_height_handler);
 
-		for(int i = 5; i <= 30; i+=5)
+		for(int i = 1; i <= 30; i == 1 ? i = 5 : i += 5)
 			ADD_VALUE_INT(i);
 		
 		cb_rcb_new();
