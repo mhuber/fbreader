@@ -53,6 +53,36 @@
 #define FONT_SIZE_MAX	24 - FONT_SIZE_MIN
 #define FONT_SIZE(i) ((i)+FONT_SIZE_MIN)
 
+static struct _action {
+	char *actionId;
+	char *actionName;
+} actions[] = {
+	"none",					"None",
+	"addBookmark",			"Add Bookmark",
+	"showBookmarks",		"Show Bookmarks",
+	"hyperlinkNavStart",	"Hyperlinks mode",
+	"gotoPageNumber",		"Go To Page",
+	"toc",					"Show Table of Contents",
+	"gotoHome",				"Go to Home",
+	"gotoSectionStart",		"Go to Start of Section",
+	"gotoSectionEnd",		"Go to End of Section",
+	"nextTOCSection",		"Go to Next TOC Section",
+	"previousTOCSection",	"Go to Previous TOC Section",
+	"largeScrollForward",	"Large Scroll Forward",
+	"largeScrollBackward",	"Large Scroll Backward",
+	"undo",					"Undo",
+	"redo",					"Redo",
+	"search",				"Search",
+	"increaseFont",			"Increase Font Size",
+	"decreaseFont",			"Decrease Font Size",
+	"toggleIndicator",		"Toggle Position Indicator",
+	"preferences",			"Show Options Dialog",
+	"bookInfo",				"Show Book Info Dialog",
+	"cancel",				"Cancel",
+	"quit",					"Quit",
+	"",						NULL
+};
+
 static char *alignments[] = { "undefined", "left", "right", "center", "justify" };
 static char *para_break_type[] = { "New Line", "Empty Line", "Line With Indent" };
 static int curBreakType = 0;
@@ -1166,9 +1196,34 @@ void book_settings_handler(int idx, bool is_alt)
 	}
 }
 
+void single_key_handler(int idx, bool is_alt)
+{
+	ZLKeyBindings *kb = &(*myFbreader->myBindings0);
+	stringstream k;
+
+	k << (vlist->parent_item_idx+1);
+	kb->bindKey(k.str(), actions[idx].actionId);
+	olists.back()->items.at(vlist->parent_item_idx).name = actions[idx].actionName;
+
+	cb_lcb_invalidate(vlist->parent_item_idx);
+}
+
+void keys_handler(int idx, bool is_alt)
+{
+	char *k;
+	asprintf(&k, "Key %d", idx + 1);
+
+	INIT_VLIST(k, single_key_handler);
+
+	for(struct _action *a = actions; a->actionName; a++)
+		ADD_VALUE_STRING(a->actionName);
+
+	cb_rcb_new();
+}
+
 void options_dialog_handler(int idx, bool is_alt)
 {
-	fprintf(stderr, "options_dialog_handler: %d\n", idx);
+//	fprintf(stderr, "options_dialog_handler: %d\n", idx);
 
 	cb_olist *current_olist = olists.back();
 
@@ -1196,7 +1251,7 @@ void options_dialog_handler(int idx, bool is_alt)
 		ADD_OPTION_BOOL_H(	"Bold", bs.BoldOption.value(), ZLBooleanOption_handler, &bs.BoldOption);
 		ADD_OPTION_INT_F(	"Line Spacing", bs.LineSpacePercentOption.value(), "%d%%");
 		ADD_OPTION_INT_T(	"Alignment", bs.AlignmentOption.value(), alignments[bs.AlignmentOption.value()]);
-		ADD_SUBMENU_ITEM(	"Margins");
+		ADD_OPTION_STRING(	"Margins", "");
 		ADD_OPTION_INT(		"First Line Indent", decoration->FirstLineIndentDeltaOption.value());
 		ADD_OPTION_BOOL_H(	"Auto Hyphenations", bs.AutoHyphenationOption.value(), ZLBooleanOption_handler, &bs.AutoHyphenationOption);
 
@@ -1334,6 +1389,31 @@ void options_dialog_handler(int idx, bool is_alt)
 			}
 		}
 		cb_lcb_redraw();
+	} else if(4 == idx) {
+		cb_olist *options = new cb_olist;
+		olists.push_back(options);
+
+		options->name = "Keys";
+		options->parent = current_olist;
+		options->parent_item_idx = idx;
+		options->item_handler = keys_handler;
+		options->destroy_handler = NULL;
+
+		cb_olist_item i;
+
+		struct _action *a;
+		ZLKeyBindings *kb = &(*myFbreader->myBindings0);
+		for(int k = 1; k <= 9; k++) {
+			stringstream s;
+			s << k;
+
+			for(a = actions; a->actionName && kb->getBinding(s.str()).compare(a->actionId); a++)
+				;
+
+			ADD_OPTION_STRING(a->actionName ? a->actionName : kb->getBinding(s.str()), "");
+		}
+
+		cb_lcb_redraw();
 	}
 }
 
@@ -1357,6 +1437,7 @@ void ZLEwlOptionsDialog(FBReader &f)
 	ADD_SUBMENU_ITEM("Indicator");
 	ADD_SUBMENU_ITEM("Language");
 	ADD_SUBMENU_ITEM("Book settings");
+	ADD_SUBMENU_ITEM("Keys");
 
 	cb_lcb_new();
 }
