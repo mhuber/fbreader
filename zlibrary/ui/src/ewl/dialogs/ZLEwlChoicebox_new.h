@@ -24,6 +24,7 @@ typedef struct _cb_list cb_list;
 
 struct _cb_list {
 	string name;
+	string alt_text;
 	vector<string> items;
 
 	int(*item_handler)(int, bool);

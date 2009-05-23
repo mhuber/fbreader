@@ -307,6 +307,7 @@ void ZLEwlTOCDialog(FBReader &f)
 	list = new cb_list;
 
 	list->name = "Table Of Contents";
+	list->alt_text = "";
 	list->item_handler = toc_handler;
 
 	short len;
@@ -365,6 +366,7 @@ void ZLEwlBMKDialog(FBReader &f)
 	list = new cb_list;
 
 	list->name = "Bookmarks";
+	list->alt_text = "Delete";
 	list->item_handler = bookmarks_handler;
 
 	std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > bookmarks

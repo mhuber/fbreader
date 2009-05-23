@@ -737,6 +737,7 @@ void cb_fcb_new(cb_list *list)
 	evas_object_name_set(footer, "footer");
 	edje_object_file_set(footer, "/usr/share/FBReader/themes/cb_header_footer.edj",
 			"footer");
+	edje_object_part_text_set(footer, "alt", list->alt_text.c_str());
 	evas_object_move(footer, 0, 800 - footer_h);
 	evas_object_resize(footer, 600, footer_h);
 	evas_object_show(footer);

@@ -61,7 +61,7 @@ collections {
                     text {
                         text, "omg, somebody forgot to set the text!!!!11oneone";
                         font, "serif";
-                        size, 12;
+                        size, 28;
                         text_class, "chrome";
                     }
                 }
@@ -72,20 +72,20 @@ collections {
                 mouse_events, 0;
                 description {
                     state, "default" 0.0;
-					color, 255 255 255 255;
+					color, 55 55 55 255;
                     rel1 { relative, 0.0 0.0; offset, 17 0; }
                     rel2 { relative, 1.0 1.0; offset, -17 -1; }
-                }
-				description {
-					state, "on" 0.0;
-					inherit, "default" 0.0;
                     text {
 						align, 0.0 0.5;
-                        text, "ALT";
                         font, "serif";
                         size, 30;
                         text_class, "chrome";
                     }
+                }
+				description {
+					state, "on" 0.0;
+					inherit, "default" 0.0;
+					color, 255 255 255 255;
 				}
             }
         }
