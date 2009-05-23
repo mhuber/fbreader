@@ -17,7 +17,6 @@
  * 02110-1301, USA.
  */
 
-#include <ZLLanguageList.h>
 #include <ZLFile.h>
 
 #include "ZLEwlDialogs.h"
@@ -80,7 +79,35 @@ static struct _action {
 	"bookInfo",				"Show Book Info Dialog",
 	"cancel",				"Cancel",
 	"quit",					"Quit",
-	"",						NULL
+	NULL,					NULL
+};
+
+static struct _language {
+	char *langId;
+	char *langName;
+} languages[] = {
+	"ar", "Arabic",
+	"cs", "Czech",
+	"de", "German",
+	"de-traditional", "German (traditional orthography)",
+	"el", "Greek",
+	"en", "English",
+	"eo", "Esperanto",
+	"es", "Spanish",
+	"fi", "Finnish",
+	"fr", "French",
+	"he", "Hebrew",
+	"id", "Indonesian",
+	"it", "Italian",
+	"no", "Norwegian",
+	"pt", "Portuguese",
+	"ru", "Russian",
+	"sv", "Swedish",
+	"tr", "Turkish",
+	"uk", "Ukrainian",
+	"zh", "Chinese",
+	"other", "Other",
+	NULL, NULL
 };
 
 static char *alignments[] = { "undefined", "left", "right", "center", "justify" };
@@ -913,16 +940,14 @@ void indicator_handler(int idx, bool is_alt)
 
 void default_language_handler(int idx, bool is_alt)
 {
-	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
+	int lsize = sizeof(languages) / sizeof(struct _language);
+
 	ZLStringOption &option = PluginCollection::instance().DefaultLanguageOption;
-	if(idx <= l.size()) {
-		if(idx == l.size())
-			option.setValue("other");
-		else
-			option.setValue(l.at(idx));
+	if(idx < lsize-1) {
+		option.setValue(languages[idx].langId);
 
 		cb_item_value &iv = olists.back()->items.at(vlist->parent_item_idx).current_value;
-		iv.text = iv.sval = ZLLanguageList::languageName(option.value());
+		iv.text = iv.sval = languages[idx].langName;
 
 		cb_lcb_invalidate(vlist->parent_item_idx);
 	}
@@ -973,15 +998,11 @@ void default_encoding_handler(int idx, bool is_alt)
 
 void language_handler(int idx, bool is_alt)
 {
-	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
-
 	if(1 == idx) {
 		INIT_VLIST("Default Language", default_language_handler);
 
-		for(unsigned int i = 0; i < l.size(); i++)
-			ADD_VALUE_STRING(ZLLanguageList::languageName(l.at(i)));
-
-		ADD_VALUE_STRING(ZLLanguageList::languageName("other"));
+		for(unsigned int i = 0; i < sizeof(languages) / sizeof(struct _language) && languages[i].langId; i++)
+			ADD_VALUE_STRING(languages[i].langName);
 		
 		cb_rcb_new();
 	} else if(2 == idx) {
@@ -1075,11 +1096,10 @@ void book_encoding_handler(int idx, bool is_alt)
 
 void book_language_handler(int idx, bool is_alt)
 {
+	int lsize = sizeof(languages) / sizeof(struct _language);
+
 	BookDescriptionPtr description = new BookDescription(myFbreader->myModel->fileName());
-	if(idx < ZLLanguageList::languageCodes().size())
-		description->myLanguage = ZLLanguageList::languageCodes().at(idx);
-	else
-		description->myLanguage = "other";
+	description->myLanguage = languages[idx].langId;
 
 	BookDescriptionUtil::saveInfo(ZLFile(myFbreader->myModel->fileName()));
 
@@ -1087,7 +1107,7 @@ void book_language_handler(int idx, bool is_alt)
 	myBookInfo->LanguageOption.setValue(description->myLanguage);
 
 	cb_item_value &iv = olists.back()->items.at(vlist->parent_item_idx).current_value;
-	iv.text = iv.sval = ZLLanguageList::languageName(description->myLanguage);
+	iv.text = iv.sval = languages[idx].langName; //(description->myLanguage);
 	cb_lcb_invalidate(vlist->parent_item_idx);
 
 	reopen_file = true;
@@ -1138,15 +1158,11 @@ void book_para_break_handler(int idx, bool is_alt)
 
 void book_settings_handler(int idx, bool is_alt)
 {
-	const std::vector<std::string> &l = ZLLanguageList::languageCodes();
-
 	if(0 == idx) {
 		INIT_VLIST("Book Language", book_language_handler);
 
-		for(unsigned int i = 0; i < l.size(); i++)
-			ADD_VALUE_STRING(ZLLanguageList::languageName(l.at(i)));
-
-		ADD_VALUE_STRING(ZLLanguageList::languageName("other"));
+		for(unsigned int i = 0; i < sizeof(languages) / sizeof(struct _language) && languages[i].langId; i++)
+			ADD_VALUE_STRING(languages[i].langName);
 		
 		cb_rcb_new();
 	} 
@@ -1198,10 +1214,13 @@ void book_settings_handler(int idx, bool is_alt)
 
 void single_key_handler(int idx, bool is_alt)
 {
+	if(!actions[idx].actionId)
+		return;
+
 	ZLKeyBindings *kb = &(*myFbreader->myBindings0);
 	stringstream k;
-
 	k << (vlist->parent_item_idx+1);
+
 	kb->bindKey(k.str(), actions[idx].actionId);
 	olists.back()->items.at(vlist->parent_item_idx).name = actions[idx].actionName;
 
@@ -1294,12 +1313,17 @@ void options_dialog_handler(int idx, bool is_alt)
 
 		cb_olist_item i;
 
-		ADD_OPTION_BOOL_H("Detect Language and Encoding", pc.LanguageAutoDetectOption.value(), ZLBooleanOption_handler, &pc.DefaultLanguageOption);
-		ADD_OPTION_STRING("Default Language",
-				(ZLLanguageList::languageName(pc.DefaultLanguageOption.value()) == "????????") ?
-				ZLLanguageList::languageName("other").c_str() :
-				ZLLanguageList::languageName(pc.DefaultLanguageOption.value()).c_str());
 
+		ADD_OPTION_BOOL_H("Detect Language and Encoding", pc.LanguageAutoDetectOption.value(), ZLBooleanOption_handler, &pc.DefaultLanguageOption);
+
+		char *l;
+		for(unsigned int i = 0; i < sizeof(languages) / sizeof(struct _language) && languages[i].langId; i++) {
+			l = languages[i].langName;
+			if(!pc.DefaultLanguageOption.value().compare(languages[i].langId))
+				break;
+		}
+
+		ADD_OPTION_STRING("Default Language", l);
 
 		bool found = false;
 		const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
@@ -1334,10 +1358,14 @@ void options_dialog_handler(int idx, bool is_alt)
 
 		cb_olist_item i;
 
-		ADD_OPTION_STRING("Language",
-				(ZLLanguageList::languageName(myBookInfo->LanguageOption.value()) == "????????") ?
-				ZLLanguageList::languageName("other").c_str() :
-				ZLLanguageList::languageName(myBookInfo->LanguageOption.value()).c_str());
+		char *l;
+		for(unsigned int j = 0; j < sizeof(languages) / sizeof(struct _language) && languages[j].langId; j++) {
+			l = languages[j].langName;
+			if(!myBookInfo->LanguageOption.value().compare(languages[j].langId))
+				break;
+		}
+
+		ADD_OPTION_STRING("Language", l);
 
 		if(myBookInfo->EncodingOption.value() == "auto") {
 			ADD_OPTION_STRING("Encoding", myBookInfo->EncodingOption.value().c_str());
@@ -1407,7 +1435,7 @@ void options_dialog_handler(int idx, bool is_alt)
 			stringstream s;
 			s << k;
 
-			for(a = actions; a->actionName && kb->getBinding(s.str()).compare(a->actionId); a++)
+			for(a = actions; a->actionId && kb->getBinding(s.str()).compare(a->actionId); a++)
 				;
 
 			ADD_OPTION_STRING(a->actionName ? a->actionName : kb->getBinding(s.str()), "");
