@@ -613,7 +613,7 @@ void settings_close_handler()
 	reopen_file = false;
 
 	myFbreader->clearTextCaches();
-    myFbreader->refreshWindow();
+//    myFbreader->refreshWindow();
 }
 
 void ZLBooleanOption_handler(int idx, bool is_alt)

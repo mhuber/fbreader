@@ -173,10 +173,11 @@ void main_loop(ZLApplication *application)
 						xcb_configure_notify_event_t *conf = (xcb_configure_notify_event_t *)e;
 
 						//printf("resize: %d %d\n", conf->width, conf->height);	
-						//
-						((ZLEwlViewWidget*)application->myViewWidget)->resize(conf->width, conf->height);
-
-						application->refreshWindow();
+						ZLEwlViewWidget *view = (ZLEwlViewWidget*)application->myViewWidget;
+						if(view->width() != conf->width || view->height() != conf->height) {
+							view->resize(conf->width, conf->height);
+							application->refreshWindow();
+						}
 						
 						break;
 					}
