@@ -22,7 +22,7 @@
 
 #include "../../../../../fbreader/src/fbreader/FBReaderActions.h"
 
-void ZLEwlGotoPageDialog(GotoPageNumber *gpn);
+void ZLEwlGotoPageDialog(FBReader &f);
 void ZLEwlOptionsDialog(FBReader &f);
 void ZLEwlTOCDialog(FBReader &f);
 void ZLEwlBMKDialog(FBReader &f);
@@ -30,5 +30,6 @@ void ZLEwlBMKAddedMsg(FBReader &f);
 void ZLEwlSearchDialog(FBReader &f);
 void ZLEwlBookInfo(FBReader &f);
 //void redraw_text();
+void ZLEwlMainMenu(FBReader &f);
 
 #endif

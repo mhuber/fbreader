@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Alexander Kerner <lunohod@openinkpot.org>
+ * Copyright (C) 2009 Alexander Kerner <lunohod@openinkpot.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,12 @@
  */
 
 #ifndef ZLEWLMESSAGE_H
-#define ZLEWLMESSAGE_H_H
+#define ZLEWLMESSAGE_H
 
-#include <Ewl.h>
+#include <stdio.h>
 
-Ewl_Widget *init_message(char *text, bool master);
+void show_message(char *text, void *handler = NULL);
+
+long read_number(char *text);
 
 #endif

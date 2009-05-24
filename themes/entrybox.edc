@@ -1,0 +1,57 @@
+collections {
+	group {
+		name: "entrybox";
+		min: 150 60;
+		parts {
+			part {
+				name, "bg";
+				type, RECT;
+				mouse_events, 0;
+				description {
+					state, "default" 0.0;
+					color, 0 0 0 255;
+					rel1 { relative, 0.0 0.0; offset, 0 0; }
+					rel2 { relative, 1.0 1.0; offset, 0 0; }
+				}
+			}
+/*			part {
+				name, "labeltext";
+				type, TEXT;
+				mouse_events, 0;
+				description {
+					state, "default" 0.0;
+					color, 255 255 255 255;
+					fixed, 1 1;
+					rel1 { relative, 0.0 0.0; offset, 0 0; }
+					rel2 { relative, 1.0 1.0; offset, 0 0; }
+					text {
+						font, "serif";
+						text, "";
+						size, 30;
+						min, 1 1;
+						align, 0.1 0.5;
+					}
+				}
+			}
+*/			
+			part
+			{
+				name, "entrytext";
+				type, TEXT;
+				mouse_events, 0;
+				description {
+					state, "default" 0.0;
+					color, 255 255 255 255;
+//					fixed, 1 1;
+					rel1 { relative, 0.0 0.0; offset, 20 0; }
+					rel2 { relative, 1.0 1.0; offset, 0 0; }
+					text {
+						font, "serif";
+						size, 30;
+						align, 0.0 0.5;
+					}
+				}
+			}
+		}
+	}
+}

@@ -560,7 +560,8 @@ void GotoPageNumber::callback(int pagenumber) {
 }
 
 void GotoPageNumber::run() {
-	ZLEwlGotoPageDialog(this);
+	FBReader &f = fbreader();
+	ZLEwlGotoPageDialog(f);
 
 /*	int pageIndex = 0;
 	const int pageNumber = fbreader().bookTextView().pageNumber();

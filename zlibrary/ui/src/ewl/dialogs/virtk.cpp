@@ -221,6 +221,7 @@ void keypress_cb(Ewl_Widget *w, void *event, void *data)
 //		if(mwin)
 //			ewl_window_keyboard_grab_set(EWL_WINDOW(mwin), 1);
 		(info->handler)(ewl_text_text_get(&EWL_ENTRY(entry)->text));
+		ecore_main_loop_quit();
 	} else if(!strcmp(k, "Escape")) {
 		if((e->base.modifiers & EWL_KEY_MODIFIER_ALT) || !(ewl_text_length_get(&EWL_ENTRY(entry)->text))) {
 			ewl_widget_hide(win);
@@ -232,6 +233,7 @@ void keypress_cb(Ewl_Widget *w, void *event, void *data)
 			if(mwin)
 				ewl_window_keyboard_grab_set(EWL_WINDOW(mwin), 1);
 			(info->handler)("");
+			ecore_main_loop_quit();
 		}
 
 		first_k = 0;
@@ -341,42 +343,20 @@ static void virtk_unrealize_cb(Ewl_Widget *w, void *ev, void *data) {
 
 Ewl_Widget *init_virtk(Ewl_Widget *parent, char *ltext, virtk_handler handler)
 {
+/*	static bool _init = false;
+
+	if(!_init) {
+		int argc = 0;
+		char **argv = NULL;
+		if(!ewl_init(&argc, argv))
+			fprintf(stderr, "Unable to init EWL.\n");
+		_init = true;
+	}
+*/
 	Ewl_Widget *win, *mvbox, *vbox, *hbox, *label, *ebox, *entry;
 	char *text;
 	int x, y;
 
-/*	win = ewl_widget_name_find("virtk");
-	if(win) {
-		ewl_window_keyboard_grab_set(EWL_WINDOW(parent), 0);
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
-
-		entry = ewl_widget_name_find("virtk_entry");
-		if(entry) {
-			printf("entry clear\n");
-//			ewl_widget_hide(entry);
-			ewl_text_clear(&EWL_ENTRY(entry)->text);
-			ewl_widget_hide(entry);
-			ewl_widget_reveal(entry);
-			ewl_widget_realize(entry);
-			ewl_widget_configure(entry);
-			ewl_entry_editable_set(EWL_ENTRY(entry), 1);
-			ewl_widget_show(entry);
-			ewl_widget_reveal(win);
-			ewl_widget_realize(win);
-			ewl_widget_configure(win);
-			ewl_entry_cursor_position_set(EWL_ENTRY_CURSOR(EWL_ENTRY(entry)->cursor), 1);
-		}
-
-		virtk_info_struct *info = (virtk_info_struct *)ewl_widget_data_get(win, (void *)"virtk_info");
-
-		info->handler = handler;
-		info->parent = parent;
-
-		set_layout(0);
-
-		return win;
-	}
-*/
 	char *vk_theme = "/usr/share/FBReader/themes/virtktheme.edj";
 
 	virtk_info_struct *info = (virtk_info_struct *)malloc(sizeof(virtk_info_struct));
@@ -398,6 +378,8 @@ Ewl_Widget *init_virtk(Ewl_Widget *parent, char *ltext, virtk_handler handler)
 	ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
 	EWL_EMBED(win)->x = 600;
 	EWL_EMBED(win)->y = 0;
+	ewl_window_dialog_set(EWL_WINDOW(win), 1);
+//	ewl_window_modal_set(EWL_WINDOW(win), 1);
 	ewl_widget_show(win);
 
 	mvbox = ewl_vbox_new();

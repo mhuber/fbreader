@@ -43,6 +43,8 @@ install-stamp: build
 		mkdir $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/oitheme.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/cb_header_footer.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
+		install -m 644 themes/messagebox.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
+		install -m 644 themes/entrybox.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/virtktheme.edj $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		install -m 644 themes/virtk_layout $(DEB_DIR)/fbreader/usr/share/FBReader/themes
 		for FLAVOUR in $(flavours); do \

@@ -26,6 +26,8 @@
 #include "virtk.h"
 
 #include <ewl/Ewl.h>
+#include <Evas.h>
+#include <Edje.h>
 
 #include <iostream>
 #include <sstream>
@@ -46,8 +48,6 @@
 #include "../../../../../fbreader/src/formats/txt/TxtPlugin.h"
 #include "../../../../../fbreader/src/formats/txt/PlainTextFormat.h"
 
-#include "ZLEwlChoicebox_new.h"
-
 #define FONT_SIZE_MIN	6
 #define FONT_SIZE_MAX	24 - FONT_SIZE_MIN
 #define FONT_SIZE(i) ((i)+FONT_SIZE_MIN)
@@ -60,6 +60,7 @@ static struct _action {
 	"addBookmark",			"Add Bookmark",
 	"showBookmarks",		"Show Bookmarks",
 	"hyperlinkNavStart",	"Hyperlinks mode",
+	"showFootnotes",		"Show Footnotes",
 	"gotoPageNumber",		"Go To Page",
 	"toc",					"Show Table of Contents",
 	"gotoHome",				"Go to Home",
@@ -75,10 +76,10 @@ static struct _action {
 	"increaseFont",			"Increase Font Size",
 	"decreaseFont",			"Decrease Font Size",
 	"toggleIndicator",		"Toggle Position Indicator",
-	"preferences",			"Show Options Dialog",
-	"bookInfo",				"Show Book Info Dialog",
-	"cancel",				"Cancel",
-	"quit",					"Quit",
+//	"preferences",			"Show Options Dialog",
+//	"bookInfo",				"Show Book Info Dialog",
+//	"cancel",				"Cancel",
+//	"quit",					"Quit",
 	NULL,					NULL
 };
 
@@ -123,120 +124,18 @@ ZLPaintContext *myContext;
 BookInfo *myBookInfo;
 BookDescriptionPtr description;
 
+static void (*next_gui)(FBReader &);
+
 bool turbo = false;
 
-static void ZLEwlGotoPageDialog_reveal(Ewl_Widget *w, void *ev, void *data) {
-	ewl_window_move(EWL_WINDOW(w), (600 - CURRENT_W(w)) / 2, (800 - CURRENT_H(w)) / 2);
-	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
-}
-
-static void ZLEwlGotoPageDialog_realize(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 0);
-}
-
-static void ZLEwlGotoPageDialog_unrealize(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
-}
-
-
-static void ZLEwlGotoPageDialog_window_close_cb(Ewl_Widget *w, void *ev, void *data)
+void ZLEwlGotoPageDialog(FBReader &f)
 {
-	ewl_main_quit();
-}
-
-static void ZLEwlGotoPageDialog_key_up_cb(Ewl_Widget *w, void *ev, void *data)
-{
-	Ewl_Event_Key_Down *e;
-	Ewl_Widget *entry, *dialog;
-	char *s;
-	int n;
-
-	e = (Ewl_Event_Key_Down*)ev;
-	w = ewl_widget_name_find("main_win");
-	entry = ewl_widget_name_find("pagenr_entry");
-	dialog = ewl_widget_name_find("gotopage_dialog");
-
-	if(!strcmp(e->base.keyname, "Escape")) {
-		s = ewl_text_text_get(EWL_TEXT(entry));
-		if(s && (strlen(s) > 0)) {
-			free(s);
-			ewl_entry_delete_left(EWL_ENTRY(entry));
-		} else {
-			ewl_main_quit();
-			((GotoPageNumber *)data)->callback(-1);			
-		}
-	} else if(!strcmp(e->base.keyname, "Return")) {
-		s = ewl_text_text_get(EWL_TEXT(entry));
-		if(s) {
-			n = atoi(s);
-			free(s);
-		}
-
-		ewl_main_quit();
-		((GotoPageNumber *)data)->callback(n);
+	long page = read_number("Go To Page");
+	if(page >= 0) {
+		f.bookTextView().gotoPage(page);
+		f.refreshWindow();
 	}
-}
 
-void ZLEwlGotoPageDialog(GotoPageNumber *gpn)
-{
-	Ewl_Widget //*w, 
-			   *label, *dialog, *entry;
-	Ewl_Widget *entry_hbox;
-
-
-	//w = ewl_widget_name_find("main_win");
-	//ewl_theme_theme_set("/usr/share/FBReader/themes/oitheme.edj");
-	
-	dialog = ewl_window_new();
-	ewl_window_title_set(EWL_WINDOW(dialog), "Go to Page");
-	ewl_window_name_set(EWL_WINDOW(dialog), "Go to Page");
-	ewl_window_class_set(EWL_WINDOW(dialog), "Go to Page");
-	ewl_widget_name_set(dialog, "gotopage_dialog");
-	//ewl_theme_data_str_set(EWL_WIDGET(dialog),"/window/group","ewl/oi_window");
-	ewl_callback_append(dialog, EWL_CALLBACK_DELETE_WINDOW, ZLEwlGotoPageDialog_window_close_cb, NULL);
-	ewl_callback_append(dialog, EWL_CALLBACK_KEY_UP, ZLEwlGotoPageDialog_key_up_cb, gpn);
-	ewl_callback_append(dialog, EWL_CALLBACK_REVEAL, ZLEwlGotoPageDialog_reveal, NULL);
-//	ewl_callback_append(dialog, EWL_CALLBACK_OBSCURE, ZLEwlGotoPageDialog_obscure, NULL);
-	ewl_callback_append(dialog, EWL_CALLBACK_REALIZE, ZLEwlGotoPageDialog_realize, NULL);
-	ewl_callback_append(dialog, EWL_CALLBACK_UNREALIZE, ZLEwlGotoPageDialog_unrealize, NULL);
-//ewl_window_transient_for(EWL_WINDOW(dialog), EWL_WINDOW(w));
-	ewl_window_dialog_set(EWL_WINDOW(dialog), 1);
-	ewl_window_keyboard_grab_set(EWL_WINDOW(dialog), 1);
-	EWL_EMBED(dialog)->x = 600;
-	EWL_EMBED(dialog)->y = 0;
-	ewl_widget_show(dialog);
-
-	entry_hbox = ewl_hbox_new();
-	ewl_container_child_append(EWL_CONTAINER(dialog), entry_hbox);
-	ewl_widget_show(entry_hbox);
-
-	label = ewl_label_new();
-	ewl_label_text_set(EWL_LABEL(label), "Page number:");
-	ewl_container_child_append(EWL_CONTAINER(entry_hbox), label);
-	ewl_widget_show(label);
-
-	entry = ewl_entry_new();
-	ewl_object_custom_w_set(EWL_OBJECT(entry), 70);
-	ewl_container_child_append(EWL_CONTAINER(entry_hbox), entry);
-	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/group","ewl/dlg_entry");
-	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/cursor/group","ewl/dlg_entry/cursor");
-	ewl_theme_data_str_set(EWL_WIDGET(entry),"/entry/selection_area/group","ewl/dlg_entry/selection");
-
-	ewl_widget_name_set(entry, "pagenr_entry");
-	ewl_widget_show(entry);
-
-	ewl_widget_focus_send(dialog);
-	ewl_widget_focus_send(entry);
-
-	ecore_main_loop_begin();
-	ewl_widget_hide(dialog);
-	ewl_widget_destroy(dialog);
 }
 
 static ZLTextTreeParagraph *curTOCParent;
@@ -357,8 +256,6 @@ int bookmarks_handler(int idx, bool is_alt)
 
 void ZLEwlBMKDialog(FBReader &f)
 {
-	Ewl_Widget *w = ewl_widget_name_find("main_win");
-
 	myFbreader = &f;
 
 	if(list)
@@ -382,47 +279,27 @@ void ZLEwlBMKDialog(FBReader &f)
 }
 
 void ZLEwlBMKAddedMsg(FBReader &f) {
-	myFbreader = &f;
-	ewl_widget_show(init_message("Bookmark added", true));
-	ecore_main_loop_begin();
+	show_message("Bookmark added");
 }
 
 // search dialogs
 
-static void search_info_reveal_cb(Ewl_Widget *w, void *ev, void *data) {
-	ewl_window_move(EWL_WINDOW(w), (600 - CURRENT_W(w)) / 2, (800 - CURRENT_H(w)) - 200);
-	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
-}
-
-static void search_info_realize_cb(Ewl_Widget *w, void *ev, void *data) {
-}
-
-static void search_info_unrealize_cb(Ewl_Widget *w, void *ev, void *data) {
-}
-
-static void search_info_keyhandler(Ewl_Widget *w, void *ev, void *data)
+void search_found_keyhandler(Evas_Object *o, char *keyname)
 {
-	Ewl_Event_Key_Down *e;
-	Ewl_Widget *message, *dialog;
-	char *s;
-
-	e = (Ewl_Event_Key_Down*)ev;
-
-
-	if(!strcmp(e->base.keyname, "Escape") || !strcmp(e->base.keyname, "Return")) {
+	if(!strcmp(keyname, "Escape") || !strcmp(keyname, "Return")) {
 		myFbreader->myModel->bookTextModel()->removeAllMarks();
-		//redraw_text();
-		ewl_main_quit();
+		myFbreader->refreshWindow();
+		ecore_main_loop_quit();
 		return;
-	} else if(!strcmp(e->base.keyname, "Right") || !strcmp(e->base.keyname, "Next") || !strcmp(e->base.keyname, "Up") || !strcmp(e->base.keyname, "0")) {
+	} else if(!strcmp(keyname, "Right") || !strcmp(keyname, "Next") || !strcmp(keyname, "Down")) {
 		if(myFbreader->bookTextView().canFindNext())
 			myFbreader->bookTextView().findNext();
-	} else if(!strcmp(e->base.keyname, "Left") || !strcmp(e->base.keyname, "Prior") || !!strcmp(e->base.keyname, "Down") || !strcmp(e->base.keyname, "9")) {
+	} else if(!strcmp(keyname, "Left") || !strcmp(keyname, "Prior") || !strcmp(keyname, "Up")) {
 		if(myFbreader->bookTextView().canFindPrevious())
 			myFbreader->bookTextView().findPrevious();
 	}
 
-	Ewl_Widget *l = ewl_widget_name_find("search_info_label");
+	string s;
 	bool n = false, p = false;
 	if(myFbreader->bookTextView().canFindNext())
 		n = true;
@@ -430,208 +307,73 @@ static void search_info_keyhandler(Ewl_Widget *w, void *ev, void *data)
 		p = true;
 
 	if(n && p) 
-		ewl_label_text_set(EWL_LABEL(l), "Search <- ->");
+		s = "<- Search ->";
 	else if(n)
-		ewl_label_text_set(EWL_LABEL(l), "Search    ->");
+		s = "Search ->";
 	else if(p)
-		ewl_label_text_set(EWL_LABEL(l), "Search <-   ");
+		s = "<- Search";
 	else
-		ewl_label_text_set(EWL_LABEL(l), "Text not found");
+		s = "Search";
+
+	edje_object_part_text_set(o, "text", s.c_str());
 }
 
-Ewl_Widget *init_search_info()
+void search_not_found_message(FBReader &f)
 {
-	Ewl_Widget *w, *label, *message, *message_hbox;
+	show_message("Text not found");
+}
 
-	w = ewl_window_new();
-	ewl_window_title_set(EWL_WINDOW(w), "Message");
-	ewl_window_name_set(EWL_WINDOW(w), "EWL_WINDOW");
-	ewl_window_class_set(EWL_WINDOW(w), "Message");
-	ewl_widget_name_set(w, "message_win");
-	ewl_callback_append(w, EWL_CALLBACK_KEY_UP, search_info_keyhandler, NULL);
-	ewl_callback_append(w, EWL_CALLBACK_REVEAL, search_info_reveal_cb, NULL);
-	ewl_callback_append(w, EWL_CALLBACK_REALIZE, search_info_realize_cb, NULL);
-	ewl_callback_append(w, EWL_CALLBACK_UNREALIZE, search_info_unrealize_cb, NULL);
-	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
-	EWL_EMBED(w)->x = 600;
-	EWL_EMBED(w)->y = 0;
-	ewl_widget_show(w);
-
-	message_hbox = ewl_hbox_new();
-	ewl_container_child_append(EWL_CONTAINER(w), message_hbox);
-	ewl_widget_show(message_hbox);
-
-	label = ewl_label_new();
-	//ewl_label_text_set(EWL_LABEL(label), "Search next(0)/previous(9). Exit - OK");
+void search_found_message(FBReader &f)
+{
 	bool n = false, p = false;
+
 	if(myFbreader->bookTextView().canFindNext())
 		n = true;
 	if(myFbreader->bookTextView().canFindPrevious())
 		p = true;
 
 	if(n && p) 
-		ewl_label_text_set(EWL_LABEL(label), "Search <- ->");
+		show_message("<- Search ->", (void*)search_found_keyhandler);
 	else if(n)
-		ewl_label_text_set(EWL_LABEL(label), "Search    ->");
+		show_message("Search ->", (void*)search_found_keyhandler);
 	else if(p)
-		ewl_label_text_set(EWL_LABEL(label), "Search <-   ");
+		show_message("<- Search", (void*)search_found_keyhandler);
 	else
-		ewl_label_text_set(EWL_LABEL(label), "Text not found");
-	ewl_widget_name_set(label, "search_info_label");
-	ewl_container_child_append(EWL_CONTAINER(message_hbox), label);
-	ewl_widget_show(label);
-
-	ewl_widget_focus_send(w);
-
-	return w;
+		show_message("Search");
 }
 
-Ewl_Widget *huj;
 void search_input_handler(char *text)
 {
 	if(text && strlen(text)) {
 		myFbreader->clearTextCaches();
 		myFbreader->refreshWindow();
 
-		if(myFbreader->bookTextView().search(std::string(text), true, false, false, false)) {
-			ewl_widget_show(huj = init_search_info());
-		} else {
-			//redraw_text();
-			ewl_widget_show(huj = init_message("Text not found", true));;
-		}
-		
-	} else {
-		//redraw_text();
+		if(myFbreader->bookTextView().search(std::string(text), true, false, false, false))
+			next_gui = search_found_message;
+		else
+			next_gui = search_not_found_message;
 	}
 }
 
 void ZLEwlSearchDialog(FBReader &f)
 {
 	Ewl_Widget *w;
-
 	myFbreader = &f;
 
-	huj = NULL;
+	next_gui = NULL;
+
 	ewl_widget_show(w = init_virtk(NULL, "Search", search_input_handler));
 	ecore_main_loop_begin();
-	if(huj) {
-		ewl_widget_hide(huj);
-		ewl_widget_destroy(huj);
-	}
 	if(w) {
 		ewl_widget_hide(w);
 		ewl_widget_destroy(w);
 	}
-}
 
-void ZLEwlBookInfo(FBReader &f)
-{
-/*
-	Ewl_Widget *w = ewl_widget_name_find("main_win");
-
-	myFbreader = &f;
-
-	const std::string &fileName = f.myModel->fileName();
-	myBookInfo = new BookInfo(fileName);
-//	description = new BookDescription(fileName);
-
-
-	int cnt = 20;
-	char **initchoices = (char **)malloc(cnt * sizeof(char*));
-	char **values = (char **)malloc(cnt * sizeof(char*));
-
-	//FIXME
-	int choice = 0;
-	int i = 0;
-	asprintf(&initchoices[i], "File: %s", ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)).c_str());
-	asprintf(&values[i++], "");
-	asprintf(&initchoices[i], "Full path: %s", ZLFile::fileNameToUtf8(ZLFile(fileName).path()).c_str());
-	asprintf(&values[i++], "");
-	asprintf(&initchoices[i], "Title: %s", myBookInfo->TitleOption.value().c_str());
-	asprintf(&values[i++], "");
-	asprintf(&initchoices[i], "Author: %s", myBookInfo->AuthorDisplayNameOption.value().c_str());
-	asprintf(&values[i++], "");
-
-	if(!myBookInfo->SeriesNameOption.value().empty()) {
-		asprintf(&initchoices[i], "Series: %s", myBookInfo->SeriesNameOption.value().c_str());
-		asprintf(&values[i++], "");
-		asprintf(&initchoices[i], "Book number: %d", myBookInfo->NumberInSeriesOption.value());
-		asprintf(&values[i++], "");
+	// run next gui window
+	if(next_gui) {
+		myFbreader->refreshWindow();
+		next_gui(f);
 	}
-
-	asprintf(&initchoices[i], "%d. Language", ++choice);
-	asprintf(&values[i++], ZLLanguageList::languageName(myBookInfo->LanguageOption.value()).c_str());
-	if(myBookInfo->EncodingOption.value() == "auto") {
-		asprintf(&initchoices[i], "Encoding");
-		asprintf(&values[i++], myBookInfo->EncodingOption.value().c_str());
-	} else {
-		asprintf(&initchoices[i], "%d. Encoding Set", ++choice);
-
-		bool found = false;
-		const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
-		for (std::vector<shared_ptr<ZLEncodingSet> >::const_iterator it = sets.begin(); !found && (it != sets.end()); ++it) {
-			const std::vector<ZLEncodingConverterInfoPtr> &infos = (*it)->infos();
-
-			for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = infos.begin(); !found && (jt != infos.end()); ++jt) {
-				if ((*jt)->name() == myBookInfo->EncodingOption.value()) {
-					asprintf(&values[i++], (*it)->name().c_str());
-
-					asprintf(&initchoices[i], "%d. Encoding", ++choice);
-					asprintf(&values[i++], (*jt)->name().c_str());
-							//(*jt)->visibleName().c_str());
-							//myBookInfo->EncodingOption.value().c_str());
-
-					found =true;
-					break;
-				}
-			}
-		}
-
-	}
-
-	FormatPlugin *plugin = PluginCollection::instance().plugin(ZLFile(fileName), false);
-	if (plugin != 0) {
-		TxtPlugin *test = dynamic_cast<TxtPlugin*>(plugin);
-		if(test != NULL) {
-			 PlainTextFormat myFormat(fileName);
-			 if (!myFormat.initialized()) {
-				 PlainTextFormatDetector detector;
-				 shared_ptr<ZLInputStream> stream = ZLFile(fileName).inputStream();
-				 if (!stream.isNull()) {
-					 detector.detect(*stream, myFormat);
-				 }
-			 }
-
-			 switch (myFormat.BreakTypeOption.value()) {
-				 case PlainTextFormat::BREAK_PARAGRAPH_AT_NEW_LINE:
-					 curBreakType = 0;
-					 break;
-				 case PlainTextFormat::BREAK_PARAGRAPH_AT_EMPTY_LINE:
-					 curBreakType = 1;
-					 break;
-				 case PlainTextFormat::BREAK_PARAGRAPH_AT_EMPTY_LINE | PlainTextFormat::BREAK_PARAGRAPH_AT_LINE_WITH_INDENT:
-				 default:
-					 curBreakType = 2;
-			 }
-
-			 curBreakType;
-
-			 asprintf(&initchoices[i], "%d. Break Paragraph at", ++choice);
-			 asprintf(&values[i++], break_type_values[curBreakType]);
-		}
-	}
-	//fixme
-	cnt = i;
-
-//	while(i < cnt) {
-//	asprintf(&initchoices[i], "File %s", fileName.c_str());
-//	asprintf(&values[i++], "");
-//}
-//
-
-
-	ewl_widget_show(init_choicebox((const char **)initchoices, (const char **)values, cnt, bookinfo_choicehandler, "Book Information", w, true));
-*/
 }
 
 void settings_close_handler()
