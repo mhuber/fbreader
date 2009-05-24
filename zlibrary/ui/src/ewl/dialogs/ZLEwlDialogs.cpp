@@ -288,6 +288,7 @@ void search_found_keyhandler(Evas_Object *o, char *keyname)
 {
 	if(!strcmp(keyname, "Escape") || !strcmp(keyname, "Return")) {
 		myFbreader->myModel->bookTextModel()->removeAllMarks();
+		myFbreader->clearTextCaches();
 		myFbreader->refreshWindow();
 		ecore_main_loop_quit();
 		return;
