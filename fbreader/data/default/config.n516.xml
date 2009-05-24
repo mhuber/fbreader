@@ -14,6 +14,7 @@
     <option name="Time" value="false"/>
     <option name="Battery" value="false"/>
     <option name="Type" value="1"/>
+    <option name="Offset" value="5"/>
   </group>
   <group name="Options">
     <option name="LeftMargin" value="15"/>
