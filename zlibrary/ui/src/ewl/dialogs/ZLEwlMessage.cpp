@@ -118,7 +118,7 @@ void show_message(char *text, void *handler)
 
 	evas_object_focus_set(main_canvas_edje, 1);
 	evas_object_event_callback_add(main_canvas_edje,
-			EVAS_CALLBACK_KEY_DOWN,
+			EVAS_CALLBACK_KEY_UP,
 			&main_win_key_handler,
 			handler);
 
@@ -244,7 +244,7 @@ long read_number(char *text)
 
 	evas_object_focus_set(main_canvas_edje, 1);
 	evas_object_event_callback_add(main_canvas_edje,
-			EVAS_CALLBACK_KEY_DOWN,
+			EVAS_CALLBACK_KEY_UP,
 			&entry_win_key_handler,
 			(void*)&number);
 

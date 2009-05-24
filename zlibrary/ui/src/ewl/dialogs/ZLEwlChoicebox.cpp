@@ -229,7 +229,7 @@ static void cb_lcb_destroy()
 		ecore_main_loop_quit();
 }
 
-static void lcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+static void lcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	int i;
 	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
@@ -270,7 +270,7 @@ static void lcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* even
 	if(!strcmp(k, "Escape"))
 		cb_lcb_destroy();
 	if(!strcmp(k, "Alt_L")) {
-		alt_modifier = true;
+		alt_modifier = false;
 		edje_object_signal_emit(evas_object_name_find(e, "lcb_footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
 	if(!strcmp(k, "space")) {
@@ -279,11 +279,13 @@ static void lcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* even
 	}
 }
 
-static void lcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+static void lcb_win_key_down_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Up* ev = (Evas_Event_Key_Up*)event_info;
-	if(!strcmp(ev->key, "Alt_L"))
-		alt_modifier = false;
+	if(!strcmp(ev->keyname, "Alt_L")) {
+		alt_modifier = true;
+		edje_object_signal_emit(evas_object_name_find(e, "lcb_footer"), alt_modifier ? "alt_on" : "alt_off", "");
+	}
 }
 
 void cb_lcb_redraw()
@@ -372,7 +374,7 @@ void cb_lcb_new()
 	evas_object_focus_set(choicebox, true);
 	evas_object_event_callback_add(choicebox,
 			EVAS_CALLBACK_KEY_DOWN,
-			&lcb_win_key_handler,
+			&lcb_win_key_down_handler,
 			NULL);
 	evas_object_event_callback_add(choicebox,
 			EVAS_CALLBACK_KEY_UP,
@@ -477,7 +479,7 @@ static void cb_rcb_destroy()
 	}
 }
 
-static void rcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+static void rcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
 	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
@@ -502,17 +504,17 @@ static void rcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* even
 	if(!strcmp(k, "Escape"))
 		cb_rcb_destroy();
 	if(!strcmp(k, "Alt_L"))
-		alt_modifier = true;
+		alt_modifier = false;
 	if(!strcmp(k, "space")) {
 		alt_modifier = !alt_modifier;
 	}
 }
 
-static void rcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+static void rcb_win_key_down_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Up* ev = (Evas_Event_Key_Up*)event_info;
 	if(!strcmp(ev->key, "Alt_L"))
-		alt_modifier = false;
+		alt_modifier = true;
 }
 
 void cb_rcb_new()
@@ -550,7 +552,7 @@ void cb_rcb_new()
 	evas_object_focus_set(choicebox, true);
 	evas_object_event_callback_add(choicebox,
 			EVAS_CALLBACK_KEY_DOWN,
-			&rcb_win_key_handler,
+			&rcb_win_key_down_handler,
 			NULL);
 	evas_object_event_callback_add(choicebox,
 			EVAS_CALLBACK_KEY_UP,
@@ -653,7 +655,7 @@ static void cb_fcb_destroy()
 	ecore_main_loop_quit();
 }
 
-static void fcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+static void fcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
 	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
@@ -677,7 +679,7 @@ static void fcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* even
 	if(!strcmp(k, "Escape"))
 		cb_fcb_destroy();
 	if(!strcmp(k, "Alt_L")) {
-		alt_modifier = true;
+		alt_modifier = false;
 		edje_object_signal_emit(evas_object_name_find(e, "footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
 	if(!strcmp(k, "space")) {
@@ -687,11 +689,11 @@ static void fcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* even
 	}
 }
 
-static void fcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+static void fcb_win_key_down_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Up* ev = (Evas_Event_Key_Up*)event_info;
 	if(!strcmp(ev->key, "Alt_L")) {
-		alt_modifier = false;
+		alt_modifier = true;
 		edje_object_signal_emit(evas_object_name_find(e, "footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
 }
@@ -771,7 +773,7 @@ void cb_fcb_new(cb_list *list)
 	evas_object_focus_set(choicebox, true);
 	evas_object_event_callback_add(choicebox,
 			EVAS_CALLBACK_KEY_DOWN,
-			&fcb_win_key_handler,
+			&fcb_win_key_down_handler,
 			NULL);
 	evas_object_event_callback_add(choicebox,
 			EVAS_CALLBACK_KEY_UP,
