@@ -1471,3 +1471,104 @@ void ZLEwlOptionsDialog(FBReader &f)
 
 	cb_lcb_new();
 }
+
+void ZLEwlBookInfo(FBReader &f)
+{
+	myFbreader = &f;
+
+	if(list)
+		delete list;
+	list = new cb_list;
+
+	list->name = "Book Info";
+	list->alt_text = "";
+	list->item_handler = NULL;
+
+	const std::string &fileName = f.myModel->fileName();
+	myBookInfo = new BookInfo(fileName);
+
+#define list_add_s(__t1__, __t2__) \
+	{ \
+	stringstream s; \
+	s << (__t1__) << (__t2__);	\
+	list->items.push_back(s.str());	\
+	}
+
+	list_add_s("File: ", ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)));
+	list_add_s("Full path: ", ZLFile::fileNameToUtf8(ZLFile(fileName).path()));
+	list_add_s("Title: ", myBookInfo->TitleOption.value());
+	list_add_s("Author: ", myBookInfo->AuthorDisplayNameOption.value());
+
+	if(!myBookInfo->SeriesNameOption.value().empty()) {
+		list_add_s("Series: ", myBookInfo->SeriesNameOption.value());
+		list_add_s("Book number: ", myBookInfo->NumberInSeriesOption.value());
+	}
+
+	cb_fcb_new(list);
+}
+
+int mmenu_handler(int idx, bool is_alt)
+{
+	switch(idx) {
+		case 0:
+			next_gui = ZLEwlBookInfo;
+			return 1;
+			break;
+		case 1:
+			next_gui = ZLEwlGotoPageDialog;
+			return 1;
+			break;
+		case 2:
+			next_gui = ZLEwlTOCDialog;
+			return 1;
+			break;
+		case 3:
+			next_gui = ZLEwlSearchDialog;
+			return 1;
+			break;
+		case 4:
+			next_gui = ZLEwlBMKDialog;
+			return 1;
+			break;
+		case 5:
+			next_gui = ZLEwlOptionsDialog;
+			return 1;
+		default:
+			return 0;
+	}
+
+	//cb_fcb_redraw(list->items.size());
+	return 0;
+}
+
+void ZLEwlMainMenu(FBReader &f)
+{
+	myFbreader = &f;
+	myContext = &(*f.context());
+
+	next_gui = NULL;
+
+	if(list)
+		delete list;
+
+	list = new cb_list;
+
+	list->name = "Main Menu";
+	list->alt_text = "";
+	list->item_handler = mmenu_handler;
+
+	list->items.push_back("Book Info");
+	list->items.push_back("Go To Page");
+	list->items.push_back("Table Of Contents");
+	list->items.push_back("Search");
+	list->items.push_back("Bookmarks");
+	list->items.push_back("Settings");
+
+	cb_fcb_new(list);
+
+	// run next gui window
+	if(next_gui) {
+		myFbreader->refreshWindow();
+		next_gui(f);
+	}
+}

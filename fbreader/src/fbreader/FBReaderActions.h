@@ -34,6 +34,7 @@ public:
 	static const std::string SHOW_COLLECTION;
 	static const std::string SHOW_NET_LIBRARY;
 	static const std::string SHOW_OPTIONS;
+	static const std::string SHOW_MENU;
 	static const std::string UNDO;
 	static const std::string REDO;
 	static const std::string SHOW_CONTENTS;
@@ -128,6 +129,13 @@ class ShowOptionsDialogAction : public FBAction {
 
 public:
 	ShowOptionsDialogAction(FBReader &fbreader);
+	void run();
+};
+
+class ShowMenuDialogAction : public FBAction {
+
+public:
+	ShowMenuDialogAction(FBReader &fbreader);
 	void run();
 };
 

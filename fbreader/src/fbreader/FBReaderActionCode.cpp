@@ -24,6 +24,7 @@ const std::string ActionCode::SHOW_READING = "showReading";
 const std::string ActionCode::SHOW_COLLECTION = "showLibrary";
 const std::string ActionCode::SHOW_NET_LIBRARY = "showNetLibrary";
 const std::string ActionCode::SHOW_OPTIONS = "preferences";
+const std::string ActionCode::SHOW_MENU = "menu";
 const std::string ActionCode::UNDO = "undo";
 const std::string ActionCode::REDO = "redo";
 const std::string ActionCode::SHOW_CONTENTS = "toc";

@@ -88,6 +88,15 @@ void ShowOptionsDialogAction::run() {
 		ZLEwlOptionsDialog(f);
 }
 
+ShowMenuDialogAction::ShowMenuDialogAction(FBReader &fbreader) : FBAction(fbreader) {
+}
+
+void ShowMenuDialogAction::run() {
+	FBReader &f = fbreader();
+	if(f.mode() != FBReader::HYPERLINK_NAV_MODE)
+		ZLEwlMainMenu(f);
+}
+
 ShowContentsAction::ShowContentsAction(FBReader &fbreader) : SetModeAction(fbreader, FBReader::CONTENTS_MODE, FBReader::BOOK_TEXT_MODE) {
 }
 

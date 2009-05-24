@@ -129,6 +129,7 @@ FBReader::FBReader(const std::string &bookToOpen) :
 	addAction(ActionCode::ADVANCED_SEARCH_ON_NETWORK, new AdvancedSearchOnNetworkAction(*this));
 	registerPopupData(ActionCode::SHOW_COLLECTION, myRecentBooksPopupData);
 	addAction(ActionCode::SHOW_OPTIONS, new ShowOptionsDialogAction(*this));
+	addAction(ActionCode::SHOW_MENU, new ShowMenuDialogAction(*this));
 	addAction(ActionCode::SHOW_CONTENTS, new ShowContentsAction(*this));
 	addAction(ActionCode::SHOW_BOOK_INFO, new ShowBookInfoAction(*this));
 	addAction(ActionCode::ADD_BOOK, new AddBookAction(*this, FBReader::BOOK_TEXT_MODE | FBReader::BOOK_COLLECTION_MODE | FBReader::CONTENTS_MODE));
