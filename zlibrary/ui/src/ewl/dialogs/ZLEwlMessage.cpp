@@ -75,7 +75,7 @@ static void main_win_key_handler(void* param, Evas* e, Evas_Object* o, void* eve
 		void (*handler)(Evas_Object*, char *) = (void(*)(Evas_Object*, char*))param;
 		handler(o, ev->keyname);
 	}
-	if(!strcmp(ev->keyname, "Escape"))
+	if(!strcmp(ev->keyname, "Escape") || !strcmp(ev->keyname, "Return"))
 		ecore_main_loop_quit();
 }
 
