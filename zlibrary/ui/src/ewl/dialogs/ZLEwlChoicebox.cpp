@@ -1,618 +1,792 @@
-/***************************************************************************
- *   Copyright (C) 2008 by Marc Lajoie                                     *
- *   marc@gatherer                                                         *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+/*
+ * Copyright (C) 2009 Alexander Kerner <lunohod@openinkpot.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ */
 
+#include <ZLibrary.h>
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "ZLEwlDialogs.h"
+#include "ZLEwlChoicebox.h"
 
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
 
-#include <Ewl.h>
-#include "ZLEwlKeyhandler.h"
-#include "ZLEwlChoicebox.h"
-#include "../util/ZLEwlUtil.h"
+#include <Ecore.h>
+#include <Ecore_Evas.h>
+#include <Edje.h>
 
-extern void redraw_text();
+extern "C" {
+#include <echoicebox.h>
+}
 
-const int noptions = 8;
+#define SETTINGS_LEFT_NAME "settings_left"
+#define SETTINGS_RIGHT_NAME "settings_right"
 
-#define HIDE_LABELS \
-	for (int i = 1; i <= 8; i++) \
-		ewl_widget_hide(EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i)))
+/* FIXME */
+#define BUFSIZE 512
 
-#define SHOW_LABELS \
-	for (int i = 1; i <= 8; i++) \
-		ewl_widget_show(EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i)))
+/* FIXME */
+const int header_h = 49;
+const int footer_h = 49;
 
-#define REL_THEME "themes/options.edj"
-typedef struct _choice_info_struct {
-	char **choices;
-	char **values;
-	int numchoices;
-	int curindex;
-	int navsel;
-	bool master;
-	choice_handler handler;
-	Ewl_Widget *parent;
-} choice_info_struct;
 
-/*
- * Returns edje theme file name.
- */
-char *get_theme_file()
+static Ecore_Evas *lcb_win, *fcb_win;
+
+static void cb_rcb_destroy();
+
+static bool alt_modifier = false;
+
+static int exit_handler(void* param, int ev_type, void* event)
 {
-//	char *cwd = get_current_dir_name();
-	char *rel_theme;
-	asprintf(&rel_theme, "%s/%s", "/usr/share/FBReader", REL_THEME);
-	//free(cwd);
-	return rel_theme;
+	fprintf(stderr, "exit_handler\n");
+	ecore_main_loop_quit();
+
+	return 1;
 }
 
-static void choicebox_reveal_cb(Ewl_Widget *w, void *ev, void *data) {
-	ewl_window_move(EWL_WINDOW(w), (600 - CURRENT_W(w)) / 2, (800 - CURRENT_H(w)) / 2);
-	ewl_window_keyboard_grab_set(EWL_WINDOW(w), 1);
+static void lcb_win_close_handler(Ecore_Evas* main_win)
+{
+	fprintf(stderr, "main_win_close_handler\n");
+	ecore_main_loop_quit();
 }
 
-static void choicebox_realize_cb(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
-	if(data)
-		win = (Ewl_Widget *)data;
+static void lcb_page_updated_handler(Evas_Object* choicebox,
+		int cur_page,
+		int total_pages,
+		void* param)
+{
+    char buf[BUFSIZE];
+    if(total_pages < 2)
+        *buf = 0;
+    else
+        snprintf(buf, BUFSIZE, "%d/%d", cur_page + 1, total_pages);
+
+    Evas* canvas = evas_object_evas_get(choicebox);
+    Evas_Object* footer = evas_object_name_find(canvas, "lcb_footer");
+
+    edje_object_part_text_set(footer, "text", buf);
+}
+
+static void lcb_draw_handler(Evas_Object* choicebox,
+		Evas_Object* item,
+		int item_num,
+		int page_position,
+		void* param)
+{
+	char foo[256];
+
+	if(olists.empty())
+		return;
+
+	cb_olist *l = olists.back();
+	if(!l)
+		return;
+
+	if(item_num >= l->items.size())
+		return;
+
+	cb_olist_item *i = &l->items.at(item_num);
+	if(i->type == ITEM_SUBMENU || i->type == ITEM_TEXT) {
+		edje_object_part_text_set(item, "text", i->name.c_str());
+		edje_object_part_text_set(item, "title", "");
+		edje_object_part_text_set(item, "value", "");
+	} else if(i->type == ITEM_OPTION) {
+		edje_object_part_text_set(item, "text", "");
+		edje_object_part_text_set(item, "title", i->name.c_str());
+
+		if(i->values.empty())
+			edje_object_part_text_set(item, "value",  i->current_value.text.c_str());
+		else if(i->values.size() <= 3) {
+			string s;
+			for(int z = 0; z < i->values.size(); z++)
+				if(z != i->curval_idx) {
+					s += "  <inactive>";
+					s += i->values.at(z).text;
+					s += "</inactive>";
+				} else
+					s += "  " + i->values.at(z).text;
+
+				edje_object_part_text_set(item, "value", s.c_str());
+		}
+	}
+
+	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
+			choicebox, item, item_num, page_position, param);
+}
+
+static void lcb_handler(Evas_Object* choicebox,
+		int item_num,
+		bool is_alt,
+		void* param)
+{
+	printf("handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
+			choicebox, item_num, is_alt, param);
+
+	if(olists.empty())
+		return;
+
+	cb_olist *l = olists.back();
+	if(!l || !l->item_handler)
+		return;
+
+	if(l->items.at(item_num).item_handler != NULL)
+		l->items.at(item_num).item_handler(item_num, is_alt);
 	else
-		win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 0);
+		l->item_handler(item_num, is_alt);
 }
 
-static void choicebox_unrealize_cb(Ewl_Widget *w, void *ev, void *data) {
-	Ewl_Widget *win;
 
+static void lcb_win_resize_handler(Ecore_Evas* main_win)
+{
+	Evas* canvas = ecore_evas_get(main_win);
+	int w, h;
+	evas_output_size_get(canvas, &w, &h);
 
-	if(data)
-		win = (Ewl_Widget *)data;
+	Evas_Object* main_canvas_edje = evas_object_name_find(canvas, "main_canvas_edje");
+	evas_object_resize(main_canvas_edje, w, h);
+
+	Evas_Object *bg = evas_object_name_find(canvas, "bg");
+	evas_object_resize(bg, w, h);
+
+	Evas_Object* header = evas_object_name_find(canvas, "lcb_header");
+	evas_object_move(header, 0, 0);
+	evas_object_resize(header, w/2, header_h);
+
+	Evas_Object* footer = evas_object_name_find(canvas, "lcb_footer");
+	evas_object_move(footer, 0, h - footer_h);
+	evas_object_resize(footer, w/2, footer_h);
+
+	header = evas_object_name_find(canvas, "rcb_header");
+	if(header) {
+		evas_object_move(header, w/2, 0);
+		evas_object_resize(header, w/2, header_h);
+	}
+
+	footer = evas_object_name_find(canvas, "rcb_footer");
+	if(footer) {
+		evas_object_move(footer, w/2, h - footer_h);
+		evas_object_resize(footer, w/2, footer_h);
+	}
+
+	Evas_Object* choicebox = evas_object_name_find(canvas, SETTINGS_LEFT_NAME);
+	if(choicebox) {
+		evas_object_resize(choicebox, w/2, h - header_h - footer_h);
+		evas_object_move(choicebox, 0, header_h);
+	}
+
+	choicebox = evas_object_name_find(canvas, SETTINGS_RIGHT_NAME);
+	if(choicebox) {
+		evas_object_resize(choicebox, w/2, h - header_h - footer_h);
+		evas_object_move(choicebox, w/2, header_h);
+	}
+}
+
+static void lcb_win_signal_handler(void* param, Evas_Object* o, const char* emission, const char* source)
+{
+	printf("%s -> %s\n", source, emission);
+}
+
+void cb_lcb_invalidate(int idx)
+{
+	Evas* canvas = ecore_evas_get(lcb_win);
+	Evas_Object* choicebox = evas_object_name_find(canvas, SETTINGS_LEFT_NAME);
+	choicebox_invalidate_item(choicebox, idx);
+}
+
+static void cb_lcb_destroy()
+{
+	if(olists.empty())
+		return;
+
+	cb_olist *l = olists.back();
+	if(!l)
+		return;
+
+	if(l->destroy_handler != NULL)
+		l->destroy_handler();
+
+	delete l;
+	olists.pop_back();
+
+	if(olists.size() > 0)
+		cb_lcb_redraw();
 	else
-		win = ewl_widget_name_find("main_win");
-	if(win)
-		ewl_window_keyboard_grab_set(EWL_WINDOW(win), 1);
+		ecore_main_loop_quit();
 }
 
-void choicebox_change_selection(Ewl_Widget * widget, int new_navsel)
+static void lcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
-	choice_info_struct *infostruct =
-		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
-	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(widget), 0);
-	Ewl_Widget *oldselected =
-		ewl_container_child_get(EWL_CONTAINER(vbox), infostruct->navsel + 1);
-	Ewl_Widget *newselected =
-		ewl_container_child_get(EWL_CONTAINER(vbox), new_navsel + 1);
+	int i;
+	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
+	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
 
-	if (get_nav_mode() == 1) {
-		ewl_widget_state_set(oldselected, "unselect",EWL_STATE_PERSISTENT);
-		ewl_widget_state_set(ewl_container_child_get(EWL_CONTAINER(oldselected), 0), "unselect",EWL_STATE_PERSISTENT);
-		ewl_widget_state_set(newselected,"select",EWL_STATE_PERSISTENT);
-		ewl_widget_state_set(ewl_container_child_get
-				(EWL_CONTAINER(newselected), 0), "select",
-				EWL_STATE_PERSISTENT);
+	const char *k = ev->key;
+
+	Evas_Object* r = evas_object_name_find(e, SETTINGS_LEFT_NAME);
+
+    if(!strcmp(ev->keyname, "Up") || !strcmp(ev->keyname, "Prior"))
+		choicebox_prev(r);
+    if(!strcmp(ev->keyname, "Down") || !strcmp(ev->keyname, "Next"))
+		choicebox_next(r);
+	if(!strcmp(k, "Left")) {
+		cb_olist_item *item;
+		if((i = choicebox_get_selection(r)) != -1 &&
+				(item = &olists.back()->items.at(i)) &&
+				(item->values.size() == 3 || item->values.size() == 2)) {
+			if(item->values.size() == 3)
+				choicebox_activate_current(r, alt_modifier);
+			choicebox_activate_current(r, alt_modifier);
+		} else
+			choicebox_prevpage(r);
 	}
-	infostruct->navsel = new_navsel;
-}
-
-void choicebox_next_page(Ewl_Widget * widget)
-{
-	choice_info_struct *infostruct;
-	infostruct =
-		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
-	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(widget), 0);
-	Ewl_Widget *tempw1, *v1, *v2;
-	if (infostruct->numchoices < noptions
-			|| (infostruct->curindex + noptions) >= infostruct->numchoices)
-		return;
-	infostruct->curindex += noptions;
-
-	int shownum =
-		((infostruct->numchoices - infostruct->curindex) >
-		 noptions) ? noptions : (infostruct->numchoices -
-			 infostruct->curindex);
-
-	HIDE_LABELS;
-
-	for (int i = 0; i < noptions; i++) {
-		tempw1 =
-			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
-
-		v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
-		v2 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 1));
-		if (i < shownum) {
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v1), 0)),
-					infostruct->choices[infostruct->curindex +
-					i]);
-
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v2), 0)),
-					infostruct->values[infostruct->curindex +
-					i]);
-
-			if(!strlen(infostruct->values[infostruct->curindex + i]))
-				ewl_widget_hide(v2);
-			else
-				ewl_widget_show(v2);
-
-		} else {
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v1), 0)), "");
-
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v2), 0)), "");
-		}
+	if(!strcmp(k, "Right")) {
+		cb_olist_item *item;
+		if((i = choicebox_get_selection(r)) != -1 &&
+				(item = &olists.back()->items.at(i)) &&
+				(item->values.size() == 3 || item->values.size() == 2)) {
+			choicebox_activate_current(r, alt_modifier);
+		} else
+			choicebox_nextpage(r);
 	}
-
-	char *p;
-	asprintf(&p, "Page %d of %d", 1 + infostruct->curindex / 8, (7 + infostruct->numchoices) / 8);
-
-	tempw1 =
-		EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), noptions + 1));
-
-	v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
-	ewl_label_text_set(EWL_LABEL
-			(ewl_container_child_get
-			 (EWL_CONTAINER(v1), 0)),
-			p);
-	free(p);
-
-	choicebox_change_selection(widget, 0);
-	SHOW_LABELS;
-}
-
-void choicebox_previous_page(Ewl_Widget * widget)
-{
-	choice_info_struct *infostruct;
-	infostruct =
-		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
-	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(widget), 0);
-	Ewl_Widget *tempw1, *v1, *v2;
-	if (infostruct->numchoices < noptions || infostruct->curindex == 0)
-		return;
-	infostruct->curindex -= noptions;
-	HIDE_LABELS;
-	for (int i = 0; i < noptions; i++) {
-		tempw1 =
-			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
-		v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
-		v2 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 1));
-
-		ewl_label_text_set(EWL_LABEL
-				(ewl_container_child_get
-				 (EWL_CONTAINER(v1), 0)),
-				infostruct->choices[infostruct->curindex + i]);
-
-		ewl_label_text_set(EWL_LABEL
-				(ewl_container_child_get
-				 (EWL_CONTAINER(v2), 0)),
-				infostruct->values[infostruct->curindex + i]);
-
-		if(!strlen(infostruct->values[infostruct->curindex + i]))
-			ewl_widget_hide(v2);
-		else
-			ewl_widget_show(v2);
+	if(!strncmp("KP_", k, 3) && isdigit(k[3]) && k[3] != '0' && !k[4])
+		choicebox_activate_nth_visible(r, k[3]-'1', alt_modifier);
+	if(!strcmp(k, "Return"))
+		choicebox_activate_current(r, alt_modifier);
+	if(!strcmp(k, "Escape"))
+		cb_lcb_destroy();
+	if(!strcmp(k, "Alt_L")) {
+		alt_modifier = true;
+		edje_object_signal_emit(evas_object_name_find(e, "lcb_footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
-
-	char *p;
-	asprintf(&p, "Page %d of %d", 1 + infostruct->curindex / 8, (7 + infostruct->numchoices) / 8);
-
-	tempw1 =
-		EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), noptions + 1));
-
-	v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
-	ewl_label_text_set(EWL_LABEL
-			(ewl_container_child_get
-			 (EWL_CONTAINER(v1), 0)),
-			p);
-	free(p);
-
-	choicebox_change_selection(widget, 0);
-	SHOW_LABELS;
+	if(!strcmp(k, "space")) {
+		alt_modifier = !alt_modifier;
+		edje_object_signal_emit(evas_object_name_find(e, "lcb_footer"), alt_modifier ? "alt_on" : "alt_off", "");
+	}
 }
 
-void choicebox_esc(Ewl_Widget * widget)
+static void lcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
-	fini_choicebox(widget);
-	ewl_main_quit();
+	Evas_Event_Key_Up* ev = (Evas_Event_Key_Up*)event_info;
+	if(!strcmp(ev->key, "Alt_L"))
+		alt_modifier = false;
 }
 
-void choicebox_item(Ewl_Widget * widget, int item, bool lp)
+void cb_lcb_redraw()
 {
-	choice_info_struct *infostruct;
-	if (item >= 1 && item <= 8) {
-		int curchoice;
-		infostruct =
-			(choice_info_struct *) ewl_widget_data_get(widget,
-					(void *)"choice_info");
-		curchoice = infostruct->curindex + (item - 1);
-		if (curchoice < infostruct->numchoices) {
-			choicebox_change_selection(widget, item);
-			(infostruct->handler) (curchoice, widget, lp);
-		}			
-	} else if (item == 9)
-		choicebox_previous_page(widget);
-	else if (item == 0)
-		choicebox_next_page(widget);
-}
-
-
-void choicebox_nav_up(Ewl_Widget * widget)
-{
-	choice_info_struct *infostruct =
-		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
-	if (infostruct->navsel == 0)
+	if(olists.size() < 1)
 		return;
 
-	choicebox_change_selection(widget, infostruct->navsel - 1);
-}
-
-void choicebox_nav_down(Ewl_Widget * widget)
-{
-	choice_info_struct *infostruct =
-		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
-	if (infostruct->navsel == (noptions - 1)
-			|| ((infostruct->curindex + infostruct->navsel + 1) >=
-				infostruct->numchoices))
+	cb_olist *l = olists.back();
+	if(!l)
 		return;
-	choicebox_change_selection(widget, infostruct->navsel + 1);
+
+	Evas* canvas = ecore_evas_get(lcb_win);
+	Evas_Object* choicebox = evas_object_name_find(canvas, SETTINGS_LEFT_NAME);
+	Evas_Object* header = evas_object_name_find(canvas, "lcb_header");
+	edje_object_part_text_set(header, "text", olists.empty() ? "" : olists.back()->name.c_str());
+	choicebox_set_size(choicebox, l->items.size());
+	choicebox_invalidate_interval(choicebox, 0, l->items.size());
+	if(l->items.size() > 0)
+		choicebox_set_selection(choicebox, 0);
 }
 
-void choicebox_nav_left(Ewl_Widget * widget)
+void ee_init()
 {
-	choicebox_previous_page(widget);
+	static int _init = 0;
+	if(!_init) {
+		if(!evas_init())
+			return;
+		if(!ecore_init())
+			return;
+		if(!ecore_evas_init())
+			return;
+		if(!edje_init())
+			return;
+
+		ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, exit_handler, NULL);
+
+		_init = 1;
+	}
 }
 
-void choicebox_nav_right(Ewl_Widget * widget)
+void cb_lcb_new()
 {
-	choicebox_next_page(widget);
+	ee_init();
+
+	lcb_win = ecore_evas_software_x11_new(0, 0, 0, 0, 600, 800);
+
+	ecore_evas_title_set(lcb_win, "LCB");
+	ecore_evas_name_class_set(lcb_win, "LCB", "LCB");
+
+	Evas* main_canvas = ecore_evas_get(lcb_win);
+
+	ecore_evas_callback_delete_request_set(lcb_win, lcb_win_close_handler);
+
+	Evas_Object* bg = evas_object_rectangle_add(main_canvas);
+	evas_object_name_set(bg, "bg");
+	evas_object_color_set(bg, 255, 255, 255, 255);
+	evas_object_move(bg, 0, 0);
+	evas_object_resize(bg, 600, 800);
+	evas_object_show(bg);
+
+	Evas_Object* header = edje_object_add(main_canvas);
+	evas_object_name_set(header, "lcb_header");
+	edje_object_file_set(header, "/usr/share/FBReader/themes/cb_header_footer.edj",
+			"header");
+	edje_object_part_text_set(header, "text", olists.empty() ? "" : olists.back()->name.c_str());
+	evas_object_move(header, 0, 0);
+	evas_object_resize(header, 300, header_h);
+	evas_object_show(header);
+
+	Evas_Object* footer = edje_object_add(main_canvas);
+	evas_object_name_set(footer, "lcb_footer");
+	edje_object_file_set(footer, "/usr/share/FBReader/themes/cb_header_footer.edj",
+			"footer");
+	evas_object_move(footer, 0, 800 - footer_h);
+	evas_object_resize(footer, 300, footer_h);
+	evas_object_show(footer);
+
+	Evas_Object* choicebox = choicebox_new(main_canvas, "/usr/share/echoicebox/echoicebox.edj", "settings-left",
+			lcb_handler, lcb_draw_handler, lcb_page_updated_handler, (void*)NULL);
+	choicebox_set_size(choicebox, olists.empty() ? 0 : olists.back()->items.size());
+	evas_object_name_set(choicebox, SETTINGS_LEFT_NAME);
+	evas_object_resize(choicebox, 300, 800 - header_h - footer_h);
+	evas_object_move(choicebox, 0, header_h);
+	evas_object_show(choicebox);
+
+	evas_object_focus_set(choicebox, true);
+	evas_object_event_callback_add(choicebox,
+			EVAS_CALLBACK_KEY_DOWN,
+			&lcb_win_key_handler,
+			NULL);
+	evas_object_event_callback_add(choicebox,
+			EVAS_CALLBACK_KEY_UP,
+			&lcb_win_key_up_handler,
+			NULL);
+
+	ecore_evas_callback_resize_set(lcb_win, lcb_win_resize_handler);
+
+	ecore_evas_show(lcb_win);
+
+	ecore_main_loop_begin();
+
+	if(lcb_win) {
+		ecore_evas_hide(lcb_win);
+		ecore_evas_free(lcb_win);
+		lcb_win = NULL;
+	}
 }
 
-void choicebox_nav_sel(Ewl_Widget * widget)
+// rcb
+static void rcb_page_updated_handler(Evas_Object* choicebox,
+		int cur_page,
+		int total_pages,
+		void* param)
 {
-	choice_info_struct *infostruct =
-		(choice_info_struct *) ewl_widget_data_get(widget, (void *)"choice_info");
-	(infostruct->handler) (infostruct->curindex * noptions +
-			infostruct->navsel, widget, false);
+    char buf[BUFSIZE];
+    if(total_pages < 2)
+        *buf = 0;
+    else
+        snprintf(buf, BUFSIZE, "%d/%d", cur_page + 1, total_pages);
 
+    Evas* canvas = evas_object_evas_get(choicebox);
+    Evas_Object* footer = evas_object_name_find(canvas, "rcb_footer");
+
+    edje_object_part_text_set(footer, "text", buf);
 }
 
-/*static key_handler_info_t choicebox_handlers = {
-	.nav_up_handler = &choicebox_nav_up,
-	.nav_down_handler = &choicebox_nav_down,
-	.nav_left_handler = &choicebox_nav_left,
-	.nav_right_handler = &choicebox_nav_right,
-	.nav_sel_handler = &choicebox_nav_sel,
-	.esc_handler = &choicebox_esc,
-	.item_handler = &choicebox_item,
-};
-*/
-
-static key_handler_info_t choicebox_handlers = {
-	choicebox_esc,
-	choicebox_esc,
-	choicebox_nav_up,
-	choicebox_nav_down,
-	choicebox_nav_left,
-	choicebox_nav_right,
-	choicebox_nav_sel,
-	NULL,
-	NULL,
-	choicebox_item
-};
-
-void choicebox_destroy_cb(Ewl_Widget * w, void *event, void *data)
+static void rcb_draw_handler(Evas_Object* choicebox,
+		Evas_Object* item,
+		int item_num,
+		int page_position,
+		void* param)
 {
-	fini_choicebox(w);
-	Ewl_Widget *win;
-	win = ewl_widget_name_find("main_win");
-//	if(win == data)
-		//redraw_text();
-	ewl_main_quit();
+	char foo[256];
+
+	if(!vlist)
+		return;
+
+	if(item_num >= vlist->values.size())
+		return;
+
+	cb_item_value *iv = &vlist->values.at(item_num);
+	edje_object_part_text_set(item, "text", iv->text.c_str());
+	edje_object_part_text_set(item, "title", "");
+	edje_object_part_text_set(item, "value", "");
+
+	fprintf(stderr, "rcd_draw_handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
+			choicebox, item, item_num, page_position, param);
 }
 
-Ewl_Widget *init_choicebox(const char *choicelist[], const char *values[], int numchoices,
-		choice_handler handler, char *header, Ewl_Widget *parent, bool master)
+static void rcb_handler(Evas_Object* choicebox,
+		int item_num,
+		bool is_alt,
+		void* param)
 {
-	Ewl_Widget *win, *vbox, *tempw1, *tempw2, *w, *v1, *v2;
+	printf("rcb_handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
+			choicebox, item_num, is_alt, param);
 
-	w = ewl_widget_name_find("main_win");
+	if(!vlist)
+		return;
 
-	set_nav_mode(0);
-	choice_info_struct *info =
-		(choice_info_struct *) malloc(sizeof(choice_info_struct));
+	vlist->item_handler(item_num, is_alt);
 
-	info->numchoices = numchoices;
-	info->curindex = 0;
-	info->navsel = 0;
-	info->handler = handler;
-	info->master = master;
-	info->parent = parent;
+	cb_rcb_destroy();
+}
 
-	info->choices = (char **) malloc(sizeof(char *) * numchoices);
-	info->values = (char **) malloc(sizeof(char *) * numchoices);
-	for (int i = 0; i < numchoices; i++) {
-		asprintf(&(info->choices[i]), "%s", choicelist[i]);
-		asprintf(&(info->values[i]), "%s", values[i]);
+static void rcb_win_signal_handler(void* param, Evas_Object* o, const char* emission, const char* source)
+{
+	printf("%s -> %s\n", source, emission);
+}
+
+static void cb_rcb_destroy()
+{
+	Evas* e = ecore_evas_get(lcb_win);
+
+	Evas_Object *o = evas_object_name_find(e, SETTINGS_RIGHT_NAME);
+	evas_object_hide(o);
+	evas_object_del(o);
+
+	o = evas_object_name_find(e, "rcb_header");
+	evas_object_hide(o);
+	evas_object_del(o);
+
+	o = evas_object_name_find(e, "rcb_footer");
+	evas_object_hide(o);
+	evas_object_del(o);
+
+	evas_object_focus_set(evas_object_name_find(e, SETTINGS_LEFT_NAME), true);
+	if(vlist) {
+		delete vlist;
+		vlist = NULL;
+	}
+}
+
+static void rcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+{
+	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
+	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
+
+	const char *k = ev->key;
+
+	Evas_Object* r = evas_object_name_find(e, SETTINGS_RIGHT_NAME);
+
+
+    if(!strcmp(ev->keyname, "Up") || !strcmp(ev->keyname, "Prior"))
+		choicebox_prev(r);
+    if(!strcmp(ev->keyname, "Down") || !strcmp(ev->keyname, "Next"))
+		choicebox_next(r);
+	if(!strcmp(k, "Left"))
+		choicebox_prevpage(r);
+	if(!strcmp(k, "Right"))
+		choicebox_nextpage(r);
+	if(!strncmp("KP_", k, 3) && isdigit(k[3]) && k[3] != '0' && !k[4])
+		choicebox_activate_nth_visible(r, k[3]-'1', alt_modifier);
+	if(!strcmp(k, "Return"))
+		choicebox_activate_current(r, alt_modifier);
+	if(!strcmp(k, "Escape"))
+		cb_rcb_destroy();
+	if(!strcmp(k, "Alt_L"))
+		alt_modifier = true;
+	if(!strcmp(k, "space")) {
+		alt_modifier = !alt_modifier;
+	}
+}
+
+static void rcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+{
+	Evas_Event_Key_Up* ev = (Evas_Event_Key_Up*)event_info;
+	if(!strcmp(ev->key, "Alt_L"))
+		alt_modifier = false;
+}
+
+void cb_rcb_new()
+{
+	Evas* main_canvas = ecore_evas_get(lcb_win);
+	int w, h;
+	evas_output_size_get(main_canvas, &w, &h);
+	w /= 2;
+
+	Evas_Object* header = edje_object_add(main_canvas);
+	evas_object_name_set(header, "rcb_header");
+	edje_object_file_set(header, "/usr/share/FBReader/themes/cb_header_footer.edj",
+			"header");
+	edje_object_part_text_set(header, "text", vlist->name.c_str());
+	evas_object_move(header, w, 0);
+	evas_object_resize(header, w, header_h);
+	evas_object_show(header);
+
+	Evas_Object* footer = edje_object_add(main_canvas);
+	evas_object_name_set(footer, "rcb_footer");
+	edje_object_file_set(footer, "/usr/share/FBReader/themes/cb_header_footer.edj",
+			"footer");
+	evas_object_move(footer, w, h - footer_h);
+	evas_object_resize(footer, w, footer_h);
+	evas_object_show(footer);
+
+	Evas_Object* choicebox = choicebox_new(main_canvas, "/usr/share/echoicebox/echoicebox.edj", "settings-right",
+			rcb_handler, rcb_draw_handler, rcb_page_updated_handler, (void*)NULL);
+	choicebox_set_size(choicebox, vlist->values.size());
+	evas_object_name_set(choicebox, SETTINGS_RIGHT_NAME);
+	evas_object_resize(choicebox, w, h - header_h - footer_h);
+	evas_object_move(choicebox, w, header_h);
+	evas_object_show(choicebox);
+
+	evas_object_focus_set(choicebox, true);
+	evas_object_event_callback_add(choicebox,
+			EVAS_CALLBACK_KEY_DOWN,
+			&rcb_win_key_handler,
+			NULL);
+	evas_object_event_callback_add(choicebox,
+			EVAS_CALLBACK_KEY_UP,
+			&rcb_win_key_up_handler,
+			NULL);
+}
+
+// fcb
+static void fcb_win_close_handler(Ecore_Evas* main_win)
+{
+	fprintf(stderr, "main_win_close_handler\n");
+	ecore_main_loop_quit();
+}
+
+static void fcb_page_updated_handler(Evas_Object* choicebox,
+		int cur_page,
+		int total_pages,
+		void* param)
+{
+    char buf[BUFSIZE];
+    if(total_pages < 2)
+        *buf = 0;
+    else
+        snprintf(buf, BUFSIZE, "%d/%d", cur_page + 1, total_pages);
+
+    Evas* canvas = evas_object_evas_get(choicebox);
+    Evas_Object* footer = evas_object_name_find(canvas, "footer");
+
+    edje_object_part_text_set(footer, "text", buf);
+}
+
+static void fcb_draw_handler(Evas_Object* choicebox,
+		Evas_Object* item,
+		int item_num,
+		int page_position,
+		void* param)
+{
+	cb_list *l = (cb_list*)param;
+	
+	if(l->items.empty())
+		return;
+
+	edje_object_part_text_set(item, "text", l->items.at(item_num).c_str());
+
+	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
+			choicebox, item, item_num, page_position, param);
+}
+
+static void fcb_handler(Evas_Object* choicebox,
+		int item_num,
+		bool is_alt,
+		void* param)
+{
+	printf("handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
+			choicebox, item_num, is_alt, param);
+
+	cb_list *l = (cb_list *)param;
+	if(l->item_handler(item_num, is_alt) != 0)
+		ecore_main_loop_quit();
+}
+
+
+static void fcb_win_resize_handler(Ecore_Evas* main_win)
+{
+	Evas* canvas = ecore_evas_get(main_win);
+	int w, h;
+	evas_output_size_get(canvas, &w, &h);
+
+	Evas_Object* main_canvas_edje = evas_object_name_find(canvas, "main_canvas_edje");
+	evas_object_resize(main_canvas_edje, w, h);
+
+	Evas_Object *bg = evas_object_name_find(canvas, "bg");
+	evas_object_resize(bg, w, h);
+
+	Evas_Object* header = evas_object_name_find(canvas, "header");
+	evas_object_move(header, 0, 0);
+	evas_object_resize(header, w, header_h);
+
+	Evas_Object* choicebox = evas_object_name_find(canvas, "cb_full");
+	if(choicebox) {
+		evas_object_resize(choicebox, w, h - header_h - footer_h);
+		evas_object_move(choicebox, 0, header_h);
 	}
 
-	win = ewl_window_new();
-	ewl_window_title_set(EWL_WINDOW(win), "EWL_WINDOW");
-	ewl_window_name_set(EWL_WINDOW(win), "EWL_WINDOW");
-	ewl_window_class_set(EWL_WINDOW(win), "ChoiceBox");
-	set_key_handler(EWL_WIDGET(win), &choicebox_handlers);
-	ewl_callback_append(win, EWL_CALLBACK_DELETE_WINDOW, choicebox_destroy_cb, (void *)parent);
-	ewl_callback_append(win, EWL_CALLBACK_REVEAL, choicebox_reveal_cb, (void *)parent);
-	ewl_callback_append(win, EWL_CALLBACK_REALIZE, choicebox_realize_cb, (void *)parent);
-	ewl_callback_append(win, EWL_CALLBACK_UNREALIZE, choicebox_unrealize_cb, (void *)parent);
-    ewl_theme_data_str_set(win, "/window/group","ewl/window/dlg_choicebox");
-	EWL_EMBED(win)->x = 600;
-	EWL_EMBED(win)->y = 0;
-	ewl_widget_data_set(EWL_WIDGET(win), (void *)"choice_info",
-			(void *) info);
-	ewl_widget_show(win);
+	Evas_Object* footer = evas_object_name_find(canvas, "footer");
+	evas_object_move(footer, 0, h - footer_h);
+	evas_object_resize(footer, w, footer_h);
+}
 
-	ewl_widget_focus_send(win);
+static void fcb_win_signal_handler(void* param, Evas_Object* o, const char* emission, const char* source)
+{
+	printf("%s -> %s\n", source, emission);
+}
 
-	vbox = ewl_vbox_new();
-	ewl_container_child_append(EWL_CONTAINER(win), vbox);
-	ewl_object_fill_policy_set(EWL_OBJECT(vbox), EWL_FLAG_FILL_FILL);
-	ewl_widget_show(vbox);
+static void cb_fcb_destroy()
+{
+//	if(l->destroy_handler != NULL)
+//		l->destroy_handler();
 
-//	int shownum = (numchoices <= noptions) ? numchoices : noptions;
-	int shownum = noptions;
+	ecore_main_loop_quit();
+}
 
-	tempw1 = ewl_hbox_new();
-	ewl_container_child_append(EWL_CONTAINER(vbox), tempw1);
-	ewl_theme_data_str_set(EWL_WIDGET(tempw1), "/hbox/group",
-			"ewl/box/dlg_optionbox");
-	ewl_object_fill_policy_set(EWL_OBJECT(tempw1), EWL_FLAG_FILL_FILL);
-	ewl_widget_show(tempw1);
+static void fcb_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
+{
+	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
+	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
 
-	v1 = ewl_vbox_new();
-	ewl_container_child_append(EWL_CONTAINER(tempw1), v1);
-	ewl_theme_data_str_set(EWL_WIDGET(v1), "/hbox/group",
-			"ewl/box/dlg_optionbox");
-	ewl_object_fill_policy_set(EWL_OBJECT(v1), EWL_FLAG_FILL_HFILL);
-	ewl_widget_show(v1);
+	const char *k = ev->key;
 
-	v2 = ewl_vbox_new();
-	ewl_container_child_append(EWL_CONTAINER(tempw1), v2);
-	ewl_theme_data_str_set(EWL_WIDGET(v2), "/hbox/group",
-			"ewl/box/dlg_optionbox");
-	ewl_object_fill_policy_set(EWL_OBJECT(v2), EWL_FLAG_FILL_HFILL);
-	ewl_widget_show(v2);
+	Evas_Object* r = evas_object_name_find(e, "cb_full");
 
-	tempw2 = ewl_label_new();
-	ewl_container_child_append(EWL_CONTAINER(v1), tempw2);
-	ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
-			"ewl/label/dlg_header");
-	ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
-		"ewl/label/dlg_header/text");
-	ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
-	ewl_label_text_set(EWL_LABEL(tempw2), header);
-	ewl_widget_show(tempw2);
-
-	for(int i = 0; i < 9 /*shownum + 1*/; i++) {
-
-		tempw1 = ewl_hbox_new();
-		ewl_container_child_append(EWL_CONTAINER(vbox), tempw1);
-		ewl_theme_data_str_set(EWL_WIDGET(tempw1), "/hbox/group",
-				"ewl/box/dlg_optionbox");
-		ewl_object_fill_policy_set(EWL_OBJECT(tempw1), EWL_FLAG_FILL_FILL);
-		if (get_nav_mode() == 1 && i == 0)
-			ewl_widget_state_set(tempw1, "select", EWL_STATE_PERSISTENT);
-
-		ewl_widget_show(tempw1);
-
-		v1 = ewl_vbox_new();
-		ewl_container_child_append(EWL_CONTAINER(tempw1), v1);
-		ewl_theme_data_str_set(EWL_WIDGET(v1), "/hbox/group",
-				"ewl/box/dlg_optionbox");
-		ewl_object_fill_policy_set(EWL_OBJECT(v1), EWL_FLAG_FILL_HFILL);
-		ewl_widget_show(v1);
-
-		tempw2 = ewl_label_new();
-		ewl_container_child_append(EWL_CONTAINER(v1), tempw2);
-		ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
-		if(i < shownum) {
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
-					"ewl/label/dlg_optionlabel");
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
-					"ewl/label/dlg_optionlabel/text");
-			if (get_nav_mode() == 1 && i == 0)
-				ewl_widget_state_set(tempw2, "select", EWL_STATE_PERSISTENT);
-			if(numchoices > i)
-				ewl_label_text_set(EWL_LABEL(tempw2), info->choices[i]);
-		} else if(i == 8) {
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
-					"ewl/label/dlg_footer");
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
-					"ewl/label/dlg_footer/text");
-			char *p;
-			asprintf(&p, "Page %d of %d", 1 + info->curindex / 8, (7 + info->numchoices) / 8);
-			ewl_label_text_set(EWL_LABEL(tempw2), p);
-			free(p);
-		}
-		ewl_widget_show(tempw2);
-
-		if(i < shownum) {
-			v2 = ewl_vbox_new();
-			ewl_container_child_append(EWL_CONTAINER(tempw1), v2);
-			ewl_theme_data_str_set(EWL_WIDGET(v2), "/hbox/group",
-					"ewl/box/dlg_optionbox");
-			ewl_object_fill_policy_set(EWL_OBJECT(v2), EWL_FLAG_FILL_HFILL);
-			if((numchoices > i) && strlen(info->values[i]))
-				ewl_widget_show(v2);
-
-			tempw2 = ewl_label_new();
-            ewl_container_child_append(EWL_CONTAINER(v2), tempw2);
-            ewl_object_fill_policy_set(EWL_OBJECT(tempw2), EWL_FLAG_FILL_HFILL);
-
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/group",
-					"ewl/label/dlg_valuelabel");
-			ewl_theme_data_str_set(EWL_WIDGET(tempw2), "/label/textpart",
-					"ewl/label/dlg_valuelabel/text");
-			if(numchoices > i)
-				ewl_label_text_set(EWL_LABEL(tempw2), info->values[i]);
-			ewl_widget_show(tempw2);
-		}
+    if(!strcmp(ev->keyname, "Up") || !strcmp(ev->keyname, "Prior"))
+		choicebox_prev(r);
+    if(!strcmp(ev->keyname, "Down") || !strcmp(ev->keyname, "Next"))
+		choicebox_next(r);
+	if(!strcmp(k, "Left"))
+		choicebox_prevpage(r);
+	if(!strcmp(k, "Right"))
+		choicebox_nextpage(r);
+	if(!strncmp("KP_", k, 3) && isdigit(k[3]) && k[3] != '0' && !k[4])
+		choicebox_activate_nth_visible(r, k[3]-'1', alt_modifier);
+	if(!strcmp(k, "Return"))
+		choicebox_activate_current(r, alt_modifier);
+	if(!strcmp(k, "Escape"))
+		cb_fcb_destroy();
+	if(!strcmp(k, "Alt_L")) {
+		alt_modifier = true;
+		edje_object_signal_emit(evas_object_name_find(e, "footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
-	return win;
-}
+	if(!strcmp(k, "space")) {
+		alt_modifier = !alt_modifier;
 
-void free_choices(choice_info_struct *infostruct)
-{
-	for (int i = 0; i < infostruct->numchoices; i++) {
-		free(infostruct->choices[i]);
-		free(infostruct->values[i]);
+		edje_object_signal_emit(evas_object_name_find(e, "footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
-	free(infostruct->choices);
-	free(infostruct->values);
 }
 
-void fini_choicebox(Ewl_Widget * win, bool redraw)
+static void fcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
-	bool master = false;
-	ewl_widget_hide(win);
-	choice_info_struct *infostruct =
-		(choice_info_struct *) ewl_widget_data_get(win, (void *)"choice_info");
-	if(infostruct->master)
-		master = true;
-	free_choices(infostruct);
-	free(infostruct);
-	ewl_widget_destroy(win);
-//	if(master && redraw)
-//		redraw_text();
-}
-
-void update_choicebox(Ewl_Widget *w, const char *choicelist[], const char *values[], int numchoices, bool rewind)
-{
-	choice_info_struct *info =
-		(choice_info_struct *) ewl_widget_data_get(w, (void *)"choice_info");
-
-	free_choices(info);
-
-	info->numchoices = numchoices;
-	if(rewind || (info->curindex >= numchoices))
-		info->curindex = 0;
-
-	info->choices = (char **) malloc(sizeof(char *) * numchoices);
-	info->values = (char **) malloc(sizeof(char *) * numchoices);
-	for (int i = 0; i < numchoices; i++) {
-		asprintf(&(info->choices[i]), "%s", choicelist[i]);
-		asprintf(&(info->values[i]), "%s", values[i]);
+	Evas_Event_Key_Up* ev = (Evas_Event_Key_Up*)event_info;
+	if(!strcmp(ev->key, "Alt_L")) {
+		alt_modifier = false;
+		edje_object_signal_emit(evas_object_name_find(e, "footer"), alt_modifier ? "alt_on" : "alt_off", "");
 	}
+}
 
-	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(w), 0);
-	Ewl_Widget *tempw1, *v1, *v2;
+void cb_fcb_invalidate(int idx)
+{
+	Evas* canvas = ecore_evas_get(fcb_win);
+	Evas_Object* choicebox = evas_object_name_find(canvas, "cb_full");
+	choicebox_invalidate_item(choicebox, idx);
+}
 
-	int shownum =
-		((info->numchoices - info->curindex) >
-		 noptions) ? noptions : (info->numchoices -
-			 info->curindex);
+void cb_fcb_invalidate_interval(int start, int end)
+{
+	Evas* canvas = ecore_evas_get(fcb_win);
+	Evas_Object* choicebox = evas_object_name_find(canvas, "cb_full");
+	choicebox_invalidate_interval(choicebox, start, end);
+}
 
-	HIDE_LABELS;
-	for (int i = 0; i < noptions; i++) {
-		tempw1 =
-			EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), i + 1));
-
-		v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
-		v2 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 1));
-		if (i < shownum) {
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v1), 0)),
-					info->choices[info->curindex +
-					i]);
-
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v2), 0)),
-					info->values[info->curindex +
-					i]);
-
-			if(!strlen(info->values[info->curindex + i]))
-				ewl_widget_hide(v2);
-			else
-				ewl_widget_show(v2);
-
-		} else {
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v1), 0)), "");
-
-			ewl_label_text_set(EWL_LABEL
-					(ewl_container_child_get
-					 (EWL_CONTAINER(v2), 0)), "");
-		}
+void cb_fcb_redraw(int newsize)
+{
+	Evas* canvas = ecore_evas_get(fcb_win);
+	Evas_Object* choicebox = evas_object_name_find(canvas, "cb_full");
+	if(newsize >= 0) {
+		choicebox_set_size(choicebox, newsize);
+		choicebox_invalidate_interval(choicebox, 0, newsize);
 	}
-
-	char *p;
-	asprintf(&p, "Page %d of %d", 1 + info->curindex / 8, (7 + info->numchoices) / 8);
-
-	tempw1 =
-		EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), noptions + 1));
-
-	v1 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 0));
-	ewl_label_text_set(EWL_LABEL
-			(ewl_container_child_get
-			 (EWL_CONTAINER(v1), 0)),
-			p);
-	free(p);
-
-	choicebox_change_selection(w, 0);
-	SHOW_LABELS;
+	if(newsize > 0)
+		choicebox_set_selection(choicebox, 0);
 }
 
-
-Ewl_Widget *choicebox_get_parent(Ewl_Widget *w)
+void cb_fcb_new(cb_list *list)
 {
-	choice_info_struct *infostruct;
-	infostruct =
-		(choice_info_struct *) ewl_widget_data_get(w, (void *)"choice_info");
+	ee_init();
 
-	return infostruct->parent;
-}
+	fcb_win = ecore_evas_software_x11_new(0, 0, 0, 0, 600, 800);
 
+	ecore_evas_title_set(fcb_win, "FCB");
+	ecore_evas_name_class_set(fcb_win, "FCB", "FCB");
 
-void update_label(Ewl_Widget *w, int number, const char *value)
-{
-	Ewl_Widget *vbox = ewl_container_child_get(EWL_CONTAINER(w), 0);
-	Ewl_Widget *tempw1, *v1, *v2;
+	Evas* main_canvas = ecore_evas_get(fcb_win);
 
-	tempw1 =
-		EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(vbox), number + 1));
-	v2 = EWL_WIDGET(ewl_container_child_get(EWL_CONTAINER(tempw1), 1));
+	ecore_evas_callback_delete_request_set(fcb_win, fcb_win_close_handler);
 
-	ewl_label_text_set(EWL_LABEL
-			(ewl_container_child_get
-			 (EWL_CONTAINER(v2), 0)),
-			value);
+	Evas_Object* bg = evas_object_rectangle_add(main_canvas);
+	evas_object_name_set(bg, "bg");
+	evas_object_color_set(bg, 255, 255, 255, 255);
+	evas_object_move(bg, 0, 0);
+	evas_object_resize(bg, 600, 800);
+	evas_object_show(bg);
+
+	Evas_Object* header = edje_object_add(main_canvas);
+	evas_object_name_set(header, "header");
+	edje_object_file_set(header, "/usr/share/FBReader/themes/cb_header_footer.edj",
+			"header");
+	edje_object_part_text_set(header, "text", list->name.c_str());
+	evas_object_move(header, 0, 0);
+	evas_object_resize(header, 600, header_h);
+	evas_object_show(header);
+
+	Evas_Object* footer = edje_object_add(main_canvas);
+	evas_object_name_set(footer, "footer");
+	edje_object_file_set(footer, "/usr/share/FBReader/themes/cb_header_footer.edj",
+			"footer");
+	edje_object_part_text_set(footer, "alt", list->alt_text.c_str());
+	evas_object_move(footer, 0, 800 - footer_h);
+	evas_object_resize(footer, 600, footer_h);
+	evas_object_show(footer);
+
+	Evas_Object* choicebox = choicebox_new(main_canvas, "/usr/share/echoicebox/echoicebox.edj", "full",
+			fcb_handler, fcb_draw_handler, fcb_page_updated_handler, list);
+	choicebox_set_size(choicebox, list->items.size());
+	evas_object_name_set(choicebox, "cb_full");
+	evas_object_resize(choicebox, 600, 800 - header_h - footer_h);
+	evas_object_move(choicebox, 0, header_h);
+	evas_object_show(choicebox);
+
+	evas_object_focus_set(choicebox, true);
+	evas_object_event_callback_add(choicebox,
+			EVAS_CALLBACK_KEY_DOWN,
+			&fcb_win_key_handler,
+			NULL);
+	evas_object_event_callback_add(choicebox,
+			EVAS_CALLBACK_KEY_UP,
+			&fcb_win_key_up_handler,
+			NULL);
+
+	ecore_evas_callback_resize_set(fcb_win, fcb_win_resize_handler);
+
+	ecore_evas_show(fcb_win);
+
+	ecore_main_loop_begin();
+
+	if(fcb_win) {
+		ecore_evas_hide(fcb_win);
+		ecore_evas_free(fcb_win);
+		fcb_win = NULL;
+	}
 }
