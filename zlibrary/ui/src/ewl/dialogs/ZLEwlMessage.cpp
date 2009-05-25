@@ -64,7 +64,7 @@ static void main_win_resize_handler(Ecore_Evas* main_win)
 
 static void main_win_signal_handler(void* param, Evas_Object* o, const char* emission, const char* source)
 {
-   printf("%s -> %s\n", source, emission);
+//   printf("%s -> %s\n", source, emission);
 }
 
 static void main_win_key_handler(void* param, Evas* e, Evas_Object* o, void* event_info)

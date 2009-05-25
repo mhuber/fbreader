@@ -53,7 +53,7 @@ static bool alt_modifier = false;
 
 static int exit_handler(void* param, int ev_type, void* event)
 {
-	fprintf(stderr, "exit_handler\n");
+//	fprintf(stderr, "exit_handler\n");
 	ecore_main_loop_quit();
 
 	return 1;
@@ -61,7 +61,7 @@ static int exit_handler(void* param, int ev_type, void* event)
 
 static void lcb_win_close_handler(Ecore_Evas* main_win)
 {
-	fprintf(stderr, "main_win_close_handler\n");
+//	fprintf(stderr, "main_win_close_handler\n");
 	ecore_main_loop_quit();
 }
 
@@ -119,8 +119,8 @@ static void lcb_draw_handler(Evas_Object* choicebox,
 		}
 	}
 
-	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
-			choicebox, item, item_num, page_position, param);
+//	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
+//			choicebox, item, item_num, page_position, param);
 }
 
 static void lcb_handler(Evas_Object* choicebox,
@@ -128,8 +128,8 @@ static void lcb_handler(Evas_Object* choicebox,
 		bool is_alt,
 		void* param)
 {
-	printf("handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
-			choicebox, item_num, is_alt, param);
+//	printf("handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
+//			choicebox, item_num, is_alt, param);
 
 	if(olists.empty())
 		return;
@@ -192,7 +192,7 @@ static void lcb_win_resize_handler(Ecore_Evas* main_win)
 
 static void lcb_win_signal_handler(void* param, Evas_Object* o, const char* emission, const char* source)
 {
-	printf("%s -> %s\n", source, emission);
+//	printf("%s -> %s\n", source, emission);
 }
 
 void cb_lcb_invalidate(int idx)
@@ -227,7 +227,7 @@ static void lcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* e
 {
 	int i;
 	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
-	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
+//	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
 
 	const char *k = ev->key;
 
@@ -419,8 +419,8 @@ static void rcb_draw_handler(Evas_Object* choicebox,
 	edje_object_part_text_set(item, "title", "");
 	edje_object_part_text_set(item, "value", "");
 
-	fprintf(stderr, "rcd_draw_handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
-			choicebox, item, item_num, page_position, param);
+//	fprintf(stderr, "rcd_draw_handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
+//			choicebox, item, item_num, page_position, param);
 }
 
 static void rcb_handler(Evas_Object* choicebox,
@@ -428,8 +428,8 @@ static void rcb_handler(Evas_Object* choicebox,
 		bool is_alt,
 		void* param)
 {
-	printf("rcb_handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
-			choicebox, item_num, is_alt, param);
+//	printf("rcb_handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
+//			choicebox, item_num, is_alt, param);
 
 	if(!vlist)
 		return;
@@ -441,7 +441,7 @@ static void rcb_handler(Evas_Object* choicebox,
 
 static void rcb_win_signal_handler(void* param, Evas_Object* o, const char* emission, const char* source)
 {
-	printf("%s -> %s\n", source, emission);
+//	printf("%s -> %s\n", source, emission);
 }
 
 static void cb_rcb_destroy()
@@ -470,7 +470,7 @@ static void cb_rcb_destroy()
 static void rcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
-	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
+//	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
 
 	const char *k = ev->key;
 
@@ -551,7 +551,7 @@ void cb_rcb_new()
 // fcb
 static void fcb_win_close_handler(Ecore_Evas* main_win)
 {
-	fprintf(stderr, "main_win_close_handler\n");
+//	fprintf(stderr, "main_win_close_handler\n");
 	ecore_main_loop_quit();
 }
 
@@ -585,8 +585,8 @@ static void fcb_draw_handler(Evas_Object* choicebox,
 		edje_object_part_text_set(item, "value", i->value.c_str());
 	}
 
-	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
-			choicebox, item, item_num, page_position, param);
+//	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
+//			choicebox, item, item_num, page_position, param);
 }
 
 static void fcb_handler(Evas_Object* choicebox,
@@ -594,8 +594,8 @@ static void fcb_handler(Evas_Object* choicebox,
 		bool is_alt,
 		void* param)
 {
-	printf("handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
-			choicebox, item_num, is_alt, param);
+//	printf("handle: choicebox: %p, item_num: %d, is_alt: %d, param: %p\n",
+//			choicebox, item_num, is_alt, param);
 
 	cb_list *l = (cb_list *)param;
 	if(l->item_handler(item_num, is_alt) != 0)
@@ -646,7 +646,7 @@ static void cb_fcb_destroy()
 static void fcb_win_key_up_handler(void* param, Evas* e, Evas_Object* o, void* event_info)
 {
 	Evas_Event_Key_Down* ev = (Evas_Event_Key_Down*)event_info;
-	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
+//	fprintf(stderr, "kn: %s, k: %s, s: %s, c: %s\n", ev->keyname, ev->key, ev->string, ev->compose);
 
 	const char *k = ev->key;
 
