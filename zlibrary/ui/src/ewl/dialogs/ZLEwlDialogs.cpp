@@ -1273,9 +1273,10 @@ int mmenu_handler(int idx, bool is_alt)
 			next_gui = ZLEwlBMKDialog;
 			return 1;
 			break;
-		case 5:
+/*		case 5:
 			next_gui = ZLEwlOptionsDialog;
 			return 1;
+*/			
 		default:
 			return 0;
 	}
@@ -1305,7 +1306,7 @@ void ZLEwlMainMenu(FBReader &f)
 	list->items.push_back("Table Of Contents");
 	list->items.push_back("Search");
 	list->items.push_back("Bookmarks");
-	list->items.push_back("Settings");
+//	list->items.push_back("Settings");
 
 	cb_fcb_new(list);
 
