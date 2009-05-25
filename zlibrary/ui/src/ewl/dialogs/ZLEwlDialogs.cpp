@@ -168,10 +168,13 @@ int toc_handler(int idx, bool is_alt)
 
 	list->items.clear();
 
+	cb_list_item item;
 	int cnt = 0;
 	if(selEntry != cm.myRoot) {
-		list->items.push_back("..");
-		list->items.push_back(".");
+		item.text = "..";
+		list->items.push_back(item);
+		item.text = ".";
+		list->items.push_back(item);
 	}
 
 	short len;
@@ -186,9 +189,10 @@ int toc_handler(int idx, bool is_alt)
 		memcpy(t, p + 7, len);
 
 		if(toc_list.at(i)->children().empty())
-			list->items.push_back(t);
+			item.text = t;
 		else
-			list->items.push_back(string("+") + t);
+			item.text = string("+") + t;
+		list->items.push_back(item);
 		free(t);
 	}
 
@@ -224,10 +228,12 @@ void ZLEwlTOCDialog(FBReader &f)
 
 			std::vector<ZLTextTreeParagraph*> vpar = ((ZLTextTreeParagraph*)cm[i])->children();
 
+			cb_list_item item;
 			if(vpar.empty())
-				list->items.push_back(t);
+				item.text = t;
 			else
-				list->items.push_back(string("+") + t);
+				item.text = string("+") + t;
+			list->items.push_back(item);
 			free(t);
 		}
 	}
@@ -272,7 +278,9 @@ void ZLEwlBMKDialog(FBReader &f)
 	for(int i = 0; i < bookmarks.size(); i++) {
 		stringstream s;
 		s << "Page " << bookmarks.at(i).second.first << ": " << bookmarks.at(i).second.second;
-		list->items.push_back(s.str());
+		cb_list_item item;
+		item.text = s.str();
+		list->items.push_back(item);
 	}
 
 	cb_fcb_new(list);
@@ -1231,21 +1239,22 @@ void ZLEwlBookInfo(FBReader &f)
 	const std::string &fileName = f.myModel->fileName();
 	myBookInfo = new BookInfo(fileName);
 
-#define list_add_s(__t1__, __t2__) \
+#define list_add_tv(__t1__, __t2__) \
 	{ \
-	stringstream s; \
-	s << (__t1__) << (__t2__);	\
-	list->items.push_back(s.str());	\
+	cb_list_item i;	\
+	i.title = (__t1__);	\
+	i.value = (__t2__);	\
+	list->items.push_back(i);	\
 	}
 
-	list_add_s("File: ", ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)));
-	list_add_s("Full path: ", ZLFile::fileNameToUtf8(ZLFile(fileName).path()));
-	list_add_s("Title: ", myBookInfo->TitleOption.value());
-	list_add_s("Author: ", myBookInfo->AuthorDisplayNameOption.value());
+	list_add_tv("File: ", ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)));
+	list_add_tv("Full path: ", ZLFile::fileNameToUtf8(ZLFile(fileName).path()));
+	list_add_tv("Title: ", myBookInfo->TitleOption.value());
+	list_add_tv("Author: ", myBookInfo->AuthorDisplayNameOption.value());
 
 	if(!myBookInfo->SeriesNameOption.value().empty()) {
-		list_add_s("Series: ", myBookInfo->SeriesNameOption.value());
-		list_add_s("Book number: ", myBookInfo->NumberInSeriesOption.value());
+		list_add_tv("Series: ", myBookInfo->SeriesNameOption.value());
+		list_add_tv("Book number: ", myBookInfo->NumberInSeriesOption.value());
 	}
 
 	cb_fcb_new(list);
@@ -1302,11 +1311,17 @@ void ZLEwlMainMenu(FBReader &f)
 	list->alt_text = "";
 	list->item_handler = mmenu_handler;
 
-	list->items.push_back("Book Info");
-	list->items.push_back("Go To Page");
-	list->items.push_back("Table Of Contents");
-	list->items.push_back("Search");
-	list->items.push_back("Bookmarks");
+	cb_list_item item;
+	item.text = "Book Info";
+	list->items.push_back(item);
+	item.text = "Go To Page";
+	list->items.push_back(item);
+	item.text = "Table Of Contents";
+	list->items.push_back(item);
+	item.text = "Search";
+	list->items.push_back(item);
+	item.text = "Bookmarks";
+	list->items.push_back(item);
 //	list->items.push_back("Settings");
 
 	cb_fcb_new(list);

@@ -40,11 +40,18 @@ typedef struct _cb_olist cb_olist;
 typedef struct _cb_item_value cb_item_value;
 
 typedef struct _cb_list cb_list;
+typedef struct _cb_list_item cb_list_item;
+
+struct _cb_list_item {
+	string text;
+	string title;
+	string value;
+};
 
 struct _cb_list {
 	string name;
 	string alt_text;
-	vector<string> items;
+	vector<cb_list_item> items;
 
 	int(*item_handler)(int, bool);
 };

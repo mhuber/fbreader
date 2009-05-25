@@ -595,7 +595,13 @@ static void fcb_draw_handler(Evas_Object* choicebox,
 	if(l->items.empty())
 		return;
 
-	edje_object_part_text_set(item, "text", l->items.at(item_num).c_str());
+	cb_list_item *i = &l->items.at(item_num);
+	if(!i->text.empty())
+		edje_object_part_text_set(item, "text", i->text.c_str());
+	else {
+		edje_object_part_text_set(item, "title", i->title.c_str());
+		edje_object_part_text_set(item, "value", i->value.c_str());
+	}
 
 	fprintf(stderr, "handle: choicebox: %p, item: %p, item_num: %d, page_position: %d, param: %p\n",
 			choicebox, item, item_num, page_position, param);
