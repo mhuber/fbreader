@@ -967,7 +967,8 @@ void single_key_handler(int idx, bool is_alt)
 	k << (vlist->parent_item_idx+1);
 
 	kb->bindKey(k.str(), actions[idx].actionId);
-	olists.back()->items.at(vlist->parent_item_idx).name = actions[idx].actionName;
+	cb_item_value &iv = olists.back()->items.at(vlist->parent_item_idx).current_value;
+	iv.text = iv.sval = actions[idx].actionName;
 
 	cb_lcb_invalidate(vlist->parent_item_idx);
 }
@@ -1183,7 +1184,7 @@ void options_dialog_handler(int idx, bool is_alt)
 			for(a = actions; a->actionId && kb->getBinding(s.str()).compare(a->actionId); a++)
 				;
 
-			ADD_OPTION_STRING(a->actionName ? a->actionName : kb->getBinding(s.str()), "");
+			ADD_OPTION_STRING(s.str(), a->actionName ? a->actionName : kb->getBinding(s.str()));
 		}
 
 		cb_lcb_redraw();
