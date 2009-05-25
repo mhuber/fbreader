@@ -70,16 +70,10 @@ static void lcb_page_updated_handler(Evas_Object* choicebox,
 		int total_pages,
 		void* param)
 {
-    char buf[BUFSIZE];
-    if(total_pages < 2)
-        *buf = 0;
-    else
-        snprintf(buf, BUFSIZE, "%d/%d", cur_page + 1, total_pages);
-
     Evas* canvas = evas_object_evas_get(choicebox);
     Evas_Object* footer = evas_object_name_find(canvas, "lcb_footer");
 
-    edje_object_part_text_set(footer, "text", buf);
+	choicebox_aux_edje_footer_handler(footer, "text", cur_page, total_pages);
 }
 
 static void lcb_draw_handler(Evas_Object* choicebox,
@@ -400,16 +394,10 @@ static void rcb_page_updated_handler(Evas_Object* choicebox,
 		int total_pages,
 		void* param)
 {
-    char buf[BUFSIZE];
-    if(total_pages < 2)
-        *buf = 0;
-    else
-        snprintf(buf, BUFSIZE, "%d/%d", cur_page + 1, total_pages);
-
     Evas* canvas = evas_object_evas_get(choicebox);
     Evas_Object* footer = evas_object_name_find(canvas, "rcb_footer");
 
-    edje_object_part_text_set(footer, "text", buf);
+	choicebox_aux_edje_footer_handler(footer, "text", cur_page, total_pages);
 }
 
 static void rcb_draw_handler(Evas_Object* choicebox,
@@ -572,16 +560,10 @@ static void fcb_page_updated_handler(Evas_Object* choicebox,
 		int total_pages,
 		void* param)
 {
-    char buf[BUFSIZE];
-    if(total_pages < 2)
-        *buf = 0;
-    else
-        snprintf(buf, BUFSIZE, "%d/%d", cur_page + 1, total_pages);
-
     Evas* canvas = evas_object_evas_get(choicebox);
     Evas_Object* footer = evas_object_name_find(canvas, "footer");
 
-    edje_object_part_text_set(footer, "text", buf);
+	choicebox_aux_edje_footer_handler(footer, "text", cur_page, total_pages);
 }
 
 static void fcb_draw_handler(Evas_Object* choicebox,
