@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: FBreader\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-25 14:51+0200\n"
-"PO-Revision-Date: 2009-05-26 04:49+0700\n"
+"PO-Revision-Date: 2009-05-25 23:38+0100\n"
 "Last-Translator: ben1981 <ben1981@centrum.cz>\n"
 "Language-Team: Czech <openinkpot-l10n@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -368,7 +368,7 @@ msgstr "Zalomit Odstavec Na"
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:991
 #, c-format
 msgid "Key %d"
-msgstr "Klíč %d"
+msgstr "Klávesa %d"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1018
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1222
@@ -446,7 +446,7 @@ msgstr "Zalomit Odstavec na"
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1182
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1226
 msgid "Keys"
-msgstr "Klíče"
+msgstr "Klávesy"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1214
 msgid "Settings"
@@ -488,4 +488,3 @@ msgstr "Číslo knihy: "
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1314
 msgid "Book Menu"
 msgstr "Menu Knihy"
-
