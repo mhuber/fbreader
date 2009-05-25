@@ -20,6 +20,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+extern "C" {
+#include <xcb/xcb.h>
+}
 
 #include "ZLEwlMessage.h"
 #include <Ecore.h>
@@ -83,17 +86,14 @@ void show_message(char *text, void *handler)
 {
 	ee_init();
 
-	Ecore_Evas* root = ecore_evas_software_x11_new(0, 0, 0, 0, 0, 0);
-	ecore_evas_title_set(root, "r");
-	ecore_evas_name_class_set(root, "r", "r");
-
 	Ecore_Evas* main_win = ecore_evas_software_x11_new(0, 0, 0, 0, 600, 800);
 	ecore_evas_title_set(main_win, "MB");
 	ecore_evas_name_class_set(main_win, "MB", "MB");
 
+	extern xcb_window_t window;
 	ecore_x_icccm_transient_for_set(
 			ecore_evas_software_x11_window_get(main_win),
-			ecore_evas_software_x11_window_get(root));
+			window);
 
 	Evas* main_canvas = ecore_evas_get(main_win);
 
@@ -111,8 +111,11 @@ void show_message(char *text, void *handler)
 	const Evas_Object *t = edje_object_part_object_get(main_canvas_edje, "text");
 	evas_object_geometry_get(t, &x, &y, &w, &h);
 
-	ecore_evas_resize(main_win, w+20, h+20);
-	evas_object_resize(main_canvas_edje, w+20, h+20);
+	w += 20;
+	h += 20;
+	ecore_evas_resize(main_win, w, h);
+	ecore_evas_move(main_win, (600 - w)/2, (800 - h)/2);
+	evas_object_resize(main_canvas_edje, w, h);
 	evas_object_move(main_canvas_edje, 0, 0);
 	evas_object_show(main_canvas_edje);
 
@@ -132,8 +135,6 @@ void show_message(char *text, void *handler)
 
 	ecore_evas_hide(main_win);
 	ecore_evas_free(main_win);
-	ecore_evas_hide(root);
-	ecore_evas_free(root);
 }
 
 // entry
@@ -200,17 +201,14 @@ long read_number(char *text)
 	number.number = -1;
 	number.cnt = 0;
 
-	Ecore_Evas* root = ecore_evas_software_x11_new(0, 0, 0, 0, 0, 0);
-	ecore_evas_title_set(root, "r");
-	ecore_evas_name_class_set(root, "r", "r");
-
 	Ecore_Evas* main_win = ecore_evas_software_x11_new(0, 0, 0, 0, 600, 800);
 	ecore_evas_title_set(main_win, "EB");
 	ecore_evas_name_class_set(main_win, "EB", "EB");
 
+	extern xcb_window_t window;
 	ecore_x_icccm_transient_for_set(
 			ecore_evas_software_x11_window_get(main_win),
-			ecore_evas_software_x11_window_get(root));
+			window);
 
 	Evas* main_canvas = ecore_evas_get(main_win);
 
@@ -237,8 +235,11 @@ long read_number(char *text)
 	edje_object_part_text_set(main_canvas_edje, "entrytext", t);
 	free(t);
 
-	ecore_evas_resize(main_win, w+40, h+20);
-	evas_object_resize(main_canvas_edje, w+40, h+20);
+	w += 40;
+	h += 20;
+	ecore_evas_resize(main_win, w, h);
+	ecore_evas_move(main_win, (600 - w)/2, (800 - h)/2);
+	evas_object_resize(main_canvas_edje, w, h);
 	evas_object_move(main_canvas_edje, 0, 0);
 	evas_object_show(main_canvas_edje);
 
@@ -258,8 +259,6 @@ long read_number(char *text)
 
 	ecore_evas_hide(main_win);
 	ecore_evas_free(main_win);
-	ecore_evas_hide(root);
-	ecore_evas_free(root);
 
 	return number.number;
 }
