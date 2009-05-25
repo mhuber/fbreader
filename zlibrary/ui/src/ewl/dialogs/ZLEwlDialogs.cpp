@@ -1298,7 +1298,7 @@ void ZLEwlMainMenu(FBReader &f)
 
 	list = new cb_list;
 
-	list->name = "Main Menu";
+	list->name = "Book Menu";
 	list->alt_text = "";
 	list->item_handler = mmenu_handler;
 
