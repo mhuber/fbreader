@@ -6,3 +6,5 @@ fbreader/FBReader
 *.gitignore
 tags
 *.swp
+po/*.mo
+
