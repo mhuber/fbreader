@@ -18,6 +18,7 @@
  */
 
 #include <locale.h>
+#include <libintl.h>
 #include <dlfcn.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -35,7 +36,8 @@ const std::string ZLibrary::PathDelimiter(":");
 const std::string ZLibrary::EndOfLine("\n");
 
 void ZLibrary::initLocale() {
-	const char *locale = setlocale(LC_MESSAGES, ""); 
+	const char *locale = setlocale(LC_ALL, ""); 
+	textdomain("fbreader");
 	if (locale != 0) {
 		std::string sLocale = locale;
 		const int dotIndex = sLocale.find('.');

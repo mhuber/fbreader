@@ -34,6 +34,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <libintl.h>
+
 #include "../util/ZLEwlUtil.h"
 #include "../../../../../fbreader/src/fbreader/FBReader.h"
 #include "../../../../../fbreader/src/fbreader/FBReaderActions.h"
@@ -52,34 +54,36 @@
 #define FONT_SIZE_MAX	24 - FONT_SIZE_MIN
 #define FONT_SIZE(i) ((i)+FONT_SIZE_MIN)
 
+#define _(__str__) gettext((__str__))
+
 static struct _action {
 	char *actionId;
 	char *actionName;
 } actions[] = {
-	"none",					"None",
-	"addBookmark",			"Add Bookmark",
-	"showBookmarks",		"Show Bookmarks",
-	"hyperlinkNavStart",	"Hyperlinks mode",
-	"showFootnotes",		"Show Footnotes",
-	"gotoPageNumber",		"Go To Page",
-	"toc",					"Show Table of Contents",
-	"gotoHome",				"Go to Home",
-	"gotoSectionStart",		"Go to Start of Section",
-	"gotoSectionEnd",		"Go to End of Section",
-	"nextTOCSection",		"Go to Next TOC Section",
-	"previousTOCSection",	"Go to Previous TOC Section",
-	"largeScrollForward",	"Large Scroll Forward",
-	"largeScrollBackward",	"Large Scroll Backward",
-	"undo",					"Undo",
-	"redo",					"Redo",
-	"search",				"Search",
-	"increaseFont",			"Increase Font Size",
-	"decreaseFont",			"Decrease Font Size",
-	"toggleIndicator",		"Toggle Position Indicator",
-//	"preferences",			"Show Options Dialog",
-//	"bookInfo",				"Show Book Info Dialog",
-//	"cancel",				"Cancel",
-//	"quit",					"Quit",
+	"none",					_("None"),
+	"addBookmark",			_("Add Bookmark"),
+	"showBookmarks",		_("Show Bookmarks"),
+	"hyperlinkNavStart",	_("Hyperlinks mode"),
+	"showFootnotes",		_("Show Footnotes"),
+	"gotoPageNumber",		_("Go To Page"),
+	"toc",					_("Show Table of Contents"),
+	"gotoHome",				_("Go to Home"),
+	"gotoSectionStart",		_("Go to Start of Section"),
+	"gotoSectionEnd",		_("Go to End of Section"),
+	"nextTOCSection",		_("Go to Next TOC Section"),
+	"previousTOCSection",	_("Go to Previous TOC Section"),
+	"largeScrollForward",	_("Large Scroll Forward"),
+	"largeScrollBackward",	_("Large Scroll Backward"),
+	"undo",					_("Undo"),
+	"redo",					_("Redo"),
+	"search",				_("Search"),
+	"increaseFont",			_("Increase Font Size"),
+	"decreaseFont",			_("Decrease Font Size"),
+	"toggleIndicator",		_("Toggle Position Indicator"),
+//	"preferences",			_("Show Options Dialog"),
+//	"bookInfo",				_("Show Book Info Dialog"),
+//	"cancel",				_("Cancel"),
+//	"quit",					_("Quit"),
 	NULL,					NULL
 };
 
@@ -87,32 +91,32 @@ static struct _language {
 	char *langId;
 	char *langName;
 } languages[] = {
-	"ar", "Arabic",
-	"cs", "Czech",
-	"de", "German",
-	"de-traditional", "German (traditional orthography)",
-	"el", "Greek",
-	"en", "English",
-	"eo", "Esperanto",
-	"es", "Spanish",
-	"fi", "Finnish",
-	"fr", "French",
-	"he", "Hebrew",
-	"id", "Indonesian",
-	"it", "Italian",
-	"no", "Norwegian",
-	"pt", "Portuguese",
-	"ru", "Russian",
-	"sv", "Swedish",
-	"tr", "Turkish",
-	"uk", "Ukrainian",
-	"zh", "Chinese",
-	"other", "Other",
+	"ar", _("Arabic"),
+	"cs", _("Czech"),
+	"de", _("German"),
+	"de-traditional", _("German (traditional orthography)"),
+	"el", _("Greek"),
+	"en", _("English"),
+	"eo", _("Esperanto"),
+	"es", _("Spanish"),
+	"fi", _("Finnish"),
+	"fr", _("French"),
+	"he", _("Hebrew"),
+	"id", _("Indonesian"),
+	"it", _("Italian"),
+	"no", _("Norwegian"),
+	"pt", _("Portuguese"),
+	"ru", _("Russian"),
+	"sv", _("Swedish"),
+	"tr", _("Turkish"),
+	"uk", _("Ukrainian"),
+	"zh", _("Chinese"),
+	"other", _("Other"),
 	NULL, NULL
 };
 
-static char *alignments[] = { "undefined", "left", "right", "center", "justify" };
-static char *para_break_type[] = { "New Line", "Empty Line", "Line With Indent" };
+static char *alignments[] = { _("undefined"), _("left"), _("right"), _("center"), _("justify") };
+static char *para_break_type[] = { _("New Line"), _("Empty Line"), _("Line With Indent") };
 static int curBreakType = 0;
 static bool reopen_file = false;
 
@@ -130,7 +134,7 @@ bool turbo = false;
 
 void ZLEwlGotoPageDialog(FBReader &f)
 {
-	long page = read_number("Go To Page");
+	long page = read_number(_("Go To Page"));
 	if(page >= 0) {
 		f.bookTextView().gotoPage(page);
 		f.refreshWindow();
@@ -209,7 +213,7 @@ void ZLEwlTOCDialog(FBReader &f)
 
 	list = new cb_list;
 
-	list->name = "Table Of Contents";
+	list->name = _("Table Of Contents");
 	list->alt_text = "";
 	list->item_handler = toc_handler;
 
@@ -268,8 +272,8 @@ void ZLEwlBMKDialog(FBReader &f)
 		delete list;
 	list = new cb_list;
 
-	list->name = "Bookmarks";
-	list->alt_text = "Delete";
+	list->name = _("Bookmarks");
+	list->alt_text = _("Delete");
 	list->item_handler = bookmarks_handler;
 
 	std::vector<std::pair<std::pair<int, int>, std::pair<int, std::string> > > bookmarks
@@ -277,7 +281,7 @@ void ZLEwlBMKDialog(FBReader &f)
 
 	for(int i = 0; i < bookmarks.size(); i++) {
 		stringstream s;
-		s << "Page " << bookmarks.at(i).second.first << ": " << bookmarks.at(i).second.second;
+		s << _("Page ") << bookmarks.at(i).second.first << ": " << bookmarks.at(i).second.second;
 		cb_list_item item;
 		item.text = s.str();
 		list->items.push_back(item);
@@ -287,7 +291,7 @@ void ZLEwlBMKDialog(FBReader &f)
 }
 
 void ZLEwlBMKAddedMsg(FBReader &f) {
-	show_message("Bookmark added");
+	show_message(_("Bookmark added"));
 }
 
 // search dialogs
@@ -316,20 +320,20 @@ void search_found_keyhandler(Evas_Object *o, char *keyname)
 		p = true;
 
 	if(n && p) 
-		s = "<- Search ->";
+		s = _("<- Search ->");
 	else if(n)
-		s = "Search ->";
+		s = _("Search ->");
 	else if(p)
-		s = "<- Search";
+		s = _("<- Search");
 	else
-		s = "Search";
+		s = _("Search");
 
 	edje_object_part_text_set(o, "text", s.c_str());
 }
 
 void search_not_found_message(FBReader &f)
 {
-	show_message("Text not found");
+	show_message(_("Text not found"));
 }
 
 void search_found_message(FBReader &f)
@@ -342,13 +346,13 @@ void search_found_message(FBReader &f)
 		p = true;
 
 	if(n && p) 
-		show_message("<- Search ->", (void*)search_found_keyhandler);
+		show_message(_("<- Search ->"), (void*)search_found_keyhandler);
 	else if(n)
-		show_message("Search ->", (void*)search_found_keyhandler);
+		show_message(_("Search ->"), (void*)search_found_keyhandler);
 	else if(p)
-		show_message("<- Search", (void*)search_found_keyhandler);
+		show_message(_("<- Search"), (void*)search_found_keyhandler);
 	else
-		show_message("Search");
+		show_message(_("Search"));
 }
 
 void search_input_handler(char *text)
@@ -371,7 +375,7 @@ void ZLEwlSearchDialog(FBReader &f)
 
 	next_gui = NULL;
 
-	ewl_widget_show(w = init_virtk(NULL, "Search", search_input_handler));
+	ewl_widget_show(w = init_virtk(NULL, _("Search"), search_input_handler));
 	ecore_main_loop_begin();
 	if(w) {
 		ewl_widget_hide(w);
@@ -426,7 +430,7 @@ void line_spacing_handler(int idx, bool is_alt)
 	cb_item_value &iv = olists.back()->items.at(vlist->parent_item_idx).current_value;
 	iv.ival = option.value();
 	char *t;
-	asprintf(&t, "%d%%", iv.ival);
+	asprintf(&t, _("%d%%"), iv.ival);
 	iv.text = t;
 	free(t);
 
@@ -442,7 +446,7 @@ void font_size_handler(int idx, bool is_alt)
 	iv.ival = option.value();
 
 	char *t;
-	asprintf(&t, "%dpt", iv.ival);
+	asprintf(&t, _("%dpt"), iv.ival);
 	iv.text = t;
 	free(t);
 
@@ -495,7 +499,7 @@ void indicator_font_size_handler(int idx, bool is_alt)
 	iv.ival = option.value();
 
 	char *t;
-	asprintf(&t, "%dpt", iv.ival);
+	asprintf(&t, _("%dpt"), iv.ival);
 	iv.text = t;
 	free(t);
 
@@ -553,16 +557,16 @@ void margins_handler(int idx, bool is_alt)
 
 	switch(idx) {
 		case 0:
-			t = "Left Margin";
+			t = _("Left Margin");
 			break;
 		case 1:
-			t = "Right Margin";
+			t = _("Right Margin");
 			break;
 		case 2:
-			t = "Top Margin";
+			t = _("Top Margin");
 			break;
 		case 3:
-			t = "Bottom Margin";
+			t = _("Bottom Margin");
 			break;
 	}
 
@@ -595,28 +599,28 @@ void format_style_handler(int idx, bool is_alt)
 {
 	cb_olist *current_olist = olists.back();
 	if(0 == idx) {
-		INIT_VLIST("Font Family", font_family_handler);
+		INIT_VLIST(_("Font Family"), font_family_handler);
 
 		for(int i = 0; i < myContext->fontFamilies().size(); i++)
 			ADD_VALUE_STRING(myContext->fontFamilies().at(i).c_str());
 		
 		cb_rcb_new();
 	} else if(1 == idx) {
-		INIT_VLIST("Font Size", font_size_handler);
+		INIT_VLIST(_("Font Size"), font_size_handler);
 
 		for(int i = 0; i <= FONT_SIZE_MAX; i++)
-			ADD_VALUE_INT_F(FONT_SIZE(i), "%dpt");
+			ADD_VALUE_INT_F(FONT_SIZE(i), _("%dpt"));
 		
 		cb_rcb_new();
 	} else if(3 == idx) {
-		INIT_VLIST("Line Spacing", line_spacing_handler);
+		INIT_VLIST(_("Line Spacing"), line_spacing_handler);
 
 		for(int i = 50; i <= 200; i+=10)
-			ADD_VALUE_INT_F(i, "%d%%");
+			ADD_VALUE_INT_F(i, _("%d%%"));
 		
 		cb_rcb_new();
 	} else if(4 == idx) {
-		INIT_VLIST("Alignment", alignment_handler);
+		INIT_VLIST(_("Alignment"), alignment_handler);
 
 		for(int i = 1; i < 5; i++)
 			ADD_VALUE_STRING(alignments[i]);
@@ -626,7 +630,7 @@ void format_style_handler(int idx, bool is_alt)
 		cb_olist *options = new cb_olist;
 		olists.push_back(options);
 
-		options->name = "Margins";
+		options->name = _("Margins");
 		options->parent = current_olist;
 		options->parent_item_idx = idx;
 		options->item_handler = margins_handler;
@@ -636,14 +640,14 @@ void format_style_handler(int idx, bool is_alt)
 
 		FBMargins &margins = FBView::margins();
 
-		ADD_OPTION_INT("Left Margin", margins.LeftMarginOption.value());
-		ADD_OPTION_INT("Right Margin", margins.RightMarginOption.value());
-		ADD_OPTION_INT("Top Margin", margins.TopMarginOption.value());
-		ADD_OPTION_INT("Bottom Margin", margins.BottomMarginOption.value());
+		ADD_OPTION_INT(_("Left Margin"), margins.LeftMarginOption.value());
+		ADD_OPTION_INT(_("Right Margin"), margins.RightMarginOption.value());
+		ADD_OPTION_INT(_("Top Margin"), margins.TopMarginOption.value());
+		ADD_OPTION_INT(_("Bottom Margin"), margins.BottomMarginOption.value());
 
 		cb_lcb_redraw();
 	} else if(6 == idx) {
-		INIT_VLIST("First Line Indent", first_line_indent_handler);
+		INIT_VLIST(_("First Line Indent"), first_line_indent_handler);
 
 		for(int i = 0; i <= 100; i += 5)
 			ADD_VALUE_INT(i);
@@ -668,24 +672,24 @@ void indicator_handler(int idx, bool is_alt)
 
 		cb_lcb_invalidate(idx);
 	} else if(5 == idx) {
-		INIT_VLIST("Indicator Height", indicator_height_handler);
+		INIT_VLIST(_("Indicator Height"), indicator_height_handler);
 
 		for(int i = 1; i <= 30; i == 1 ? i = 5 : i += 5)
 			ADD_VALUE_INT(i);
 		
 		cb_rcb_new();
 	} else if(6 == idx) {
-		INIT_VLIST("Offset From Text", indicator_offset_handler);
+		INIT_VLIST(_("Offset From Text"), indicator_offset_handler);
 
 		for(int i = 0; i <= 100; i+=5)
 			ADD_VALUE_INT(i);
 		
 		cb_rcb_new();
 	} else if(7 == idx) {
-		INIT_VLIST("Indicator Font Size", indicator_font_size_handler);
+		INIT_VLIST(_("Indicator Font Size"), indicator_font_size_handler);
 
 		for(int i = 0; i <= 16 - FONT_SIZE_MIN; i++)
-			ADD_VALUE_INT_F(FONT_SIZE(i), "%dpt");
+			ADD_VALUE_INT_F(FONT_SIZE(i), _("%dpt"));
 		
 		cb_rcb_new();
 	}
@@ -752,7 +756,7 @@ void default_encoding_handler(int idx, bool is_alt)
 void language_handler(int idx, bool is_alt)
 {
 	if(1 == idx) {
-		INIT_VLIST("Default Language", default_language_handler);
+		INIT_VLIST(_("Default Language"), default_language_handler);
 
 		for(unsigned int i = 0; i < sizeof(languages) / sizeof(struct _language) && languages[i].langId; i++)
 			ADD_VALUE_STRING(languages[i].langName);
@@ -760,14 +764,14 @@ void language_handler(int idx, bool is_alt)
 		cb_rcb_new();
 	} else if(2 == idx) {
 		const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
-		INIT_VLIST("Default Encoding Set", default_encoding_set_handler);
+		INIT_VLIST(_("Default Encoding Set"), default_encoding_set_handler);
 
 		for(unsigned int i = 0; i < sets.size(); i++)
 			ADD_VALUE_STRING(sets.at(i)->name());
 
 		cb_rcb_new();
 	} else if(3 == idx) {
-		INIT_VLIST("Default Encoding", default_encoding_handler);
+		INIT_VLIST(_("Default Encoding"), default_encoding_handler);
 
 		const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
 
@@ -912,7 +916,7 @@ void book_para_break_handler(int idx, bool is_alt)
 void book_settings_handler(int idx, bool is_alt)
 {
 	if(0 == idx) {
-		INIT_VLIST("Book Language", book_language_handler);
+		INIT_VLIST(_("Book Language"), book_language_handler);
 
 		for(unsigned int i = 0; i < sizeof(languages) / sizeof(struct _language) && languages[i].langId; i++)
 			ADD_VALUE_STRING(languages[i].langName);
@@ -923,14 +927,14 @@ void book_settings_handler(int idx, bool is_alt)
 	if((myBookInfo->EncodingOption.value() != "auto") && ((1 == idx) || (2 == idx))) {
 		if(1 == idx) {
 			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
-			INIT_VLIST("Default Encoding Set", book_encoding_set_handler);
+			INIT_VLIST(_("Default Encoding Set"), book_encoding_set_handler);
 
 			for(unsigned int i = 0; i < sets.size(); i++)
 				ADD_VALUE_STRING(sets.at(i)->name());
 
 			cb_rcb_new();
 		} else if(2 == idx) {
-			INIT_VLIST("Default Encoding", book_encoding_handler);
+			INIT_VLIST(_("Default Encoding"), book_encoding_handler);
 
 			const std::vector<ZLEncodingConverterInfoPtr> *pinfos = NULL;
 
@@ -956,7 +960,7 @@ void book_settings_handler(int idx, bool is_alt)
 	if(((myBookInfo->EncodingOption.value() != "auto") && (3 == idx)) ||
 		((myBookInfo->EncodingOption.value() == "auto") && (2 == idx))) {
 
-		INIT_VLIST("Break Paragraph At", book_para_break_handler);
+		INIT_VLIST(_("Break Paragraph At"), book_para_break_handler);
 
 		for(unsigned int i = 0; i < 3; i++)
 			ADD_VALUE_INT_T(i, para_break_type[i]);
@@ -984,7 +988,7 @@ void single_key_handler(int idx, bool is_alt)
 void keys_handler(int idx, bool is_alt)
 {
 	char *k;
-	asprintf(&k, "Key %d", idx + 1);
+	asprintf(&k, _("Key %d"), idx + 1);
 
 	INIT_VLIST(k, single_key_handler);
 
@@ -1011,7 +1015,7 @@ void options_dialog_handler(int idx, bool is_alt)
 		cb_olist *options = new cb_olist;
 		olists.push_back(options);
 
-		options->name = "Format & Style";
+		options->name = _("Format & Style");
 		options->parent = current_olist;
 		options->parent_item_idx = idx;
 		options->item_handler = format_style_handler;
@@ -1019,14 +1023,14 @@ void options_dialog_handler(int idx, bool is_alt)
 
 		cb_olist_item i;
 
-		ADD_OPTION_STRING(	"Font Family", bs.FontFamilyOption.value());
-		ADD_OPTION_INT_F(	"Font Size", bs.FontSizeOption.value(), "%dpt");
-		ADD_OPTION_BOOL_H(	"Bold", bs.BoldOption.value(), ZLBooleanOption_handler, &bs.BoldOption);
-		ADD_OPTION_INT_F(	"Line Spacing", bs.LineSpacePercentOption.value(), "%d%%");
-		ADD_OPTION_INT_T(	"Alignment", bs.AlignmentOption.value(), alignments[bs.AlignmentOption.value()]);
-		ADD_OPTION_STRING(	"Margins", "");
-		ADD_OPTION_INT(		"First Line Indent", decoration->FirstLineIndentDeltaOption.value());
-		ADD_OPTION_BOOL_H(	"Auto Hyphenations", bs.AutoHyphenationOption.value(), ZLBooleanOption_handler, &bs.AutoHyphenationOption);
+		ADD_OPTION_STRING(	_("Font Family"), bs.FontFamilyOption.value());
+		ADD_OPTION_INT_F(	_("Font Size"), bs.FontSizeOption.value(), _("%dpt"));
+		ADD_OPTION_BOOL_H(	_("Bold"), bs.BoldOption.value(), ZLBooleanOption_handler, &bs.BoldOption);
+		ADD_OPTION_INT_F(	_("Line Spacing"), bs.LineSpacePercentOption.value(), _("%d%%"));
+		ADD_OPTION_INT_T(	_("Alignment"), bs.AlignmentOption.value(), alignments[bs.AlignmentOption.value()]);
+		ADD_OPTION_STRING(	_("Margins"), "");
+		ADD_OPTION_INT(		_("First Line Indent"), decoration->FirstLineIndentDeltaOption.value());
+		ADD_OPTION_BOOL_H(	_("Auto Hyphenations"), bs.AutoHyphenationOption.value(), ZLBooleanOption_handler, &bs.AutoHyphenationOption);
 
 		cb_lcb_redraw();
 	} else if(1 == idx) {
@@ -1035,7 +1039,7 @@ void options_dialog_handler(int idx, bool is_alt)
 		cb_olist *options = new cb_olist;
 		olists.push_back(options);
 
-		options->name = "Indicator";
+		options->name = _("Indicator");
 		options->parent = current_olist;
 		options->parent_item_idx = idx;
 		options->item_handler = indicator_handler;
@@ -1043,21 +1047,21 @@ void options_dialog_handler(int idx, bool is_alt)
 
 		cb_olist_item i;
 
-		ADD_OPTION_BOOL(	"Show Indicator", (indicatorInfo.TypeOption.value() == ZLTextPositionIndicatorInfo::FB_INDICATOR));
-		ADD_OPTION_BOOL_H(	"Show TOC Marks", myFbreader->bookTextView().ShowTOCMarksOption.value(), ZLBooleanOption_handler, &myFbreader->bookTextView().ShowTOCMarksOption);
-		ADD_OPTION_BOOL_H(	"Show Position", indicatorInfo.ShowTextPositionOption.value(), ZLBooleanOption_handler, &indicatorInfo.ShowTextPositionOption);
-		ADD_OPTION_BOOL_H(	"Show Time", indicatorInfo.ShowTimeOption.value(), ZLBooleanOption_handler, &indicatorInfo.ShowTimeOption);
-		ADD_OPTION_BOOL_H(	"Show Battery", indicatorInfo.ShowBatteryOption.value(), ZLBooleanOption_handler, &indicatorInfo.ShowBatteryOption);
-		ADD_OPTION_INT(		"Indicator Height", indicatorInfo.HeightOption.value());
-		ADD_OPTION_INT(		"Offset from Text", indicatorInfo.OffsetOption.value());
-		ADD_OPTION_INT_F(	"Font Size", indicatorInfo.FontSizeOption.value(), "%dpt");
+		ADD_OPTION_BOOL(	_("Show Indicator"), (indicatorInfo.TypeOption.value() == ZLTextPositionIndicatorInfo::FB_INDICATOR));
+		ADD_OPTION_BOOL_H(	_("Show TOC Marks"), myFbreader->bookTextView().ShowTOCMarksOption.value(), ZLBooleanOption_handler, &myFbreader->bookTextView().ShowTOCMarksOption);
+		ADD_OPTION_BOOL_H(	_("Show Position"), indicatorInfo.ShowTextPositionOption.value(), ZLBooleanOption_handler, &indicatorInfo.ShowTextPositionOption);
+		ADD_OPTION_BOOL_H(	_("Show Time"), indicatorInfo.ShowTimeOption.value(), ZLBooleanOption_handler, &indicatorInfo.ShowTimeOption);
+		ADD_OPTION_BOOL_H(	_("Show Battery"), indicatorInfo.ShowBatteryOption.value(), ZLBooleanOption_handler, &indicatorInfo.ShowBatteryOption);
+		ADD_OPTION_INT(		_("Indicator Height"), indicatorInfo.HeightOption.value());
+		ADD_OPTION_INT(		_("Offset from Text"), indicatorInfo.OffsetOption.value());
+		ADD_OPTION_INT_F(	_("Font Size"), indicatorInfo.FontSizeOption.value(), _("%dpt"));
 
 		cb_lcb_redraw();
 	} else if(2 == idx) {
 		cb_olist *options = new cb_olist;
 		olists.push_back(options);
 
-		options->name = "Language";
+		options->name = _("Language");
 		options->parent = current_olist;
 		options->parent_item_idx = idx;
 		options->item_handler = language_handler;
@@ -1068,7 +1072,7 @@ void options_dialog_handler(int idx, bool is_alt)
 		cb_olist_item i;
 
 
-		ADD_OPTION_BOOL_H("Detect Language and Encoding", pc.LanguageAutoDetectOption.value(), ZLBooleanOption_handler, &pc.DefaultLanguageOption);
+		ADD_OPTION_BOOL_H(_("Detect Language and Encoding"), pc.LanguageAutoDetectOption.value(), ZLBooleanOption_handler, &pc.DefaultLanguageOption);
 
 		char *l;
 		for(unsigned int i = 0; i < sizeof(languages) / sizeof(struct _language) && languages[i].langId; i++) {
@@ -1077,7 +1081,7 @@ void options_dialog_handler(int idx, bool is_alt)
 				break;
 		}
 
-		ADD_OPTION_STRING("Default Language", l);
+		ADD_OPTION_STRING(_("Default Language"), l);
 
 		bool found = false;
 		const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
@@ -1086,15 +1090,15 @@ void options_dialog_handler(int idx, bool is_alt)
 
 			for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = infos.begin(); !found && (jt != infos.end()); ++jt) {
 				if ((*jt)->name() == pc.DefaultEncodingOption.value()) {
-					ADD_OPTION_STRING("Default Encoding Set", (*it)->name().c_str());
-					ADD_OPTION_STRING("Default Encoding", (*jt)->name().c_str());
+					ADD_OPTION_STRING(_("Default Encoding Set"), (*it)->name().c_str());
+					ADD_OPTION_STRING(_("Default Encoding"), (*jt)->name().c_str());
 
 					found = true;
 					break;
 				}
 			}
 		}
-		ADD_OPTION_BOOL_H("iso-8859-1 -> win-1251", ZLEncodingCollection::useWindows1252HackOption().value(), ZLBooleanOption_handler, &ZLEncodingCollection::useWindows1252HackOption());
+		ADD_OPTION_BOOL_H(_("iso-8859-1 -> win-1251"), ZLEncodingCollection::useWindows1252HackOption().value(), ZLBooleanOption_handler, &ZLEncodingCollection::useWindows1252HackOption());
 
 		cb_lcb_redraw();
 	} else if(3 == idx) {
@@ -1104,7 +1108,7 @@ void options_dialog_handler(int idx, bool is_alt)
 		cb_olist *options = new cb_olist;
 		olists.push_back(options);
 
-		options->name = "Book Settings";
+		options->name = _("Book Settings");
 		options->parent = current_olist;
 		options->parent_item_idx = idx;
 		options->item_handler = book_settings_handler;
@@ -1119,10 +1123,10 @@ void options_dialog_handler(int idx, bool is_alt)
 				break;
 		}
 
-		ADD_OPTION_STRING("Language", l);
+		ADD_OPTION_STRING(_("Language"), l);
 
 		if(myBookInfo->EncodingOption.value() == "auto") {
-			ADD_OPTION_STRING("Encoding", myBookInfo->EncodingOption.value().c_str());
+			ADD_OPTION_STRING(_("Encoding"), myBookInfo->EncodingOption.value().c_str());
 		} else {
 			bool found = false;
 			const std::vector<shared_ptr<ZLEncodingSet> > &sets = ZLEncodingCollection::instance().sets();
@@ -1131,8 +1135,8 @@ void options_dialog_handler(int idx, bool is_alt)
 
 				for (std::vector<ZLEncodingConverterInfoPtr>::const_iterator jt = infos.begin(); !found && (jt != infos.end()); ++jt) {
 					if ((*jt)->name() == myBookInfo->EncodingOption.value()) {
-						ADD_OPTION_STRING("Encoding Set", (*it)->name().c_str());
-						ADD_OPTION_STRING("Encoding", (*jt)->name().c_str());
+						ADD_OPTION_STRING(_("Encoding Set"), (*it)->name().c_str());
+						ADD_OPTION_STRING(_("Encoding"), (*jt)->name().c_str());
 
 						found =true;
 						break;
@@ -1167,7 +1171,7 @@ void options_dialog_handler(int idx, bool is_alt)
 						curBreakType = 2;
 				}
 
-				ADD_OPTION_INT_T("Break Paragraph at", curBreakType, para_break_type[curBreakType]);
+				ADD_OPTION_INT_T(_("Break Paragraph at"), curBreakType, para_break_type[curBreakType]);
 			}
 		}
 		cb_lcb_redraw();
@@ -1175,7 +1179,7 @@ void options_dialog_handler(int idx, bool is_alt)
 		cb_olist *options = new cb_olist;
 		olists.push_back(options);
 
-		options->name = "Keys";
+		options->name = _("Keys");
 		options->parent = current_olist;
 		options->parent_item_idx = idx;
 		options->item_handler = keys_handler;
@@ -1207,7 +1211,7 @@ void ZLEwlOptionsDialog(FBReader &f)
 	cb_olist *options = new cb_olist;
 	olists.push_back(options);
 
-	options->name = "Settings";
+	options->name = _("Settings");
 	options->parent = NULL;
 	options->parent_item_idx = -1;
 	options->item_handler = options_dialog_handler;
@@ -1215,11 +1219,11 @@ void ZLEwlOptionsDialog(FBReader &f)
 
 	cb_olist_item i;
 
-	ADD_SUBMENU_ITEM("Format & Style");
-	ADD_SUBMENU_ITEM("Indicator");
-	ADD_SUBMENU_ITEM("Language");
-	ADD_SUBMENU_ITEM("Book settings");
-	ADD_SUBMENU_ITEM("Keys");
+	ADD_SUBMENU_ITEM(_("Format & Style"));
+	ADD_SUBMENU_ITEM(_("Indicator"));
+	ADD_SUBMENU_ITEM(_("Language"));
+	ADD_SUBMENU_ITEM(_("Book settings"));
+	ADD_SUBMENU_ITEM(_("Keys"));
 
 	cb_lcb_new();
 }
@@ -1232,7 +1236,7 @@ void ZLEwlBookInfo(FBReader &f)
 		delete list;
 	list = new cb_list;
 
-	list->name = "Book Info";
+	list->name = _("Book Info");
 	list->alt_text = "";
 	list->item_handler = NULL;
 
@@ -1247,14 +1251,14 @@ void ZLEwlBookInfo(FBReader &f)
 	list->items.push_back(i);	\
 	}
 
-	list_add_tv("File: ", ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)));
-	list_add_tv("Full path: ", ZLFile::fileNameToUtf8(ZLFile(fileName).path()));
-	list_add_tv("Title: ", myBookInfo->TitleOption.value());
-	list_add_tv("Author: ", myBookInfo->AuthorDisplayNameOption.value());
+	list_add_tv(_("File: "), ZLFile::fileNameToUtf8(ZLFile(fileName).name(false)));
+	list_add_tv(_("Full path: "), ZLFile::fileNameToUtf8(ZLFile(fileName).path()));
+	list_add_tv(_("Title: "), myBookInfo->TitleOption.value());
+	list_add_tv(_("Author: "), myBookInfo->AuthorDisplayNameOption.value());
 
 	if(!myBookInfo->SeriesNameOption.value().empty()) {
-		list_add_tv("Series: ", myBookInfo->SeriesNameOption.value());
-		list_add_tv("Book number: ", myBookInfo->NumberInSeriesOption.value());
+		list_add_tv(_("Series: "), myBookInfo->SeriesNameOption.value());
+		list_add_tv(_("Book number: "), myBookInfo->NumberInSeriesOption.value());
 	}
 
 	cb_fcb_new(list);
@@ -1307,20 +1311,20 @@ void ZLEwlMainMenu(FBReader &f)
 
 	list = new cb_list;
 
-	list->name = "Book Menu";
+	list->name = _("Book Menu");
 	list->alt_text = "";
 	list->item_handler = mmenu_handler;
 
 	cb_list_item item;
-	item.text = "Book Info";
+	item.text = _("Book Info");
 	list->items.push_back(item);
-	item.text = "Go To Page";
+	item.text = _("Go To Page");
 	list->items.push_back(item);
-	item.text = "Table Of Contents";
+	item.text = _("Table Of Contents");
 	list->items.push_back(item);
-	item.text = "Search";
+	item.text = _("Search");
 	list->items.push_back(item);
-	item.text = "Bookmarks";
+	item.text = _("Bookmarks");
 	list->items.push_back(item);
 //	list->items.push_back("Settings");
 
