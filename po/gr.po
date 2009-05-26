@@ -1,0 +1,491 @@
+# FBReader translation file.
+#
+# Copyright (C) 2009 Georgios Lyras <glyras@gmail.com>
+# This file is distributed under the same license as the FBReader package.
+# Georgios Lyras <glyras@gmail.com>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FBreader\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-05-25 14:51+0200\n"
+"PO-Revision-Date: 2009-05-26 14:03+0700\n"
+"Last-Translator: Georgios Lyras <glyras@gmail.com>\n"
+"Language-Team: Greek <openinnkpot-l10n@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:63
+msgid "None"
+msgstr "Κενό"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:64
+msgid "Add Bookmark"
+msgstr "Εισαγωγή Σελιδοδείκτη"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:65
+msgid "Show Bookmarks"
+msgstr "Εμφάνιση Σελιδοδείκτη"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:66
+msgid "Hyperlinks mode"
+msgstr "Λειτουργεία σύνδεσμου υπερ-κειμένου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:67
+msgid "Show Footnotes"
+msgstr "Εμφάνιση υποσημειώσεων"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:68
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:137
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1321
+msgid "Go To Page"
+msgstr "Μετάβαση σε σελίδα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:69
+msgid "Show Table of Contents"
+msgstr "Εμφάνιση Περιεχομένων"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:70
+msgid "Go to Home"
+msgstr "Μεταβαση στο Αρχικό Μενού"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:71
+msgid "Go to Start of Section"
+msgstr "Μετάβαση στην αρχή του τμήματος"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:72
+msgid "Go to End of Section"
+msgstr "Μετάβαση στο τέλος του τμήματος"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:73
+msgid "Go to Next TOC Section"
+msgstr "Μετάβαση στο επομενο τμημα μενου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:74
+msgid "Go to Previous TOC Section"
+msgstr "Μετάβαση στο προηγούμενο τμημα μενου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:75
+msgid "Large Scroll Forward"
+msgstr "Κύλιση εμπρός"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:76
+msgid "Large Scroll Backward"
+msgstr "Κύλιση πίσω"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:77
+msgid "Undo"
+msgstr "Αναίρεση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:78
+msgid "Redo"
+msgstr "Επανάληψη"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:79
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:329
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:355
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:378
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1325
+msgid "Search"
+msgstr "Αναζήτηση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:80
+msgid "Increase Font Size"
+msgstr "Άυξηση μεγέθους γραμματοσειράς"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:81
+msgid "Decrease Font Size"
+msgstr "Μείωση μεγέθους γραμματοσειράς"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:82
+msgid "Toggle Position Indicator"
+msgstr "Εναλλάγη δείκτη θέσης"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:94
+msgid "Arabic"
+msgstr "Αραβικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:95
+msgid "Czech"
+msgstr "Τσέχικα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:96
+msgid "German"
+msgstr "Γερμανικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:97
+msgid "German (traditional orthography)"
+msgstr "Γερμανικά (παραδοσιακή ορθογραφία)"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:98
+msgid "Greek"
+msgstr "Ελληνικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:99
+msgid "English"
+msgstr "Αγγλικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:100
+msgid "Esperanto"
+msgstr "Εσπεράντο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:101
+msgid "Spanish"
+msgstr "Ισπανικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:102
+msgid "Finnish"
+msgstr "Φινλανδικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:103
+msgid "French"
+msgstr "Γαλλικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:104
+msgid "Hebrew"
+msgstr "Εβραϊκα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:105
+msgid "Indonesian"
+msgstr "Ινδονησιακά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:106
+msgid "Italian"
+msgstr "Ιταλικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:107
+msgid "Norwegian"
+msgstr "Νορβηγικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:108
+msgid "Portuguese"
+msgstr "Πορτογαλικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:109
+msgid "Russian"
+msgstr "Ρώσικα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:110
+msgid "Swedish"
+msgstr "Σουηδικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:111
+msgid "Turkish"
+msgstr "Τούρκικα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:112
+msgid "Ukrainian"
+msgstr "Ουκρανικά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:113
+msgid "Chinese"
+msgstr "Κινέζικα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:114
+msgid "Other"
+msgstr "Άλλο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:118
+msgid "undefined"
+msgstr "Απροσδιόριστο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:118
+msgid "left"
+msgstr "Αριστερά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:118
+msgid "right"
+msgstr "Δεξιά"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:118
+msgid "center"
+msgstr "Κέντρο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:118
+msgid "justify"
+msgstr "Ευθυγράμμιση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:119
+msgid "New Line"
+msgstr "Νέα γραμμή"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:119
+msgid "Empty Line"
+msgstr "Άδεια γραμμή"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:119
+msgid "Line With Indent"
+msgstr "Γραμμή με εσοχές"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:216
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1323
+msgid "Table Of Contents"
+msgstr "Ευρετήριο περιεχομένων"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:275
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1327
+msgid "Bookmarks"
+msgstr "Σελιδοδείκτες"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:276
+msgid "Delete"
+msgstr "Διαγραφή"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:284
+msgid "Page "
+msgstr "Σελίδα "
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:294
+msgid "Bookmark added"
+msgstr "Σελιδοδείκτης προστέθηκε"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:323
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:349
+msgid "<- Search ->"
+msgstr "<- Αναζήτηση ->"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:325
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:351
+msgid "Search ->"
+msgstr "Αναζήτηση ->"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:327
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:353
+msgid "<- Search"
+msgstr "<- Αναζήτηση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:336
+msgid "Text not found"
+msgstr "Το κείμενο δεν βρέθηκε"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:433
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:619
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1029
+#, c-format
+msgid "%d%%"
+msgstr "%d%%"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:449
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:502
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:612
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:692
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1027
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1057
+#, c-format
+msgid "%dpt"
+msgstr "%dpt"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:560
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:643
+msgid "Left Margin"
+msgstr "Αριστερό περιθώριο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:563
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:644
+msgid "Right Margin"
+msgstr "Δεξί περιθώριο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:566
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:645
+msgid "Top Margin"
+msgstr "Άνω περιθώριο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:569
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:646
+msgid "Bottom Margin"
+msgstr "Κάτω περιθώριο"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:602
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1026
+msgid "Font Family"
+msgstr "Οικογένεια γραμματοσειρας"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:609
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1027
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1057
+msgid "Font Size"
+msgstr "Μέγεθος γραμματοσειράς"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:616
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1029
+msgid "Line Spacing"
+msgstr "Διαστήματα γραμμών"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:623
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1030
+msgid "Alignment"
+msgstr "Ευθυγράμμιση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:633
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1031
+msgid "Margins"
+msgstr "Περιθώρια"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:650
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1032
+msgid "First Line Indent"
+msgstr "Εσοχή πρώτης γραμμής"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:675
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1055
+msgid "Indicator Height"
+msgstr "Ύψος δείκτη"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:682
+msgid "Offset From Text"
+msgstr "Απόκλιση κειμένου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:689
+msgid "Indicator Font Size"
+msgstr "Μέγεθος γραμματοσειράς δείκτη"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:759
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1084
+msgid "Default Language"
+msgstr "Προεπιλεγμένη γλώσσα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:767
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:930
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1093
+msgid "Default Encoding Set"
+msgstr "Προεπιλεγμένο σετ κωδικοποίησεων"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:774
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:937
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1094
+msgid "Default Encoding"
+msgstr "Προεπιλεγμένη κωδικοποίηση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:919
+msgid "Book Language"
+msgstr "Γλώσσα βιβλίου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:963
+msgid "Break Paragraph At"
+msgstr "Εισαγωγή παραγράφου εδώ"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:991
+#, c-format
+msgid "Key %d"
+msgstr "Πλήκτρο %d"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1018
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1222
+msgid "Format & Style"
+msgstr "Μετατροπή και στυλ"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1028
+msgid "Bold"
+msgstr "Τονισμένα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1033
+msgid "Auto Hyphenations"
+msgstr "Αυτόματες ενώσεις"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1042
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1223
+msgid "Indicator"
+msgstr "Δείκτης"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1050
+msgid "Show Indicator"
+msgstr "Εμφάνιση δείκτη"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1051
+msgid "Show TOC Marks"
+msgstr "Εμφάνιση κουκίδων μενου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1052
+msgid "Show Position"
+msgstr "Εμφάνιση θέσης"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1053
+msgid "Show Time"
+msgstr "Εμφάνιση ώρας"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1054
+msgid "Show Battery"
+msgstr "Εμφάνιση δείκτη μπαταρίας"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1056
+msgid "Offset from Text"
+msgstr "Απόκλιση κειμένου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1064
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1126
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1224
+msgid "Language"
+msgstr "Γλώσσα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1075
+msgid "Detect Language and Encoding"
+msgstr "Εμφάνιση γλώσσας και κωδικοποίησης"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1101
+msgid "iso-8859-1 -> win-1251"
+msgstr "iso-8859-1 -> win-1251"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1111
+msgid "Book Settings"
+msgstr "Ρυθμίσεις βιβλίου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1129
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1139
+msgid "Encoding"
+msgstr "Κωδικοποίηση"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1138
+msgid "Encoding Set"
+msgstr "Σέτ κωδικοποίησεων"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1174
+msgid "Break Paragraph at"
+msgstr "Εισαγωγή παραγράφου εδώ"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1182
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1226
+msgid "Keys"
+msgstr "Πλήκτρα"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1214
+msgid "Settings"
+msgstr "Ρυθμίσεις"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1225
+msgid "Book settings"
+msgstr "Ρυθμίσεις βιβλίου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1239
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1319
+msgid "Book Info"
+msgstr "Πληροφορίες βιβλίου"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1254
+msgid "File: "
+msgstr "Αρχείο: "
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1255
+msgid "Full path: "
+msgstr "Πλήρης διαδρομή"
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1256
+msgid "Title: "
+msgstr "Τίτλος: "
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1257
+msgid "Author: "
+msgstr "Συγγραφέας: "
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1260
+msgid "Series: "
+msgstr "Σειρά: "
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1261
+msgid "Book number: "
+msgstr "Αριθμός βιβλίου: "
+
+#: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1314
+msgid "Book Menu"
+msgstr "Μενου βιβλίου"
+
