@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: FBreader\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-25 14:51+0200\n"
-"PO-Revision-Date: 2009-05-26 19:29+0200\n"
+"PO-Revision-Date: 2009-05-26 19:42+0200\n"
 "Last-Translator: Mathias Huber <mhuber@mathiashuber.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -69,19 +69,19 @@ msgstr "Zum vorigen Abschnitt"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:75
 msgid "Large Scroll Forward"
-msgstr "Weit vorwärts scrollen"
+msgstr "Nächste Seite"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:76
 msgid "Large Scroll Backward"
-msgstr "Weit zurück scrollen"
+msgstr "Vorige Seite"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:77
 msgid "Undo"
-msgstr "Rückgängig"
+msgstr "Zurück (Hyperlink)"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:78
 msgid "Redo"
-msgstr "Wiederherstellen"
+msgstr "Vorwärts (Hyperlink)"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:79
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:329
@@ -332,7 +332,7 @@ msgstr "Einrückung erste Zeile"
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:675
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1055
 msgid "Indicator Height"
-msgstr "Größe des Anzeigers"
+msgstr "Größe des Positionszeigers"
 
 # Abstand vom Text
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:682
@@ -341,7 +341,7 @@ msgstr "Abstand vom Text"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:689
 msgid "Indicator Font Size"
-msgstr "Schriftgröße Anzeiger"
+msgstr "Schriftgröße Positionszeiger"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:759
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1084
@@ -389,11 +389,11 @@ msgstr "Silbentrennung"
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1042
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1223
 msgid "Indicator"
-msgstr "Anzeiger"
+msgstr "Positionszeiger"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1050
 msgid "Show Indicator"
-msgstr "Anzeiger zeigen"
+msgstr "Positionszeiger einblenden"
 
 #: zlibrary/ui/src/ewl/dialogs/ZLEwlDialogs.cpp:1051
 msgid "Show TOC Marks"
